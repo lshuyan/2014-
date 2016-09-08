@@ -1,0 +1,346 @@
+//
+//  UIControllerUserInfo.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/10/31.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerUserInfo.h"
+
+#import "UIControllerLogin.h"
+#import "UIControllerEditUserInfo.h"
+
+#import "UICellHead.h"
+#import "UserManager.h"
+
+#import "UIImageView+WebCache.h"
+
+@interface UIControllerUserInfo ()
+{
+    UICellHead * _cellHead;
+    
+    ModelUser *_modelUser;
+    
+    //保存Cell里的控件  键为indexpathd的区行
+    NSMutableDictionary *_dicCell;
+}
+@end
+
+@implementation UIControllerUserInfo
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        _dicCell=[NSMutableDictionary new];
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    [SVProgressHUD dismiss];
+    
+    _modelUser=[UserManager shareUserManager].currUser;
+    
+    [self updateByLanguage];
+    
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+#pragma mark - AppLanguageProtocol.h
+-(void)updateByLanguage
+{
+    self.title = LocalizedString(@"gerenzhongxin");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+}
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [_tableView reloadData];
+    
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 5;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if(section==1)
+    {
+        return 3;
+    }
+    else
+    {
+        return 1;
+    }
+    
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if ([self isEqualIndexPath:indexPath section:0 row:0]) {
+        return 107;
+    }
+    return 44;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+    static NSString *cellID = @"Cell";
+    
+    if (indexPath.section==0) {
+        
+        //头像
+        UICellHead *cell = [[[NSBundle mainBundle] loadNibNamed:@"UICellHead" owner:self options:nil] lastObject];
+        _cellHead = cell;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        [cell.btnName setTitle:_modelUser.nickname forState:UIControlStateNormal];
+        [cell.btnSynchro addTarget:self action:@selector(onTouchBtnSynchro) forControlEvents:UIControlEventTouchUpInside];
+
+        [cell.ImageVIewIcon setImageWithURL:[NSURL URLWithString:[UserManager shareUserManager].currUser.avatar] placeholderImage:[UIImage imageWithBundleFile:@"iPhone/User/tu_0.png"] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+            if (image) {
+                _cellHead.ImageVIewIcon.image = [UIImage imageWithData:UIImagePNGRepresentation(image) scale:[UIScreen mainScreen].scale];
+            }
+        }];
+        [_dicCell setObject:cell forKey:[self getKeyForIndexPath:indexPath]];
+        
+        
+        return cell;
+    }
+    else
+    {
+        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellID];
+        
+        if (!cell) {
+            cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellID];
+            [_dicCell setObject:cell forKey:[self getKeyForIndexPath:indexPath]];
+        }
+        
+        //收藏
+        if ([self isEqualIndexPath:indexPath section:1 row:0]) {
+            cell.textLabel.text = LocalizedString(@"shuqian");
+            
+            UISwitch * s = [[UISwitch alloc]init];
+            [s addTarget:self action:@selector(onTouchSwitch:) forControlEvents:UIControlEventTouchUpInside];
+            s.on = YES;
+            cell.accessoryView = s;
+            
+        }//历史记录
+        else if ([self isEqualIndexPath:indexPath section:1 row:1]) {
+            cell.textLabel.text = LocalizedString(@"zueijinfangwen");
+            
+            UISwitch * s = [[UISwitch alloc] init];
+            [s addTarget:self action:@selector(onTouchSwitch:) forControlEvents:UIControlEventTouchUpInside];
+            s.on = YES;
+            cell.accessoryView = s;
+            
+        }//智能填表
+        else if ([self isEqualIndexPath:indexPath section:1 row:2]) {
+            cell.textLabel.text = LocalizedString(@"zhinengtianbiao");
+            
+            UISwitch * s = [[UISwitch alloc]init];
+            [s addTarget:self action:@selector(onTouchSwitch:) forControlEvents:UIControlEventTouchUpInside];
+            s.on = YES;
+            cell.accessoryView = s;
+            
+        }//同步方式
+        else if ([self isEqualIndexPath:indexPath section:2 row:0])
+        {
+            cell.textLabel.text = LocalizedString(@"tongbufangshi");
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            cell.detailTextLabel.text = LocalizedString(@"jinzaiWifixiazidong");
+        }//同步设备图
+        else if ([self isEqualIndexPath:indexPath section:3 row:0])
+        {
+            
+        }//注销当前账号
+        else if ([self isEqualIndexPath:indexPath section:4 row:0])
+        {
+            cell=[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+            cell.textLabel.text = LocalizedString(@"zhuxiaodangqianzhanghao");
+            cell.textLabel.textColor = [UIColor redColor];
+            cell.textLabel.textAlignment = NSTextAlignmentCenter;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            
+        }
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        
+        return cell;
+    }
+    
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    //注销
+    if ([self isEqualIndexPath:indexPath section:4 row:0]) {
+        [UserManager shareUserManager].currUser = nil;
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:KNotificationDidLogout object:nil];
+        switch (_fromController) {
+            case FromControllerUnknow:
+            case FromControllerRoot:
+            {
+                UIControllerLogin *controllerLogin = [[UIControllerLogin alloc] initWithNibName:@"UIControllerLogin" bundle:nil];
+                controllerLogin.fromController = _fromController;
+                
+                [self.navigationController pushViewController:controllerLogin animated:YES];
+            }break;
+            case FromControllerSystemSettings:
+            {
+                [self.navigationController popToViewController:self.navigationController.viewControllers[1] animated:YES];
+            }break;
+                
+            default:
+                break;
+        }
+    }
+    else if([self isEqualIndexPath:indexPath section:2 row:0])
+    {
+        //同步方式
+        _DEBUG_LOG(@"%s " ,__FUNCTION__);
+        UITableViewCell *cell = [_dicCell objectForKey: [self getKeyForIndexPath:indexPath]];
+        cell.detailTextLabel.text = @"try";
+    }
+    else if([self isEqualIndexPath:indexPath section:0 row:0 ])
+    {
+        UIControllerEditUserInfo *vc = [[UIControllerEditUserInfo alloc] initWithNibName:@"UIControllerEditUserInfo" bundle:nil];
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    
+}
+
+-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    if (section==3) {
+        return LocalizedString(@"shebeitongbu");
+    }
+    return nil;
+}
+
+//点击同步按钮
+-(void)onTouchBtnSynchro
+{
+    _DEBUG_LOG(@"%s%@",__FUNCTION__,@"同步");
+    _cellHead.labelSynchro.text = @"正在同步";
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        _cellHead.labelSynchro.text = @"上次同步:刚刚";
+    });
+}
+
+/**
+ *  比较indexpath
+ *
+ *  @param section   如果section 为-1  只比较row
+ *  @param row       同上
+ *
+ */
+-(BOOL)isEqualIndexPath:(NSIndexPath*)indexPath section:(NSInteger)section row:(NSInteger)row
+{
+    if (section==-1) {
+        return (indexPath.row==row);
+    }
+    else if (row==-1) {
+        return (indexPath.section==section);
+    }
+    else
+    {
+        return (indexPath.section==section && indexPath.row==row);
+    }
+}
+
+/**
+ *  获得由indexpath 区行组成的 字符串
+ */
+-(NSString *)getKeyForIndexPath:(NSIndexPath *)indexPath
+{
+    return [NSString stringWithFormat:@"%d%d", indexPath.section, indexPath.row];
+}
+
+//
+-(void)onTouchSwitch:(UISwitch *)sth
+{
+    for (int i=10; i<13 ; i++) {
+        //字典的键 10代表 1.section  0.row
+        NSString *key = [NSString stringWithFormat:@"%d",i];
+        UITableViewCell  *cell = _dicCell[key];
+        UISwitch *s = (UISwitch *)cell.accessoryView;
+        if (s==sth) {
+            //            _DEBUG_LOG(@"%@开关%",cell.textLabel.text)
+            _DEBUG_LOG(@"%s:%@", __FUNCTION__, cell.textLabel.text);
+        }
+    }
+}
+
+//返回按钮 lianjie
+-(void)onTouchBtnBack
+{
+    if (IsiPad) {
+        [self.navigationController dismissModalViewControllerAnimated:YES];
+    }
+    else
+    {
+        //iPhone跳转
+        switch (_fromController) {
+            case FromControllerUnknow:
+            {
+                [self.navigationController popToRootViewControllerAnimated:YES];
+            }break;
+            case FromControllerRoot:
+            {
+                [self.navigationController popToRootViewControllerAnimated:YES];
+            }break;
+            case FromControllerSystemSettings:
+            {
+                [self.navigationController popToViewController:self.navigationController.viewControllers[1] animated:YES];
+            }break;
+                
+            default:
+                break;
+        }
+    }
+    
+}
+
+
+@end

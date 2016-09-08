@@ -1,0 +1,40 @@
+//
+//  UIViewBrushSet.h
+//  KTBrowser
+//
+//  Created by David on 14-2-26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+
+
+@protocol UIViewBrushSetDelegate;
+
+@interface UIViewBrushSet : UIView
+{
+    IBOutlet UIView *_viewWrap;
+    IBOutlet UIView *_viewBrush;
+    
+    IBOutlet UISlider *_slider;
+    
+    IBOutlet UIImageView *_bgImageVIew;
+    IBOutlet UIView *_viewBottom;
+    NSArray *_arrColor;
+    
+}
+
+
+@property (nonatomic, weak) id<UIViewBrushSetDelegate> delegate;
+
++ (UIViewBrushSet *)viewBrushSetFromXib;
+
+- (void)setColor:(UIColor *)color width:(CGFloat)width;
+
+@end
+
+@protocol UIViewBrushSetDelegate <NSObject>
+
+- (void)viewBrushSetLineColor:(UIColor *)lineColor;
+- (void)viewBrushSetLineWidth:(CGFloat)lineWidth;
+
+@end

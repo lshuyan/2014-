@@ -1,0 +1,31 @@
+//
+//  UIControllerAddProgram.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+
+/**
+ *  操作类型
+ */
+typedef NS_ENUM(NSInteger, ModeProgramActionType) {
+    /**
+     *  新建模式
+     */
+    ProgramActionTypeAdd,
+    /**
+     *  编辑预约(编辑节目)
+     */
+    ProgramActionTypeEdit
+};
+
+@class ModelMode;
+
+@interface UIControllerAddProgram : UIControllerBase
+
+@property (nonatomic, strong) void (^callbackDidAddMode)(ModelMode *);
+
+@end

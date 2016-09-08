@@ -1,0 +1,287 @@
+//
+//  ADOApp.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOApp.h"
+
+#import <sqlite3.h>
+
+static int QueryCallback (void *result, int colCount, char **data, char **colName)
+{
+    NSMutableArray *arrResult = (__bridge NSMutableArray *)result;
+    ModelApp *model = [ModelApp model];
+    model.pkid = atoi(data[0]);
+    model.pkid_server = atoi(data[1]);
+    model.userid = atoi(data[2]);
+    
+    model.appType = atoi(data[3]);
+    char *
+    value = data[4];
+    if (value) model.title = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[5];
+    if (value) model.icon = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[6];
+    if (value) model.link = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[7];
+    if (value) model.urlSchemes = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[8];
+    if (value) model.package = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[9];
+    if (value) model.downloadLink = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    model.sortIndex = atoi(data[10]);
+    
+    [arrResult addObject:model];
+    return 0;
+}
+
+@implementation ADOApp
+
+/**
+ *  判断是否存在
+ *
+ *  @param appType App类型
+ *  @param link 连接地址/功能模块的地址
+ *  @param urlSchemes urlSchemes
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithAppType:(AppType)appType link:(NSString *)link urlSchemes:(NSString *)urlSchemes
+{
+    BOOL bFlag = NO;
+    NSString *sql = nil;
+    if (AppTypeNative==appType) {
+        sql = [NSString stringWithFormat:@"select * from tab_app where app_type=%d and url_schemes = '%@'", appType, urlSchemes?:@""];
+    }
+    else {
+        sql = [NSString stringWithFormat:@"select * from tab_app where app_type=%d and link = '%@'", appType, link?:@""];
+    }
+    
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, [sql UTF8String], callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    bFlag = arrResult.count>0;
+    
+    return bFlag;
+}
+
+/**
+ *  添加
+ *
+ *  @param model ModelApp
+ *
+ *  @return NSInteger  最后添加的id； < 0，表示错误； >= 0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelApp *)model
+{
+    NSInteger lastInsertId = -1;
+    
+    if ([ADOApp isExistWithAppType:model.appType link:model.link urlSchemes:model.urlSchemes]) {
+        return lastInsertId;
+    }
+    
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"insert into tab_app (app_type, name, icon, link, url_schemes, download_link, sort_index) values (%d, '%@', '%@', '%@', '%@', '%@', %d)", model.appType, model.title?:@"", model.icon?:@"", model.link?:@"", model.urlSchemes?:@"", model.downloadLink?:@"", model.sortIndex] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+    } while (NO);
+    
+    lastInsertId = (NSInteger)sqlite3_last_insert_rowid(db);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return lastInsertId;
+}
+
+/**
+ *  删除App
+ *
+ *  @param aid 本地数据库AppId
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"delete from tab_app where pkid = %d", pkid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+/**
+ *  清空数据表
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)clear
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"delete from tab_app"] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+/**
+ *  更新数据
+ *
+ *  @param model ModelApp
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateModel:(ModelApp *)model
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"update tab_app set name='%@', icon='%@', link='%@', url_schemes='%@', download_link='%@', sort_index=%d where pkid=%d", model.title?:@"", model.icon?:@"", model.link?:@"", model.urlSchemes?:@"", model.downloadLink?:@"", model.sortIndex, model.pkid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+/**
+ *  通过唯一键更新排序索引
+ *
+ *  @param orderIndex 排序索引
+ *  @param pkid       唯一键id
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)updateOrderIndex:(NSInteger)orderIndex withPkid:(NSInteger)pkid
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"update tab_app set sort_index=%d where pkid=%d", orderIndex, pkid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    return bFlag;
+}
+
+/**
+ *  查询所有App
+ *
+ *  @return NSArray 所有App
+ */
++ (NSArray *)queryAll
+{
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    const char *sql = [[NSString stringWithFormat:@"select * from tab_app order by sort_index"] UTF8String];
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return arrResult;
+}
+
+/**
+ *  分页查询App
+ *
+ *  @param page     页码
+ *  @param pagesize 数量
+ *
+ *  @return NSArray App
+ */
++ (NSArray *)queryWithPage:(NSInteger)page pagesize:(NSInteger)pagesize
+{
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    const char *sql = [[NSString stringWithFormat:@"select * from tab_app order by sort_index asc limit %d,%d", page*pagesize, pagesize] UTF8String];
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return arrResult;
+}
+
+@end

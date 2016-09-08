@@ -1,0 +1,32 @@
+//
+//  config.h
+//
+//  Created by David on 13-2-19.
+//  Copyright (c) 2013年 KOTO Inc. All rights reserved.
+//
+
+#ifndef multi_func_config_h
+#define multi_func_config_h
+
+#define _DEBUG 1
+
+
+// 百度统计 中华浏览器
+#define BaiduMobAppKey @"0d0167cbc4"
+
+//------ ShareSDK 相关
+// David
+//#define SSK_AppId_ShareSDK @"19681956c3a5"
+// 国广
+#define SSK_AppId_ShareSDK @"405867c8219e"
+
+#define kSkinDirName IsiPad?@"skin/iPad":@"skin/iPhone"
+#define kMaxAppNumber   (30)
+/**
+ *  个性化定制 提醒操作 时长
+ */
+#define kReminderActionDuration (20.0f)
+
+#define kBgColorNav [UIColor colorWithRed:0.161 green:0.161 blue:0.161 alpha:1.000]
+
+#endif

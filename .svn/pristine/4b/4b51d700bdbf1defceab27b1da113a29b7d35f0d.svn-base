@@ -1,0 +1,29 @@
+//
+//  ModelSyncDelete.h
+//  ChinaBrowser
+//
+//  Created by David on 14/12/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelSyncBase.h"
+
+@interface ModelSyncDelete : ModelSyncBase
+
+@property (nonatomic, assign) NSInteger pkid;
+@property (nonatomic, assign) NSInteger userId;
+@property (nonatomic, strong) NSString *lan;
+
+@property (nonatomic, assign) SyncDataType syncDataType;
+@property (nonatomic, assign) NSInteger pkidServer;
+@property (nonatomic, assign) NSInteger updateTime;
+
+
+/**
+ *  添加删除记录(书签)
+ *
+ *  @param modelBookmark 书签
+ *  @param type          类型
+ */
++(void)addSyncDeleteWithBookmarkHistory:(ModelSyncBase *)modelSyncBase syncDataType:(SyncDataType)type;
+@end

@@ -1,0 +1,68 @@
+//
+//  ADOMode.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/22.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOMode.h"
+
+@implementation ADOMode
+
++ (BOOL)isExistWithName:(NSString *)name sysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId
+{
+    return NO;
+}
+
++ (BOOL)isExistWithPkidServer:(NSInteger)pkidServer
+{
+    return NO;
+}
+
++ (NSInteger)addModel:(ModelMode *)model
+{
+    return 0;
+}
+
++ (BOOL)updateName:(NSString *)name withPkid:(NSInteger)pkid
+{
+    return NO;
+}
+
++ (ModelMode *)queryWithPkid:(NSInteger)pkid
+{
+    return nil;
+}
+
++ (NSArray *)queryWithUserId:(NSInteger)userId
+{
+    return nil;
+}
+
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    return NO;
+}
+
++ (BOOL)deleteWithPkidServer:(NSInteger)pkidServer
+{
+    return NO;
+}
+
++ (BOOL)deleteWithUserId:(NSInteger)userId
+{
+    return NO;
+}
+
++ (BOOL)deleteWithSysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId;
+{
+    return NO;
+}
+
++ (BOOL)clear
+{
+    return NO;
+}
+
+@end

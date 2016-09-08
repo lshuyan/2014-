@@ -1,0 +1,171 @@
+//
+//  UIControllerAddProgram.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerAddProgram.h"
+
+#import "UIViewNav.h"
+#import "UIViewReminderEdit.h"
+
+#import "ModelMode.h"
+#import "ModelModeProgram.h"
+#import "ModelProgram.h"
+
+#import "UIControllerProgramList.h"
+
+@interface UIControllerAddProgram () <UITableViewDataSource, UITableViewDelegate>
+{
+    IBOutlet UITableView *_tableView;
+    UIViewNav *_viewNav;
+    UIViewReminderEdit *_viewReminderEdit;
+    
+    ModelMode *_modelMode;
+    ModelModeProgram *_modelModeProgram;
+}
+
+@end
+
+@implementation UIControllerAddProgram
+
+- (void)setActionType:(ProgramActionType)actionType
+{
+    _actionType = actionType;
+    if (_viewReminderEdit) {
+        _viewReminderEdit.actionType = _actionType;
+    }
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    UIButton *btnSave = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [btnSave setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];
+    [btnSave addTarget:self action:@selector(onTouchSave) forControlEvents:UIControlEventTouchUpInside];
+    [btnSave sizeToFit];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnSave];
+    [self.view addSubview:_viewNav];
+    
+    _viewReminderEdit = [UIViewReminderEdit viewFromXib];
+    _tableView.tableFooterView = _viewReminderEdit;
+    
+    if (ProgramActionTypeNone!=_actionType) {
+        _viewReminderEdit.actionType = _actionType;
+    }
+    else {
+        _viewReminderEdit.actionType = ProgramActionTypeAddMode;
+    }
+    
+    
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin = CGPointMake(0, _viewNav.bottom);
+    rc.size = CGSizeMake(self.view.width, self.view.height-rc.origin.y);
+    _tableView.frame = rc;
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)onTouchSave
+{
+    [SVProgressHUD showWithMaskType:SVProgressHUDMaskTypeClear];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [SVProgressHUD dismiss];
+    });
+}
+
+#pragma mark - public methos
+- (void)setEditModelMode:(ModelMode *)modelMode
+{
+    _modelMode = modelMode;
+}
+
+- (void)setEditModelModeProgram:(ModelModeProgram *)modelModeProgram
+{
+    _modelModeProgram = modelModeProgram;
+    UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+    cell.detailTextLabel.text = _modelModeProgram.modelProgram.title;
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 1;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *Identifier = @"UICellAddProgram";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:Identifier];
+    if (!cell) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:Identifier];
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.textLabel.text = LocalizedString(@"diantai_zixun");
+        cell.detailTextLabel.text = LocalizedString(@"qingxuanzeneirong");
+        cell.detailTextLabel.textColor = [UIColor darkGrayColor];
+    }
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    UIControllerProgramList *controllerProgramList = [[UIControllerProgramList alloc] initWithNibName:@"UIControllerProgramList" bundle:nil];
+    
+    [controllerProgramList setCallbackSelectProgram:^(ModelProgram *modelProgram) {
+        UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        cell.detailTextLabel.text = modelProgram.title;
+        
+        [_viewReminderEdit setCanSelectTime:modelProgram.arrSubProgram.count];
+        if (modelProgram.arrSubProgram.count<=0) {
+            [_viewReminderEdit setTime:modelProgram.time];
+        }
+    }];
+    controllerProgramList.title = LocalizedString(@"diantai_zixun");
+    [self.navigationController pushViewController:controllerProgramList animated:YES];
+}
+
+@end

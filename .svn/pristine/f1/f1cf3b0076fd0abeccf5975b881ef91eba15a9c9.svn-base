@@ -1,0 +1,21 @@
+//
+//  UIViewCellRightView.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/7.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UIViewCellRightView : UIView
+
+@property (nonatomic, strong) NSString *text;
+@property (nonatomic, assign) BOOL shouldShowArrow;
+
+@property (nonatomic, strong) UIColor *textColor;
+@property (nonatomic, strong) UIFont *font;
+
++ (instancetype)rightView;
+
+@end

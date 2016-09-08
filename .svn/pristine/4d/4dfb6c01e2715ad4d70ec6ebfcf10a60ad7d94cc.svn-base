@@ -1,0 +1,38 @@
+//
+//  UIControllerSelectionForder.h
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/13.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+#import "UINavigationBarCustom.h"
+
+#import "ModelBookmark.h"
+
+@protocol UIControllerSelectionForderDelegate;
+
+@interface UIControllerSelectionForder : UIControllerBase<UITableViewDelegate, UITableViewDataSource>
+
+{
+    
+    IBOutlet UINavigationBarCustom *_navBar;
+    IBOutlet UITableView *_tableView;
+    
+}
+@property(nonatomic, weak)id<UIControllerSelectionForderDelegate> delegate;
+//之前选中的文件ID
+@property(nonatomic, assign)NSInteger pkid;
+@end
+
+@protocol UIControllerSelectionForderDelegate <NSObject>
+/**
+ *  传递选中的文件id
+ *
+ *  @param controller
+ *  @param paren_pkid 选中的文件id
+ */
+- (void)controller:(UIControllerSelectionForder *)controller SelectionForder:(NSInteger)paren_pkid;
+
+@end

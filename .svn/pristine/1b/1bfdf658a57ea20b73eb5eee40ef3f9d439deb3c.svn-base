@@ -1,0 +1,442 @@
+//
+//  UIViewMenu.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-25.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewMenu.h"
+
+#import "UIScrollViewMenu.h"
+#import "UIViewMenuPage.h"
+#import "SMPageControl.h"
+#import "UIControlItem.h"
+
+@interface UIViewMenu () <UIScrollViewDelegate>
+
+@end
+
+@implementation UIViewMenu
+{
+    IBOutlet UIScrollViewMenu *_scrollViewMenu;
+    IBOutlet UIView *_viewContent;
+    IBOutlet SMPageControl *_pageControl;
+    
+    BOOL _animating;
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dismiss) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    _pageControl.pageIndicatorTintColor = [UIColor randomColor];
+    _pageControl.currentPageIndicatorTintColor = [UIColor randomColor];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(dismiss)
+                                                 name:UIApplicationDidChangeStatusBarOrientationNotification
+                                               object:nil];
+    
+    NSArray *arrArrMenuItem = @[
+                                @[
+                                    @{
+                                        @"type":@(MenuItemRefresh),
+                                        @"title":@"shuaxin",
+                                        @"icon":@"17"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemDesktopStyle),
+                                        @"title":@"zhuomianyangshi",
+                                        @"icon":@"24"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemFindInPage),
+                                        @"title":@"yeneichazhao",
+                                        @"icon":@"0"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemShare),
+                                        @"title":@"fenxiang",
+                                        @"icon":@"1"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemScreenshot),
+                                        @"title":@"jietutuya",
+                                        @"icon":@"16"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemBookmark),
+                                        @"title":@"jiarushuqian",
+                                        @"icon":@"2"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemBookmarkHistory),
+                                        @"title":@"shuqianlishi",
+                                        @"icon":@"10"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemProfile),
+                                        @"title":@"gerenzhongxin",
+                                        @"icon":@"6"
+                                        },
+                                    ],
+                                @[
+                                    @{
+                                        @"type":@(MenuItemSetBrightness),
+                                        @"title":@"liangdutiaojie",
+                                        @"icon":@"11"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemNoImageMode),
+                                        @"title":@"wutumoshi",
+                                        @"icon":@"4"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemNoSaveHistory),
+                                        @"title":@"wuhenliulan",
+                                        @"icon":@"12"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemQRCode),
+                                        @"title":@"saoerweima",
+                                        @"icon":@"22"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemFullscreenMode),
+                                        @"title":@"quanpingmoshi",
+                                        @"icon":@"9"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemSkinManage),
+                                        @"title":@"pifuguanli",
+                                        @"icon":@"15"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemLanguage),
+                                        @"title":@"yuyanshezhi",
+                                        @"icon":@"19"
+                                        },
+                                    @{
+                                        @"type":@(MenuItemSystemSettings),
+                                        @"title":@"xitongshezhi",
+                                        @"icon":@"24"
+                                        }
+                                    ],
+                                @[
+//                                    @{
+//                                        @"type":@(MenuItemDownload),
+//                                        @"title":@"xiazaiguanli",
+//                                        @"icon":@"23"
+//                                        },
+                                    @{
+                                        @"type":@(MenuItemFeedback),
+                                        @"title":@"yijianfankui",
+                                        @"icon":@"14"
+                                        },
+//                                    @{
+//                                        @"type":@(MenuItemSaveTraffic),
+//                                        @"title":@"shengliuchaxun",
+//                                        @"icon":@"13"
+//                                        },
+                                    @{
+                                        @"type":@(MenuItemCheckVersion),
+                                        @"title":@"jianchagengxin",
+                                        @"icon":@"20"
+                                        }/*,
+                                    @{
+                                        @"type":@(MenuItemExit),
+                                        @"title":@"tuichu",
+                                        @"icon":@"20"
+                                        }*/
+                                    ]
+                                ];
+    
+    for (NSInteger i=0; i<arrArrMenuItem.count; i++) {
+        UIViewMenuPage *viewMenuPage = [[UIViewMenuPage alloc] initWithFrame:_scrollViewMenu.bounds];
+        viewMenuPage.rowCount = 2;
+        viewMenuPage.colCount = 4;
+        viewMenuPage.tag = i;
+        [_scrollViewMenu addSubview:viewMenuPage];
+        
+        NSArray *arrMenuItemDic = arrArrMenuItem[i];
+        for (NSInteger j=0; j<arrMenuItemDic.count; j++) {
+            NSDictionary *dicMenuItem = arrMenuItemDic[j];
+            
+            UIControlItem *viewMenuItem = [UIControlItem viewFromXibWithType:ControlItemTypeMenu];
+            viewMenuItem.labelTitle.text = LocalizedString(dicMenuItem[@"title"]);
+            
+            [viewMenuItem addTarget:self action:@selector(onTouchMenuItem:) forControlEvents:UIControlEventTouchUpInside];
+            [viewMenuPage addMenuItem:viewMenuItem];
+            
+            MenuItem menuItem = [dicMenuItem[@"type"] integerValue];
+            viewMenuItem.tag = menuItem;
+            
+            switch (menuItem) {
+                case MenuItemBookmark:
+                {
+                    _viewMenuItemBookmark = viewMenuItem;
+                }break;
+                case MenuItemRefresh:
+                {
+                    _viewMenuItemRefresh = viewMenuItem;
+                }break;
+                case MenuItemFindInPage:
+                {
+                    _viewMenuItemFindInPage = viewMenuItem;
+                }break;
+                case MenuItemNoImageMode:
+                {
+                    _viewMenuItemNoImageMode = viewMenuItem;
+                }break;
+                case MenuItemFullscreenMode:
+                {
+                    _viewMenuItemFullscreen = viewMenuItem;
+                }break;
+                case MenuItemNoSaveHistory:
+                {
+                    _viewMenuItemNoSaveHistory = viewMenuItem;
+                }break;
+                default:
+                    break;
+            }
+        }
+    }
+    _scrollViewMenu.frame = _scrollViewMenu.frame;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        _pageControl.numberOfPages = arrArrMenuItem.count;
+        [_viewContent setSubViewBgColor];
+    });
+}
+
++ (instancetype)viewFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:@"UIViewMenu" owner:nil options:nil][0];
+}
+
+/**
+ *  根据链接地址更新菜单状态
+ *
+ *  @param link 当前标签页的网址链接地址, link = nil 表示当前标签非网页
+ */
+- (void)updateStateWithLink:(NSString *)link
+{
+    if (link) {
+        _viewMenuItemBookmark.enabled =
+        _viewMenuItemFindInPage.enabled =
+        _viewMenuItemRefresh.enabled = YES;
+        
+        // 判断是否存在该网址的书签
+        BOOL isExistBookmark = YES;
+        if (isExistBookmark) {
+            _viewMenuItemBookmark.labelTitle.text = LocalizedString(@"yichushuqian");
+            _viewMenuItemBookmark.imageViewIcon.image = nil;
+            _viewMenuItemBookmark.imageViewIcon.highlightedImage = nil;
+        }
+        else {
+            _viewMenuItemBookmark.labelTitle.text = LocalizedString(@"jiarushuqian");
+            _viewMenuItemBookmark.imageViewIcon.image = nil;
+            _viewMenuItemBookmark.imageViewIcon.highlightedImage = nil;
+        }
+        _viewMenuItemBookmark.selected = isExistBookmark;
+    }
+    else {
+        _viewMenuItemBookmark.enabled =
+        _viewMenuItemFindInPage.enabled =
+        _viewMenuItemRefresh.enabled = NO;
+    }
+    
+    _viewMenuItemNoImageMode.selected = [AppSetting shareAppSetting].noImageMode;
+    _viewMenuItemFullscreen.selected = [AppSetting shareAppSetting].fullscreenMode;
+    _viewMenuItemNoSaveHistory.selected = [AppSetting shareAppSetting].noSaveHistory;
+}
+
+/**
+ *  显示面板
+ *
+ *  @param view         显示在哪个目标视图上
+ *  @param centerOfDock 停靠的边栏中点
+ *  @param dockDirection 停靠的边栏方向
+ */
+- (void)showInView:(UIView *)view centerOfDock:(CGPoint)centerOfDock dockDirection:(DockDirection)dockDirection
+{
+    _animating = YES;
+    
+    self.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    
+    self.frame = view.bounds;
+    [view addSubview:self];
+    
+    CGRect rc = _viewContent.frame;
+    switch (dockDirection) {
+        case DockDirectionTop:
+        {
+            rc.size.width = 320;
+            rc.origin.y = centerOfDock.y;
+            rc.origin.x = centerOfDock.x-rc.size.width/2;
+            if (rc.origin.x+rc.size.width>self.width) {
+                rc.origin.x = self.width-rc.size.width;
+            }
+            else if (rc.origin.x<0) {
+                rc.origin.x = 0;
+            }
+            _viewContent.frame = CGRectIntegral(rc);
+            
+            _viewContent.layer.anchorPoint = CGPointMake((centerOfDock.x-_viewContent.left)/_viewContent.width, 0);
+            _viewContent.layer.position = centerOfDock;
+        }break;
+        case DockDirectionBottom:
+        {
+            rc.size.width = self.width;
+            rc.origin.y = centerOfDock.y-rc.size.height;
+            rc.origin.x = centerOfDock.x-rc.size.width/2;
+            if (rc.origin.x+rc.size.width>self.width) {
+                rc.origin.x = self.width-rc.size.width;
+            }
+            else if (rc.origin.x<0) {
+                rc.origin.x = 0;
+            }
+            _viewContent.frame = CGRectIntegral(rc);
+            
+            _viewContent.layer.anchorPoint = CGPointMake((centerOfDock.x-_viewContent.left)/_viewContent.width, 1);
+            _viewContent.layer.position = centerOfDock;
+        }break;
+            
+        default:
+            break;
+    }
+    
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"transform"];
+    anim.values = @[[NSValue valueWithCATransform3D:CATransform3DMakeScale(0.001, 0.001, 1)],
+                    [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.1, 1.1, 1)],
+                    [NSValue valueWithCATransform3D:CATransform3DMakeScale(1, 1, 1)]];
+    anim.keyTimes = @[@(0), @(0.75), @(1)];
+    anim.duration = 0.5;
+    anim.timingFunctions = @[[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn],
+                             [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut],
+                             [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
+    
+    [_viewContent.layer addAnimation:anim forKey:@"transform"];
+    
+    CABasicAnimation *animOpacity = [CABasicAnimation animationWithKeyPath:@"backgroundColor"];
+    animOpacity.fromValue = (id)[UIColor clearColor].CGColor;
+    animOpacity.toValue = (id)[UIColor colorWithWhite:0 alpha:0.3].CGColor;
+    animOpacity.duration = 0.4;
+    animOpacity.delegate = self;
+    [animOpacity setValue:^{
+        _animating = NO;
+    } forKey:@"handle"];
+    [self.layer addAnimation:animOpacity forKey:@"backgroundColor"];
+    
+    _viewContent.layer.transform = CATransform3DMakeScale(1, 1, 1);
+    self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.3];
+}
+
+/**
+ *  消失
+ */
+- (void)dismiss
+{
+    // self dismisss
+    [self dismissWithCompletion:nil];
+}
+
+- (void)dismissWithCompletion:(void(^)(void))completion
+{
+    if (_animating) {
+        return;
+    }
+    
+    _animating = YES;
+    
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"transform"];
+    anim.values = @[[NSValue valueWithCATransform3D:CATransform3DMakeScale(1, 1, 1)],
+                    [NSValue valueWithCATransform3D:CATransform3DMakeScale(1.1, 1.1, 1)],
+                    [NSValue valueWithCATransform3D:CATransform3DMakeScale(0.001, 0.001, 1)]];
+    anim.keyTimes = @[@(0), @(0.25), @(1)];
+    anim.duration = 0.5;
+    anim.timingFunctions = @[[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn],
+                             [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut],
+                             [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
+    [_viewContent.layer addAnimation:anim forKey:@"transform"];
+    
+    CABasicAnimation *animOpacity = [CABasicAnimation animationWithKeyPath:@"backgroundColor"];
+    animOpacity.toValue = (id)[UIColor clearColor].CGColor;
+    animOpacity.fromValue = (id)[UIColor colorWithWhite:0 alpha:0.3].CGColor;
+    animOpacity.duration = 0.4;
+    animOpacity.delegate = self;
+    [animOpacity setValue:^{
+        if (completion) completion();
+        
+        _animating = NO;
+        [self removeFromSuperview];
+    } forKey:@"handle"];
+    [self.layer addAnimation:animOpacity forKey:@"backgroundColor"];
+    
+    _viewContent.layer.transform = CATransform3DMakeScale(0.001, 0.001, 1);
+    self.backgroundColor = [UIColor colorWithWhite:0 alpha:0];
+}
+
+- (void)animationDidStop:(CAAnimation *)anim finished:(BOOL)flag
+{
+    void (^handle)() = [anim valueForKey:@"handle"];
+    if (handle) {
+        handle();
+    }
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    if (_animating) {
+        return;
+    }
+    
+    CGPoint touchPoint = [[touches anyObject] locationInView:self];
+    if (!CGRectContainsPoint(_viewContent.frame, touchPoint)) {
+        [self dismiss];
+    }
+}
+
+#pragma mark - UIScrollViewDelegate
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    _pageControl.currentPage = scrollView.contentOffset.x/scrollView.width;
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    if (!decelerate) {
+        [self scrollViewDidEndDecelerating:scrollView];
+    }
+}
+
+- (IBAction)onValueChanged:(SMPageControl *)pageControl
+{
+    [_scrollViewMenu setContentOffset:CGPointMake(_scrollViewMenu.width*pageControl.currentPage, 0) animated:YES];
+}
+
+- (void)onTouchMenuItem:(UIControlItem *)viewMenuItem
+{
+    MenuItem menuItem = (MenuItem)viewMenuItem.tag;
+    [self dismissWithCompletion:^{
+        [_delegate viewMenu:self seletedMenuItem:menuItem];
+    }];
+}
+
+@end

@@ -1,0 +1,303 @@
+//
+//  ADOBookmark.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOBookmark.h"
+
+#import <sqlite3.h>
+
+static int QueryCallback (void *result, int colCount, char **data, char **colName)
+{
+    NSMutableArray *arrResult = (__bridge NSMutableArray *)result;
+    ModelBookmark *model = [ModelBookmark model];
+    model.pkid = atoi(data[0]);
+    model.paren_pkid = atoi(data[1]);
+    model.sort = atoi(data[2]);
+    char *
+    value = data[3];
+    if (value) model.title = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[4];
+    if (value) model.link = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[5];
+    if (value) model.icon = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    model.isFolder = atoi(data[6]);
+    model.canEdit = atoi(data[7]);
+    model.userid = atoi(data[8]);
+    model.time = atoi(data[9]);
+    
+    [arrResult addObject:model];
+    return 0;
+}
+@implementation ADOBookmark
+
+/**
+ *  判断是否存在
+ *
+ *  @param appType App类型
+ *  @param link 连接地址/功能模块的地址
+ *  @param urlSchemes urlSchemes
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithlink:(NSString *)link title:(NSString *)title
+{
+    BOOL bFlag = NO;
+    NSString *sql = nil;
+
+    sql = [NSString stringWithFormat:@"select * from tab_bookmark where link=%@ and title = '%@'", link?:@"", title?:@""];
+    
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, [sql UTF8String], callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    bFlag = arrResult.count>0;
+    
+    return bFlag;
+}
+
+/**
+ *  添加
+ *
+ *  @param model ModelApp
+ *
+ *  @return NSInteger  最后添加的id； < 0，表示错误； >= 0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelBookmark *)model
+{
+    NSInteger lastInsertId = -1;
+    
+    if ([ADOBookmark isExistWithlink:model.link title:model.title]) {
+        return lastInsertId;
+    }
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"insert into tab_bookmark (parent_pkid, sort, title, link, icon, is_folder, can_edit, userid, time) values (%d, %d, '%@', '%@', '%@', %d, %d, %d, %ld)", model.paren_pkid, model.sort, model.title?:@"", model.link?:@"", model.icon?:@"", model.isFolder, model.canEdit, model.userid, model.time] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+    } while (NO);
+    
+    lastInsertId = (NSInteger)sqlite3_last_insert_rowid(db);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return lastInsertId;
+}
+
+/**
+ *  删除App
+ *
+ *  @param aid 本地数据库AppId
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"delete from tab_bookmark where pkid = %d", pkid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+/**
+ *  清空数据表
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)clear
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"delete from tab_bookmark"] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+/**
+ *  更新数据
+ *
+ *  @param model ModelApp
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateModel:(ModelBookmark *)model
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"update tab_bookmark set  parent_pkid=%d, sort=%d, title='%@', link='%@', icon='%@', is_folder=%d, can_edit=%d, userid=%d, time=%ld where pkid =%d", model.paren_pkid, model.sort, model.title?:@"", model.link?:@"", model.icon?:@"", model.isFolder, model.canEdit, model.userid, model.time ,model.pkid] UTF8String];
+
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+/**
+ *  通过唯一键更新排序索引
+ *
+ *  @param orderIndex 排序索引
+ *  @param pkid       唯一键id
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)updateSort:(NSInteger)sort withPkid:(NSInteger)pkid
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"update tab_bookmark set sort=%d where pkid=%d", sort, pkid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    return bFlag;
+}
+
+/**
+ *  查询所有App
+ *
+ *  @return NSArray 所有App
+ */
++ (NSArray *)queryAll
+{
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    const char *sql = [[NSString stringWithFormat:@"select * from tab_bookmark order by sort"] UTF8String];
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return arrResult;
+}
+
+/**
+ *  查询所有文件夹
+ *
+ *  @return NSArray 所有文件夹
+ */
++ (NSArray *)queryAllFolder
+{
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    const char *sql = [[NSString stringWithFormat:@"select * from tab_bookmark where is_folder = 1 order by sort"] UTF8String];
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return arrResult;
+}
+
+/**
+ *  按文件夹查询书签
+ *
+ *  @param Parent_pkid 文件夹编号
+ *
+ *  @return NSArray bookmark
+ */
++ (NSArray *)queryWithParent_pkid:(NSInteger )parent_pkid
+{
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    const char *sql = [[NSString stringWithFormat:@"select * from tab_bookmark where parent_pkid = %d order by sort", parent_pkid] UTF8String];
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return arrResult;
+}
+
+
+@end

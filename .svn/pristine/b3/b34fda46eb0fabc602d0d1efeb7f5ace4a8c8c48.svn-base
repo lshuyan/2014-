@@ -1,0 +1,183 @@
+//
+//  ADOHistory.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOHistory.h"
+
+#import <sqlite3.h>
+
+static int QueryCallback (void *result, int colCount, char **data, char **colName)
+{
+    NSMutableArray *arrResult = (__bridge NSMutableArray *)result;
+    ModelHistory *model = [ModelHistory model];
+    model.pkid = atoi(data[0]);
+    model.pkid_server = atoi(data[1]);
+    model.userid = atoi(data[2]);
+    
+    char *value = data[3];
+    if (value) model.title = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[4];
+    if (value) model.link = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    value = data[5];
+    if (value) model.icon = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+    model.time = atoi(data[6]);
+    model.times = atoi(data[7]);
+    
+    [arrResult addObject:model];
+    return 0;
+}
+
+@implementation ADOHistory
+/**
+ *  判断是否存在
+ *
+ *  @param link 连接地址/功能模块的地址
+ *  @param urlSchemes urlSchemes
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithlink:(NSString *)link title:(NSString *)title
+{
+    BOOL bFlag = NO;
+    NSString *sql = nil;
+    
+    sql = [NSString stringWithFormat:@"select * from tab_history where link=%@ and title = '%@'", link?:@"", title?:@""];
+    
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, [sql UTF8String], callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    bFlag = arrResult.count>0;
+    
+    return bFlag;
+}
+/**
+ *  添加
+ *
+ *  @param model ModelApp
+ *
+ *  @return NSInteger  最后添加的id； <= 0，表示错误； > 0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelHistory *)model
+{
+    NSInteger lastInsertId = -1;
+    
+    if ([ADOHistory isExistWithlink:model.link title:model.title]) {
+        return lastInsertId;
+    }
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"insert into tab_history (title, link, icon, time, userid) values ('%@', '%@', '%@', %f, %d)",model.title?:@"", model.link?:@"", model.icon?:@"",model.time, model.userid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+    } while (NO);
+    
+    lastInsertId = (NSInteger)sqlite3_last_insert_rowid(db);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return lastInsertId;
+}
+/**
+ *  清空数据表
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)clear
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"delete from tab_history"] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+/**
+ *  查询所有书签及文件夹
+ *
+ *  @return NSArray 所有
+ */
++ (NSArray *)queryAll
+{
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db = nil ;
+    const char *sql = [[NSString stringWithFormat:@"select * from tab_history order by time desc"] UTF8String];
+    sqlite3_callback callback = QueryCallback;
+    NSMutableArray *arrResult = [NSMutableArray array];
+    char *msg = nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, callback, (__bridge void*)arrResult, &msg))
+            break;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return arrResult;
+}
+
+/**
+ *  删除
+ *
+ *  @param 唯一键
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    BOOL bFlag = NO;
+    const char *filename = [GetDBPathWithName(DB_NAME) UTF8String];
+    sqlite3 *db;
+    const char *sql = [[NSString stringWithFormat:@"delete from tab_history where pkid = %d", pkid] UTF8String];
+    char *msg=nil;
+    do {
+        if (SQLITE_OK!=sqlite3_open(filename, &db))
+            break;
+        if (SQLITE_OK!=sqlite3_exec(db, sql, nil, nil, &msg)) {
+            break;
+        }
+        bFlag = YES;
+    } while (NO);
+    
+    if (msg) sqlite3_free(msg);
+    if (db) sqlite3_close(db);
+    
+    return bFlag;
+}
+
+@end

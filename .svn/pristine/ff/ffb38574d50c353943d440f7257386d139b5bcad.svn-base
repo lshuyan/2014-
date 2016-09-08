@@ -1,0 +1,15 @@
+//
+//  DatabaseUtil.h
+//  ChinaBrowser
+//
+//  Created by David on 12-7-24.
+//  Copyright (c) 2012年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface DatabaseUtil : NSObject
+
++ (void)createDatabase;
+
+@end

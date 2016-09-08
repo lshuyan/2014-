@@ -1,0 +1,267 @@
+//
+//  UIControllerDrawView.m
+//  DrawView
+//
+//  Created by HHY on 14-10-22.
+//  Copyright (c) 2014年 koto. All rights reserved.
+//
+
+#import "UIControllerDrawView.h"
+#import "UIViewBrushSet.h"
+#import "UIImage+Ex.h"
+#import "UIViewEraserSet.h"
+#import "UIViewShareAndSave.h"
+@interface UIControllerDrawView ()<UIViewBrushSetDelegate,UIViewEraserSetDelegate,UIAlertViewDelegate,UIActionSheetDelegate,UIViewShareDelegate>
+@end
+
+@implementation UIControllerDrawView
+
++ (UIControllerDrawView *)UIControllerDrawViewFromXib
+{
+    return [[UIControllerDrawView alloc]initWithNibName:@"UIControllerDrawView" bundle:nil];
+}
+
+//进来后 不能再转
+-(BOOL)shouldAutorotate
+{
+    
+    return NO;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    _controlItemback.labelTitle.text = LocalizedString(@"fanhui");
+    _controlItemBrush.labelTitle.text = LocalizedString(@"huabi");
+    _controlItemEraser.labelTitle.text = LocalizedString(@"xiangpi");
+    _controlItemRedo.labelTitle.text = LocalizedString(@"qingchu");
+    _controlItemShare.labelTitle.text = LocalizedString(@"baocun");
+    
+    [_controlItemBrush setBgColorNormal:[UIColor redColor] highlighted:[UIColor blueColor]];
+    [_controlItemEraser setBgColorNormal:[UIColor redColor] highlighted:[UIColor blueColor]];
+
+}
+
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    //判断是横的还是竖的
+    CGRect rect = [UIScreen mainScreen].bounds;
+    if (UIInterfaceOrientationIsLandscape(orientation)) {
+        rect.size.height = rect.size.width;
+        rect.size.width = self.view.bounds.size.height;
+    }
+    
+    //根据图片大小  设置位置  (居中)
+    rect.size = self.bgImge.size;
+    rect.origin = CGPointMake(0.5*self.view.bounds.size.width-0.5*rect.size.width, 0.5*self.view.bounds.size.height-0.5*rect.size.height-0.5*_viewBottom.height);
+    if (rect.origin.y <=  0) {
+        rect.origin.y = 0;
+        rect.size.height = self.view.bounds.size.height-_viewBottom.height;
+        rect.size.width = rect.size.height/self.bgImge.size.height * rect.size.width;
+        rect.origin.x = 0.5*self.view.bounds.size.width-0.5*rect.size.width;
+    }
+
+    _viewBg.frame = rect;
+    //截屏的背景图 做画板背景
+    rect.origin = CGPointZero;
+    UIImageView *imageView = [[UIImageView alloc] initWithFrame:rect];
+    NSLog(@"+++++++%@",NSStringFromCGSize(self.bgImge.size));
+    imageView.image = self.bgImge;
+    imageView.contentMode = UIViewContentModeScaleAspectFit;
+    [_viewBg addSubview:imageView];
+    
+    //加上画板
+    UIViewDraw *viewDraw =  [[UIViewDraw alloc] initWithFrame:rect];
+    viewDraw.backgroundColor = [UIColor clearColor];
+    [_viewBg addSubview:viewDraw];
+    
+    //初始化画板属性
+    viewDraw.lineWidth = 10;
+    viewDraw.lineColor = [UIColor redColor];
+    
+    self.isSave = NO;
+    
+    _controlItemBrush.selected = YES;
+    _viewDraw = viewDraw;
+    
+    //下边按钮栏放到屏幕最前面
+    [self.view bringSubviewToFront:_viewBottom];
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    NSUInteger i = 0;
+    float spacing  = (self.view.frame.size.width-320)/6.0;
+    for (UIView * subView in _viewBottom.subviews) {
+        if ([subView isMemberOfClass:[UIControlItem class]]) {
+            UIControlItem *but = (UIControlItem *)subView;
+            but.frame = CGRectMake(spacing+(64+spacing)*1.0*i, 0, 64, 64);
+            i++;
+        }
+    }
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - IBAction
+//放回按钮
+- (IBAction)onTouchBack
+{
+
+    //保存过将不再提示
+    if (self.isSave)
+    {
+        if(self.navigationController)
+        {
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+        else
+        {
+            [self dismissViewControllerAnimated:YES completion:nil];
+        }
+    }
+    else
+    {
+//        LocalizedString(@"ninhaimeiyoubaocuntupian,quedingyaofanhuima?") LocalizedString(@"tishi" )
+        UIAlertView *av = [[UIAlertView alloc]initWithTitle:nil message:nil  delegate:self cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"fangqibianji"), nil];
+        [av show];
+    }
+}
+
+//画笔按钮
+- (IBAction)onTouchBrush
+{
+    //只有在选中状态才创建选择界面
+    if(_controlItemBrush.selected == YES)
+    {
+        //创建选择界面  设置选择界面值
+        UIViewBrushSet *viewBrushSet = [UIViewBrushSet viewBrushSetFromXib];
+        
+        viewBrushSet.delegate = self;
+        [viewBrushSet setColor:_viewDraw.lineColor width:_viewDraw.lineWidth];
+        
+        [self.view addSubview:viewBrushSet];
+    }
+   
+    
+    //按钮状态
+    _viewDraw.isClearMode = NO;
+    _controlItemBrush.selected = YES;
+    _controlItemEraser.selected = NO;
+
+}
+
+//橡皮按钮
+- (IBAction)onTouchEraser
+{
+    //只有在选中状态才创建选择界面
+    if (_controlItemEraser.selected == YES) {
+        UIViewEraserSet *viewBrushSet = [UIViewEraserSet viewEraserSetFromXib];
+        
+        viewBrushSet.delegate = self;
+        [viewBrushSet setEraserWidth:_viewDraw.lineWidth];
+        
+        [self.view addSubview:viewBrushSet];
+    }
+    
+    //按钮状态
+    _viewDraw.isClearMode = YES;
+    _controlItemBrush.selected = NO;
+    _controlItemEraser.selected = YES;
+    
+}
+
+//清除按钮
+- (IBAction)onTouchRedo
+{
+//    LocalizedString(@"ninquedingyaoqingchusuoyoutuyama")
+    UIActionSheet *as = [[UIActionSheet alloc]initWithTitle:nil delegate:self cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:nil otherButtonTitles:LocalizedString(@"qingchu"), nil];
+    
+    [as showInView:self.view];
+    
+    
+}
+
+- (IBAction)onTouchMore
+{
+    UIViewShareAndSave *viewShare = [UIViewShareAndSave ViewShareAndSave:self];
+    [self.view addSubview:viewShare];
+    viewShare.delegate = self;
+    
+    //保存当前屏幕图前  先把下边按钮栏隐藏;
+    _viewBottom.hidden = YES;
+    //截图
+    UIImage *image = [UIImage imageFromView:_viewBg];
+    
+    _viewBottom.hidden = NO;
+    
+    //保存图片
+    viewShare.saveImage = image;
+    
+    
+}
+
+#pragma  mark UIViewBrushSetDelegate
+- (void)viewBrushSetLineColor:(UIColor *)lineColor
+{
+    _viewDraw.lineColor = lineColor;
+}
+
+- (void)viewBrushSetLineWidth:(CGFloat)lineWidth
+{
+    _viewDraw.lineWidth = lineWidth;
+}
+
+#pragma  mark UIViewEraserSetDelegate
+- (void)viewEraserSetWidth:(CGFloat)eraserWidth
+{
+    _viewDraw.lineWidth = eraserWidth;
+}
+
+#pragma  mark UIAlerVIewDelegate
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 1) {
+        if(self.navigationController)
+        {
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+        else
+        {
+            [self dismissViewControllerAnimated:YES completion:nil];
+        }
+    }
+}
+
+#pragma  mark UIActionSheetDelegate
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 0)
+    {
+       [_viewDraw clear];
+    }
+ 
+}
+
+#pragma  mark UIViewShareDelegate
+-(void)UIViewShareAndSave:(UIViewShareAndSave *)viewShare shareItem:(UIViewShareItem *)shareItem shareItemLabelTitle:(NSString *)title
+{
+    NSLog(@"分享了 %@",title);
+}
+
+
+@end

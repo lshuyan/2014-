@@ -1,0 +1,176 @@
+//
+//  UIControllerManuallyAdd.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerManuallyAdd.h"
+#import "UIViewNav.h"
+#import "ModelApp.h"
+
+@interface UIControllerManuallyAdd ()<UITextFieldDelegate>
+{
+    UIViewNav *_viewNav;
+    // 标题
+    UITextField *_textFieldTitle;
+    
+    // 地址
+    UITextField *_textFieldURL;
+    
+    UIButton *_btnSave;
+}
+@end
+
+@implementation UIControllerManuallyAdd
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self initData];
+    [self loadSubViews];
+}
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [_textFieldTitle becomeFirstResponder];
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (IsiPad) return;
+    [_viewNav resizeWithOrientation:orientation];
+    
+    [self setSubViewsFrame];
+}
+
+#pragma mark - Private Method
+- (void)loadSubViews
+{
+    self.view.backgroundColor = [UIColor whiteColor];
+    
+    _textFieldTitle = [[UITextField alloc] initWithFrame:CGRectMake(20, 91, self.view.bounds.size.width - 40, 35)];
+    _textFieldTitle.layer.borderWidth = 1;
+    _textFieldTitle.layer.borderColor = [UIColor colorWithRed:173/255.0 green:173/255.0 blue:173/255.0 alpha:1].CGColor;
+    _textFieldTitle.returnKeyType = UIReturnKeyNext;
+    _textFieldTitle.placeholder = LocalizedString(@"biaoti");
+    _textFieldTitle.delegate = self;
+    [self.view addSubview:_textFieldTitle];
+    
+    _textFieldURL = [[UITextField alloc] initWithFrame:CGRectMake(20, 150, self.view.bounds.size.width - 40, 35)];
+    _textFieldURL.layer.borderWidth = 1;
+    _textFieldURL.layer.borderColor = [UIColor colorWithRed:173/255.0 green:173/255.0 blue:173/255.0 alpha:1].CGColor;
+    _textFieldURL.returnKeyType = UIReturnKeyDone;
+    _textFieldURL.placeholder = LocalizedString(@"wangzhi");
+    _textFieldURL.enablesReturnKeyAutomatically = YES;
+    _textFieldURL.keyboardType = UIKeyboardTypeEmailAddress;
+    _textFieldURL.delegate = self;
+    [self.view addSubview:_textFieldURL];
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    
+    _btnSave = [UIButton buttonWithType:UIButtonTypeCustom];
+    [_btnSave addTarget:self action:@selector(onTouchSave) forControlEvents:UIControlEventTouchUpInside];
+    [_btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [_btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [_btnSave setTitleColor:[UIColor lightGrayColor] forState:UIControlStateHighlighted];
+    _btnSave.titleLabel.font = [UIFont systemFontOfSize:15];
+    [_btnSave sizeToFit];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:_btnSave];
+    
+    _btnSave.enabled = NO;
+}
+
+- (void)initData
+{
+    self.title = LocalizedString(@"shoudongtianjia");
+}
+
+- (BOOL)isURL:(NSString *)URL
+{
+    NSString *urlRegex = @"[a-zA-z]+\\.[^\\s]*";
+    NSPredicate *urlTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", urlRegex];
+    return [urlTest evaluateWithObject:URL];
+}
+
+- (void)setSubViewsFrame
+{
+    CGRect textFieldTitleRc = _textFieldTitle.frame;
+    textFieldTitleRc.origin.y = _viewNav.bottom + (self.view.width == 320?27 : 12);
+    textFieldTitleRc.size.width = _viewNav.width - 40;
+    _textFieldTitle.frame = textFieldTitleRc;
+    
+    CGRect textFieldURLRc = _textFieldURL.frame;
+    textFieldURLRc.origin.y = _viewNav.bottom + (self.view.width == 320?85 : 55);
+    textFieldURLRc.size.width = _viewNav.width - 40;
+    _textFieldURL.frame = textFieldURLRc;
+}
+#pragma mark - Action Method
+- (void)onTouchBack
+{
+    [_textFieldTitle resignFirstResponder];
+    [_textFieldURL resignFirstResponder];
+    [self dismissModalViewControllerAnimated:YES];
+}
+- (void)onTouchSave
+{
+    /**
+     *  生成一个 modelAPP
+     */
+    if (self.manuallyAddDelegate) {
+        ModelApp *model = [[ModelApp alloc] init];
+        model.title = _textFieldTitle.text;
+        model.link = _textFieldURL.text;
+        model.appType = AppTypeWeb;
+        self.manuallyAddDelegate(model);
+    }
+    [self onTouchBack];
+}
+#pragma mark - UITextField Delegate
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    _btnSave.enabled = _textFieldTitle.text.length && [self isURL:_textFieldURL.text];
+    _textFieldURL.enablesReturnKeyAutomatically = _btnSave.enabled;
+    return YES;
+}
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    if (textField == _textFieldTitle){
+        
+        [_textFieldTitle resignFirstResponder];
+        [_textFieldURL becomeFirstResponder];
+        
+        return NO;
+    }else if (textField == _textFieldURL){
+        
+        if (_textFieldTitle.text.length && [self isURL:_textFieldURL.text]) {
+            [self onTouchSave];
+        }
+    }
+    return YES;
+}
+@end

@@ -1,0 +1,125 @@
+//
+//  UITableViewFM.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/18.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UITableViewFM.h"
+
+#import "UIViewFMPlayer.h"
+
+#import "UICellFMMode.h"
+#import "BlockUI.h"
+
+@interface UITableViewFM () <UITableViewDataSource, UITableViewDelegate>
+{
+    UIViewFMPlayer *_viewFMPlayer;
+    
+    NSMutableArray *_arrProgramList;
+    NSInteger _currIndex;
+}
+
+@end
+
+@implementation UITableViewFM
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    _arrProgramList = [NSMutableArray arrayWithArray:@[@"商务模式", @"休闲模式", @"测试模式一"]];
+    
+    self.dataSource = self;
+    self.delegate = self;
+    
+    CGRect rc = self.bounds;
+    _viewFMPlayer = [UIViewFMPlayer viewFromXib];
+    rc.size.height = _viewFMPlayer.height;
+    _viewFMPlayer.frame = rc;
+    _viewFMPlayer.backgroundColor = [UIColor colorWithWhite:1 alpha:0.0];
+    self.tableHeaderView = _viewFMPlayer;
+    self.backgroundView = nil;
+    self.backgroundColor = [UIColor clearColor];
+    
+    _currIndex = 0;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        UICellFMMode *cell = (UICellFMMode *)[self cellForRowAtIndexPath:[NSIndexPath indexPathForRow:_currIndex inSection:0]];
+        [cell updateBtnRadioImageWithSelect:YES];
+    });
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _arrProgramList.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICellFMMode *cell = (UICellFMMode *)[tableView dequeueReusableCellWithIdentifier:@"UICellFMMode"];
+    if (!cell) {
+        cell = [UICellFMMode cellFromXib];
+        [cell.btnRadio addTarget:self action:@selector(onTouchRadio:) forControlEvents:UIControlEventTouchUpInside];
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressGesture:)];
+        [cell addGestureRecognizer:longPressGesture];
+    }
+    cell.btnRadio.tag = indexPath.row;
+    cell.tag = indexPath.row;
+    cell.labelTitle.text = _arrProgramList[indexPath.row];
+    [cell updateBtnRadioImageWithSelect:indexPath.row==_currIndex];
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 61;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+#pragma mark - private methods
+- (void)onTouchRadio:(UIButton *)btnRadio
+{
+    [(UICellFMMode *)[self cellForRowAtIndexPath:[NSIndexPath indexPathForRow:_currIndex inSection:0]] updateBtnRadioImageWithSelect:NO];
+    _currIndex = btnRadio.tag;
+    [(UICellFMMode *)[self cellForRowAtIndexPath:[NSIndexPath indexPathForRow:_currIndex inSection:0]] updateBtnRadioImageWithSelect:YES];
+}
+
+- (void)longPressGesture:(UILongPressGestureRecognizer *)longPressGesture
+{
+    if (UIGestureRecognizerStateBegan!=longPressGesture.state) {
+        return;
+    }
+    NSInteger index = longPressGesture.view.tag;
+    if (index==rand()%_arrProgramList.count) {
+//        return;
+    }
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:LocalizedString(@"shanchu") otherButtonTitles:LocalizedString(@"chongmingming"), nil];
+    [actionSheet showInView:[UIApplication sharedApplication].keyWindow withCompletionHandler:^(NSInteger buttonIndex) {
+        if (buttonIndex==actionSheet.cancelButtonIndex) {
+            return;
+        }
+        
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:0];
+        
+        if (0==buttonIndex) {
+            // 删除
+            [_arrProgramList removeObjectAtIndex:index];
+            [self deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        }
+        else if (1==buttonIndex) {
+            // 重命名
+            NSString *name = _arrProgramList[index];
+            _arrProgramList[index] = [NSString stringWithFormat:@"%@%02d", name, rand()%100];
+            [self reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        }
+    }];
+}
+
+@end

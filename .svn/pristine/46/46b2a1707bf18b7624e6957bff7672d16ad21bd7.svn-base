@@ -1,0 +1,555 @@
+//
+//  SyncHelper.m
+//  ChinaBrowser
+//
+//  Created by David on 14/12/19.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "SyncHelper.h"
+
+#import "ModelHistory.h"
+#import "ModelBookmark.h"
+#import "ModelMode.h"
+#import "ModelModeProgram.h"
+#import "ModelUserSettings.h"
+
+#import "ADOUserSettings.h"
+#import "ADOBookmark.h"
+#import "ADOHistory.h"
+#import "ADOMode.h"
+#import "ADOModeProgram.h"
+
+static SyncHelper *_syncHelper;
+
+@interface SyncHelper ()
+
+@property (nonatomic, assign) NSInteger userId;
+@property (nonatomic, strong) NSString *token;
+
+@end
+
+@implementation SyncHelper
+{
+    AFHTTPClient *_afClient;
+}
+
++ (instancetype)shareSync
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _syncHelper = [[SyncHelper alloc] init];
+    });
+    return _syncHelper;
+}
+
+- (NSInteger)userId
+{
+    return [UserManager shareUserManager].currUser.uid;
+}
+
+- (NSString *)token
+{
+    return [UserManager shareUserManager].currUser.token;
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _afClient = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:GetApiBaseUrl()]];
+
+    }
+    return self;
+}
+
+// --------------------- 批处理 get=>compare=>submit
+/**
+ *  根据用户设置同步所有能同步的数据
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncAllIfNeededWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    if ([self isSyncing]) return;
+    
+    if ([UserManager shareUserManager].currUser.settings.syncBookmark) {
+        // 书签
+        [self syncBookmarkWithCompletion:^{
+            if ([UserManager shareUserManager].currUser.settings.syncLastVisit) {
+                // 最近访问
+                [self syncHistoryWithCompletion:^{
+                    if ([UserManager shareUserManager].currUser.settings.syncReminder) {
+                        // 个性化定制
+                        [self syncReminderWithCompletion:^{
+                            if (completion) completion();
+                        } fail:^(NSError *error) {
+                            if (fail) {
+                                fail(error);
+                            }
+                        }];
+                    }
+                } fail:^(NSError *error) {
+                    if (fail) {
+                        fail(error);
+                    }
+                }];
+            }
+            else if ([UserManager shareUserManager].currUser.settings.syncReminder) {
+                // 个性化定制
+                [self syncReminderWithCompletion:^{
+                    if (completion) completion();
+                } fail:^(NSError *error) {
+                    if (fail) {
+                        fail(error);
+                    }
+                }];
+            }
+        } fail:^(NSError *error) {
+            if (fail) {
+                fail(error);
+            }
+        }];
+    }
+    else if ([UserManager shareUserManager].currUser.settings.syncLastVisit) {
+        // 最近访问
+        [self syncHistoryWithCompletion:^{
+            if ([UserManager shareUserManager].currUser.settings.syncReminder) {
+                // 个性化定制
+                [self syncReminderWithCompletion:^{
+                    if (completion) completion();
+                } fail:^(NSError *error) {
+                    if (fail) {
+                        fail(error);
+                    }
+                }];
+            }
+        } fail:^(NSError *error) {
+            if (fail) {
+                fail(error);
+            }
+        }];
+    }
+    else if ([UserManager shareUserManager].currUser.settings.syncReminder) {
+        // 个性化定制
+        [self syncReminderWithCompletion:^{
+            if (completion) completion();
+        } fail:^(NSError *error) {
+            if (fail) {
+                fail(error);
+            }
+        }];
+    }
+}
+
+// --------------------- 批处理 get=>compare=>submit
+/**
+ *  同步用户设置
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncUserSettingsWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    if ([self isSyncing]) return;
+    
+    [self syncGetUserSettingsWithCompletion:^(ModelUserSettings *modelUserSettings) {
+        
+    } fail:^(NSError *error) {
+        if (fail) {
+            fail(error);
+        }
+    }];
+}
+
+/**
+ *  同步最近浏览
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncHistoryWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+/**
+ *  同步书签
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncBookmarkWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+/**
+ *  同步定制提醒(个性化定制)
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncReminderWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+// --------------------- 批处理同步 submit
+- (void)synAddModelHistory:(ModelHistory *)modelHistory completion:(SyncAddCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+- (void)synAddModelBookmark:(ModelBookmark *)modelBookmark completion:(SyncAddCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+- (void)synAddModelMode:(ModelMode *)modelMode completion:(SyncAddCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+- (void)synAddModelModeProgram:(ModelModeProgram *)modelMode completion:(SyncAddCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+// --------------------- 批处理同步 delete
+- (void)syncDeleteHistoryWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token]};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:API_DeleteUserHistory parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncDeleteBookmarkWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+- (void)syncDeleteModeWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+- (void)syncDeleteModeProgramWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    
+}
+
+// --------------------- 单条同步 update
+- (void)syncUpdateUserSetting:(ModelUserSettings *)userSetting completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token],
+                                @"sync_bookmark":@(userSetting.syncBookmark),
+                                @"sync_lastvisit":@(userSetting.syncLastVisit),
+                                @"sync_reminder":@(userSetting.syncReminder),
+                                @"sync_style":@(userSetting.syncStyle),
+                                @"update_time":@(userSetting.updateTimeServer)};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:GetApiWithName(API_UpdateUserSettings) parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncUpdateHistory:(ModelHistory *)history withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token],
+                                @"pkid":@(pkidServer),
+                                @"update_time":@(history.updateTimeServer),
+                                
+                                @"title":history.title,
+                                @"link":history.link,
+                                @"time":@(history.time),
+                                @"icon":history.icon};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:GetApiWithName(API_UpdateUserHistory) parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncUpdateBookmark:(ModelBookmark *)bookmark withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token],
+                                @"pkid":@(pkidServer),
+                                @"update_time":@(bookmark.updateTimeServer),
+                                
+                                @"title":bookmark.title,
+                                @"link":bookmark.link,
+                                @"icon":bookmark.icon,
+                                @"is_folder":@(bookmark.isFolder),
+                                @"can_edit":@(bookmark.canEdit),
+                                @"parent_pkid":@(bookmark.parent_pkid_server)};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:GetApiWithName(API_UpdateUserHistory) parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncUpdateMode:(ModelMode *)mode withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token],
+                                @"pkid":@(pkidServer),
+                                @"update_time":@(mode.updateTimeServer),
+                                
+                                @"name":mode.name,
+                                @"sys_recommend":@(mode.sysRecommend)};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:GetApiWithName(API_UpdateUserHistory) parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncUpdateModeProgram:(ModelModeProgram *)modeProgram withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token],
+                                @"pkid":@(pkidServer),
+                                @"update_time":@(modeProgram.updateTimeServer),
+                                
+                                @"mode_pkid":@(modeProgram.modePkidServer),
+                                @"program_pkid":@(modeProgram.modelProgram.pkid_server),
+                                @"time":@(modeProgram.time),
+                                @"repeat":@(modeProgram.repeatMode),
+                                @"on":@(modeProgram.on)};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:GetApiWithName(API_UpdateUserHistory) parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+// --------------------- 同步 get
+/**
+ *  下载用户设置
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetUserSettingsWithCompletion:(SyncGetUserSettingsCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token]};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:API_GetUserSettings parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dictResult = [self resovleJSON:JSON];
+        if (dictResult) {
+            ModelUserSettings *modelUserSettings = [ModelUserSettings modelWithDict:dictResult];
+            // 比较更新时间，本地更新时间<服务器上的更新时间，则需要更新本地数据
+            if ([UserManager shareUserManager].currUser.settings.updateTime<modelUserSettings.updateTimeServer) {
+                modelUserSettings.updateTime = modelUserSettings.updateTimeServer;
+                [UserManager shareUserManager].currUser.settings = modelUserSettings;
+                [ADOUserSettings updateModel:modelUserSettings];
+            }
+        }
+        if (completion) {
+            completion([UserManager shareUserManager].currUser.settings);
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+/**
+ *  下载 历史记录
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetHistoryWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token]};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:API_GetUserHistory  parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSArray *arrDictHistory = [self resovleJSON:JSON];
+        NSMutableArray *arrHistoryServer = [NSMutableArray arrayWithCapacity:arrDictHistory.count];
+        for (NSDictionary *dictHistory in arrDictHistory) {
+            ModelHistory *modelHistory = [ModelHistory modelWithDict:dictHistory];
+            [arrHistoryServer addObject:modelHistory];
+            
+            /**
+             *  查询本地是否存在改链接的记录
+             */
+            ModelHistory *modelHistoryLocal = [ADOHistory queryWithLink:modelHistory.link userId:[self userId]];
+            if (modelHistoryLocal) {
+                // 本地存在，则和服务器上的数据合并
+                modelHistoryLocal.pkid_server = modelHistory.pkid_server;
+                modelHistoryLocal.title = modelHistory.title;
+            }
+            else {
+                // 本地不存在
+                [ADOHistory addModel:modelHistory];
+            }
+            
+        }
+        
+#warning TODO:比较 最近浏览 增删改本地
+        
+        if (completion) {
+            completion(nil);
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncGetBookmarkWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token]};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:API_GetUserBookmark  parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSArray *arrDictBookmark = [self resovleJSON:JSON];
+        NSMutableArray *arrBookmarkLocal = [ADOBookmark queryWithUserId:[self userId]];
+        NSMutableArray *arrBookmarkServer = [NSMutableArray arrayWithCapacity:arrDictBookmark.count];
+        for (NSDictionary *dictBookmark in arrDictBookmark) {
+            ModelBookmark *modelBookmark = [ModelBookmark modelWithDict:dictBookmark];
+            [arrBookmarkServer addObject:modelBookmark];
+        }
+        
+#warning TODO:比较 书签 增删改本地
+        
+        if (completion) {
+            completion(nil);
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncGetModeWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token]};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:API_GetUserMode  parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSArray *arrDictMode = [self resovleJSON:JSON];
+        NSMutableArray *arrModeLocal = [ADOMode queryWithUserId:[self userId] sysRecommend:NO];
+        NSMutableArray *arrModeServer = [NSMutableArray arrayWithCapacity:arrDictMode.count];
+        for (NSDictionary *dictMode in arrDictMode) {
+            ModelMode *modelMode = [ModelMode modelWithDict:dictMode];
+            [arrModeServer addObject:modelMode];
+        }
+        
+#warning TODO:比较 模式 增删改本地
+        
+        if (completion) {
+            completion(nil);
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+- (void)syncGetModeProgramWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail
+{
+    NSDictionary *dictParam = @{@"uid":@([self userId]),
+                                @"token":[self token]};
+    NSMutableURLRequest *req = [_afClient requestWithMethod:@"POST" path:API_GetUserModeProgram  parameters:dictParam];
+    AFJSONRequestOperation *afReq = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSArray *arrDictModeProgram = [self resovleJSON:JSON];
+//        NSMutableArray *arrModeProgramLocal = [ADOModeProgram queryWithModePkid:<#(NSInteger)#>];
+        NSMutableArray *arrModeProgramServer = [NSMutableArray arrayWithCapacity:arrDictModeProgram.count];
+        for (NSDictionary *dictModeProgram in arrDictModeProgram) {
+            ModelModeProgram *modelModeProgram = [ModelModeProgram modelWithDict:dictModeProgram];
+            [arrModeProgramServer addObject:modelModeProgram];
+        }
+        
+#warning TODO:比较 模式-节目 增删改本地
+        
+        if (completion) {
+            completion(nil);
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        if (fail) fail(error);
+    }];
+    [afReq start];
+}
+
+// ----------------------- private methods
+- (id)resovleJSON:(id)JSON
+{
+    id data = nil;
+    do {
+        if (![JSON isKindOfClass:[NSDictionary class]]) break;
+        id error = JSON[@"error"];
+        NSString *msg = JSON[@"msg"];
+        data = JSON[@"data"];
+        
+        if (!data) break;
+        NSInteger errorCode = error?[error integerValue]:0;
+        
+    } while (NO);
+    
+    return data;
+}
+
+@end

@@ -1,0 +1,349 @@
+//
+//  UIViewLaunch.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewLaunch.h"
+
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+#import "KTAnimationKit.h"
+
+#define kLaunchInfo @"kLaunchInfo"
+#define kLaunchInfoKeyDate @"kLaunchInfoKeyDate"
+#define kLaunchInfoKeyIndex @"kLaunchInfoKeyIndex"
+
+@interface UIViewLaunch ()
+{
+    NSTimeInterval _duration;
+    void(^_didDimiss)();
+    AFJSONRequestOperation *_afReqLaunch;
+    
+    UIImageView *_imageView;
+}
+
+@end
+
+@implementation UIViewLaunch
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+}
+
+/**
+ *  显示启动大图
+ *
+ *  @param view       父视图
+ *  @param duration   显示时长
+ *  @param completion 消失block
+ */
+- (void)showInView:(UIView *)view duration:(NSTimeInterval)duration didDimissCompletion:(void(^)())completion
+{
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = NO;
+    [RotateUtil shareRotateUtil].rotateLock = YES;
+    
+    _didDimiss = completion;
+    _duration = duration;
+    
+    self.frame = view.bounds;
+    self.autoresizingMask = UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth;
+    
+    _imageView = [[UIImageView alloc] initWithFrame:self.bounds];
+    _imageView.autoresizingMask = UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth;
+    _imageView.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1];
+    _imageView.contentMode = UIViewContentModeScaleToFill;
+    [view addSubview:self];
+    [self addSubview:_imageView];
+    
+    [self showLocal];
+    [self reqLaunchJson];
+}
+
+/**
+ *  直接消失
+ */
+- (void)dismiss
+{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    
+    if (_didDimiss) _didDimiss();
+    
+    [UIView animateWithDuration:0.5 animations:^{
+        self.alpha = 0;
+    } completion:^(BOOL finished) {
+        [RotateUtil shareRotateUtil].shouldShowRotateLock = YES;
+        [RotateUtil shareRotateUtil].rotateLock = NO;
+        
+        [self removeFromSuperview];
+    }];
+    
+}
+
+/**
+ *  延时消失
+ *
+ *  @param delay 延时时长
+ */
+- (void)dismissDelay:(NSTimeInterval)delay
+{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    
+    _duration = delay;
+    [self performSelector:@selector(dismiss) withObject:nil afterDelay:_duration];
+}
+
+#pragma mark - private methods
+/**
+ *  显示本地缓存图片
+ */
+- (void)showLocal
+{
+    void (^showImage)(NSArray *, NSString *) = ^(NSArray *arrImage, NSString *date){
+        if (arrImage.count>0) {
+            NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+            NSDictionary *dicLaunchInfo = [ud objectForKey:kLaunchInfo];
+            NSString *dateOld = dicLaunchInfo[kLaunchInfoKeyDate];
+            NSInteger index = [dicLaunchInfo[kLaunchInfoKeyIndex] integerValue];
+            if (dicLaunchInfo && [dateOld isEqualToString:date]) {
+                // 同一天
+                index++;
+                if (index>=arrImage.count) {
+                    index = 0;
+                }
+            }
+            else {
+                // 当天第一次
+                index = 0;
+            }
+            
+            NSDictionary *dicImage = arrImage[index];
+            NSString *imgLink = dicImage[@"img_v"];
+            if (IsiPad) {
+                if (!IsPortrait) {
+                    imgLink = dicImage[@"img_h"];
+                }
+            }
+            
+            UIImage *image = [[SDImageCache sharedImageCache] imageFromDiskCacheForKey:imgLink];
+            if (image) {
+                _imageView.image = image;
+            }
+            else {
+                [self showDefault];
+            }
+        }
+        else {
+            [self dismiss];
+        }
+    };
+    
+    NSString *device = nil;
+    if (IsiPad) device = @"ipad";
+    else if (IsiPhone5) device = @"iphone5";
+    else if (IsiPhone6) device = @"iphone6";
+    else if (IsiPhone6Plus) device = @"iphone6plus";
+    else device = @"iphone";
+    
+    NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit fromDate:[NSDate date]];
+    NSString *dateStr = [NSString stringWithFormat:@"%04d%02d%02d", dateComp.year, dateComp.month, dateComp.day];
+    
+    NSDictionary *param = @{@"device":device, @"date":dateStr};
+    AFHTTPClient *afClient = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [afClient requestWithMethod:@"GET" path:GetApiWithName(API_LaunchImg) parameters:param];
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    dateComp = nil;
+    afClient = nil;
+    req = nil;
+    
+    NSData *data = [NSData dataWithContentsOfFile:filepath];
+    if (data) {
+        NSDictionary *dictResult = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
+        if ([self verifyJSONDict:dictResult]) {
+            showImage(dictResult[@"data"], dateStr);
+        }
+        else {
+            // 无缓存数据，则使用系统Default图
+            [self showDefault];
+        }
+    }
+    else {
+        // 无缓存数据，则使用系统Default图
+        [self showDefault];
+    }
+}
+
+/**
+ *  显示AppDefault图
+ */
+- (void)showDefault
+{
+    NSString *filename = @"Default.png";
+    if (IsiPad) {
+        if (IsPortrait) {
+            filename = @"Default-Portrait.png";
+        }
+        else {
+            filename = @"Default-Landscape.png";
+        }
+    }
+    else {
+        if (IsiPhone5) {
+            filename = @"Default-568h.png";
+        }
+        else {
+            filename = @"Default.png";
+        }
+    }
+    
+    _imageView.image = [UIImage imageWithBundleFile:filename];
+}
+
+/**
+ *  根据日期和本地信息显示数组中某张图片或不显示，并且修改本地配置信息
+ *
+ *  @param arrImage 图片数组字典，count=0表示不显示
+ *  @param date     日期 yyyyMMdd
+ */
+- (void)showImage:(NSArray *)arrImage date:(NSString *)date
+{
+    if (arrImage.count>0) {
+        NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+        NSDictionary *dicLaunchInfo = [ud objectForKey:kLaunchInfo];
+        NSString *dateOld = dicLaunchInfo[kLaunchInfoKeyDate];
+        NSInteger index = [dicLaunchInfo[kLaunchInfoKeyIndex] integerValue];
+        if (dicLaunchInfo && [dateOld isEqualToString:date]) {
+            // 同一天，索引+1
+            index++;
+            if (index>=arrImage.count) {
+                index = 0;
+            }
+            dicLaunchInfo = @{kLaunchInfoKeyDate:date, kLaunchInfoKeyIndex:@(index)};
+            [ud setObject:dicLaunchInfo forKey:kLaunchInfo];
+            [ud synchronize];
+        }
+        else {
+            // 当天第一次
+            index = 0;
+            dicLaunchInfo = @{kLaunchInfoKeyDate:date, kLaunchInfoKeyIndex:@(index)};
+            [ud setObject:dicLaunchInfo forKey:kLaunchInfo];
+            [ud synchronize];
+        }
+        
+        NSDictionary *dicImage = arrImage[index];
+        NSString *imgLink = dicImage[@"img_v"];
+        if (IsiPad) {
+            if (!IsPortrait) {
+                imgLink = dicImage[@"img_h"];
+            }
+        }
+        
+        __unsafe_unretained typeof(self) wSelf = self;
+        NSTimeInterval wDuration = _duration;
+        UIImage *imagePlaceholder = _imageView.image;
+        [_imageView setImageWithURL:[NSURL URLWithString:imgLink] placeholderImage:imagePlaceholder completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+            [wSelf dismissDelay:wDuration];
+        }];
+        
+        /*
+         // 下载其他图片，提供下次读取本地时使用
+         for (NSDictionary *dicImageItem in arrImage) {
+         NSString *src = dicImageItem[@"img_v"];
+         if (![src isEqualToString:imgLink]) {
+         [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:src] options:0 progress:nil completed:nil];
+         }
+         src = dicImageItem[@"img_h"];
+         if (![src isEqualToString:imgLink]) {
+         [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:src] options:0 progress:nil completed:nil];
+         }
+         }
+         */
+    }
+    else {
+        [self dismiss];
+    }
+}
+
+/**
+ *  验证JSON数据格式的合法性
+ *
+ *  @param dictResult JSON 解析后的数据
+ *
+ *  @return BOOL
+ */
+- (BOOL)verifyJSONDict:(NSDictionary *)dictResult
+{
+    BOOL flag = NO;
+    do {
+        if (![dictResult isKindOfClass:[NSDictionary class]]) break;
+        NSArray *arrDicImg = dictResult[@"data"];
+        if (![arrDicImg isKindOfClass:[NSArray class]]) break;
+        
+        // 数据格式正确，但是 count = 0，表示当天不显示图片
+        
+        flag = YES;
+    } while (NO);
+    return flag;
+}
+
+- (void)reqLaunchJson
+{
+    [_afReqLaunch cancel];
+    _afReqLaunch = nil;
+    
+    NSString *device = nil;
+    if (IsiPad) device = @"ipad";
+    else if (IsiPhone5) device = @"iphone5";
+    else if (IsiPhone6) device = @"iphone6";
+    else if (IsiPhone6Plus) device = @"iphone6plus";
+    else device = @"iphone";
+    
+    NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit fromDate:[NSDate date]];
+    NSString *dateStr = [NSString stringWithFormat:@"%04d%02d%02d", dateComp.year, dateComp.month, dateComp.day];
+    
+    NSDictionary *param = @{@"device":device, @"date":dateStr};
+    AFHTTPClient *afClient = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [afClient requestWithMethod:@"GET" path:GetApiWithName(API_LaunchImg) parameters:param];
+    req.timeoutInterval = 3;
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    _afReqLaunch = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if ([self verifyJSONDict:JSON]) {
+            [_afReqLaunch.responseData writeToFile:filepath atomically:NO];
+            [self showImage:JSON[@"data"] date:dateStr];
+        }
+        else {
+            // 请求成功，但数据为空，或数据格式有误，程序视为：不显示启动大图
+            [self dismiss];
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            NSDictionary *dictResult = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
+            if ([self verifyJSONDict:dictResult]) {
+                [self showImage:dictResult[@"data"] date:dateStr];
+            }
+            else {
+                [self dismiss];
+            }
+        }
+        else {
+            // 无缓存数据，则不显示
+            [self dismiss];
+        }
+    }];
+    [_afReqLaunch start];
+}
+
+@end

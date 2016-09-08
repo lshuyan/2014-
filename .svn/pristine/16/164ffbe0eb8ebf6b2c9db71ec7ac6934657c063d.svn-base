@@ -1,0 +1,718 @@
+//
+//  UIControllerMain.m
+//  ChinaBrowser
+//
+//  Created by David on 14-8-30.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerMain.h"
+
+#import "UIViewHome.h"
+#import "UIScrollViewHome.h"
+#import "UIScrollViewTrans.h"
+#import "UIScrollViewTravel.h"
+#import "UIScrollViewRecommend.h"
+#import "UIScrollViewApp.h"
+
+#import "UIViewNews.h"
+#import "UIViewRecommendSubCate.h"
+
+#import "UIViewTopBar.h"
+#import "UIViewBottomBar.h"
+#import "UIViewBarEventDelegate.h"
+
+#import "UIViewMenu.h"
+#import "UIViewBookmarkPopAction.h"
+#import "UIViewSearchOption.h"
+#import "UIViewSearchPanel.h"
+
+#import "UIControllerLanguage.h"
+#import "UIControllerTrans.h"
+#import "UIControllerQRCode.h"
+#import "UIControllerScreenshot.h"
+#import "UIControllerDraw.h"
+#import "UIControllerDrawView.h"
+#import "UIControllerLogin.h"
+#import "UIControllerSetSkin.h"
+#import "UIControllerTravelDetail.h"
+#import "UIControllerUserInfo.h"
+#import "UIControllerDesktopStyle.h"
+#import "UIControllerBookmarkHistory.h"
+#import "UIControllerSysSettings.h"
+#import "UIControllerLabelsList.h"
+
+#import "ModelTravelProvince.h"
+
+#import "QRCodeProtocol.h"
+#import "CheckVersion.h"
+
+#import "UserManager.h"
+
+@interface UIControllerMain ()
+<
+UIViewBarEventDelegate,
+UIViewMenuDelegate,
+UIViewBookmarkPopActionDelegate,
+UIViewSearchOptionDelegate,
+UIScrollViewTransDelegate,
+UIScrollViewTravelDelegate,
+UIScrollViewRecommendDelegate,
+UIScrollViewAppDelegate,
+UIViewNewsDelegate,
+UIViewRecommendSubCateDelegate,
+QRCodeProtocol,
+UIControllerScreenshotDelegate,
+UIControllerSetSkinDelegate,
+UIControllerTravelDetailDelegate,
+UIViewSearchPanelDelegate
+>
+
+@end
+
+@implementation UIControllerMain
+{
+    __weak IBOutlet UIImageView *_imageViewBg;
+    IBOutlet UIViewTopBar *_viewTopBar;
+    IBOutlet UIViewBottomBar *_viewBottomBar;
+    
+    IBOutlet UIViewHome *_viewHome;
+    IBOutlet UIScrollViewTrans *_scrollViewTrans;
+    IBOutlet UIScrollViewTravel *_scrollViewTravel;
+    IBOutlet UIScrollViewRecommend *_scrollViewRecommend;
+    IBOutlet UIScrollViewApp *_scrollViewApp;
+    
+    /**
+     *  使用 __weak 的好处：_viewMenu 显示的时候有值，消失后自动变为 nil
+     */
+    __weak UIViewMenu *_viewMenu;
+    
+    __weak UIViewSearchPanel *_viewSearchPanel;
+    
+    UIWebView *_webView;
+    
+    // 取消编辑的点击手势
+    UITapGestureRecognizer *_tapGestureCancelEdit;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+     
+    // Do any additional setup after loading the view.
+    
+    // 注册通知
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didChangedLanguageNotification:)
+                                                 name:kNotificationDidChangedAppLan
+                                               object:nil];
+    
+    if (IsiOS7) {
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+    }
+    
+    [self.view setBgImageWithScaleAspectFillImage:[AppSetting shareAppSetting].skinImage];
+    
+    _webView = [[UIWebView alloc] initWithFrame:_viewHome.frame];
+    _webView.autoresizingMask = _viewHome.autoresizingMask;
+    [_webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://baidu.com"]]];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+// ---------------------------------- 各种通知 事件 -----------------
+- (void)didChangedLanguageNotification:(NSNotification *)notification
+{
+    [_viewTopBar updateByLanguage];
+    [_scrollViewTrans updateByLanguage];
+    [_scrollViewTravel updateByLanguage];
+    [_scrollViewRecommend updateByLanguage];
+    [_scrollViewApp updateByLanguage];
+}
+
+// ---------------------------------- 私有 事件 -----------------
+/**
+ *  根据电池栏方向 重新 布局视图
+ *
+ *  @param orientation 电池栏方向
+ */
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [super layoutSubViewsWithInterfaceOrientation:orientation];
+    
+    // _viewTopBar
+    CGRect rc = _viewTopBar.frame;
+    rc.origin = CGPointZero;
+    rc.size.width = self.view.width;
+    if (IsiOS8) {
+        if (UIInterfaceOrientationIsLandscape(orientation)) {
+            rc.size.height = 44;
+        }
+        else {
+            rc.size.height = 64;
+        }
+    }
+    _viewTopBar.frame = rc;
+    
+    // _viewBottomBar
+    rc = _viewBottomBar.frame;
+    rc.origin.x = 0;
+    rc.size.width = self.view.width;
+    rc.origin.y = self.view.height-(UIInterfaceOrientationIsPortrait(orientation)?_viewBottomBar.height:0);
+    _viewBottomBar.frame = rc;
+    
+    if (_viewHome.superview) {
+        _viewHome.frame = [self mainFrame];
+    }
+    else {
+        _webView.frame = [self mainFrame];
+    }
+    
+    if (_viewSearchPanel) {
+        _viewSearchPanel.frame = [self mainFrame];
+    }
+}
+
+/**
+ *  得到主体内容的显示区域
+ *
+ *  @return CGRect
+ */
+- (CGRect)mainFrame
+{
+    CGRect rc = CGRectMake(0, _viewTopBar.bottom, self.view.width, _viewBottomBar.top-_viewTopBar.bottom);
+    return rc;
+}
+
+// ---------------------------------- 工具栏事件 -----------------
+#pragma mark - UIViewBarEventDelegate
+- (void)view:(UIView *)view barEvent:(BarEvent)barEvent barItem:(UIView *)barItem
+{
+    _scrollViewApp.edit = NO;
+    
+    switch (barEvent) {
+        // --------- _viewTopBar、_viewBottomBar公共事件
+        case BarEventGoBack:
+        {
+            [_viewHome popToRootWithCompletion:nil];
+        }break;
+        case BarEventGoForward:
+        {
+            
+        }break;
+        case BarEventHome:
+        {
+            _viewTopBar.viewTopBarStatus = ViewTopBarStatusHome;
+            
+            [_webView removeFromSuperview];
+            _viewHome.frame = [self mainFrame];
+            [self.view insertSubview:_viewHome belowSubview:_viewBottomBar];
+        }break;
+        case BarEventMenu:
+        {
+           
+            UIViewMenu *viewMenu = [UIViewMenu viewFromXib];
+            _viewMenu = viewMenu;
+            [viewMenu updateStateWithLink:_webView.superview?[_webView stringByEvaluatingJavaScriptFromString:@"window.location.href"]:nil];
+            viewMenu.delegate = self;
+            CGRect rc = [barItem convertRect:barItem.bounds toView:barItem.window.rootViewController.view];
+            CGPoint point;
+            DockDirection dockDirection;
+            if (IsPortrait) {
+                point = CGPointMake(CGRectGetMidX(rc), _viewBottomBar.top);
+                dockDirection = DockDirectionBottom;
+            }
+            else {
+                point = CGPointMake(CGRectGetMidX(rc), _viewTopBar.bottom);
+                dockDirection = DockDirectionTop;
+            }
+            [viewMenu showInView:self.view centerOfDock:point dockDirection:dockDirection];
+        }break;
+        case BarEventWindows:
+        {
+            
+        }break;
+            
+        // ------------------------
+        case BarEventRefresh:
+        {
+            
+        }break;
+        case BarEventStop:
+        {
+            
+        }break;
+        case BarEventQRCode:
+        {
+            UIControllerQRCode *controller = [self.storyboard instantiateViewControllerWithIdentifier:@"UIControllerQRCode"];
+            [self presentModalViewController:controller animated:YES];
+//            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case BarEventBookmark:
+        {
+            UIViewBookmarkPopAction *viewBookmarkPopAction = [UIViewBookmarkPopAction viewFromXib];
+            viewBookmarkPopAction.delegate = self;
+            [viewBookmarkPopAction updateStateWithLink:@"http://www.baidu.com"];
+            CGRect rc = [barItem convertRect:barItem.bounds toView:barItem.window.rootViewController.view];
+            CGPoint point  = CGPointMake(CGRectGetMidX(rc), _viewTopBar.bottom);
+            [viewBookmarkPopAction showInView:self.view centerOfDock:point];
+        }break;
+        case BarEventSearchOption:
+        {
+            [_viewTopBar.textField resignFirstResponder];
+            
+            UIViewSearchOption *viewSearchOption = [UIViewSearchOption viewFromXib];
+            viewSearchOption.delegate = self;
+            CGRect rc = [barItem convertRect:barItem.bounds toView:barItem.window.rootViewController.view];
+            CGPoint point  = CGPointMake(CGRectGetMidX(rc), _viewTopBar.bottom);
+            [viewSearchOption showInView:self.view centerOfDock:point];
+        }break;
+        
+        // ---------- 地址栏输入框事件
+        case BarEventDidBeginInputUrl:
+        {
+            _viewTopBar.viewTopBarStatus = ViewTopBarStatusInput;
+            
+            if (_viewSearchPanel) return;
+            
+            CGRect rc = [self mainFrame];
+            rc.size.height+=_viewBottomBar.height;
+            _viewSearchPanel = [UIViewSearchPanel viewFromXib];
+            _viewSearchPanel.delegate = self;
+            _viewSearchPanel.frame = rc;
+            // 防止动画未结束就点击取消
+            _viewTopBar.btnCancel.userInteractionEnabled = NO;
+            [_viewSearchPanel showInView:self.view completion:^{
+                _viewTopBar.btnCancel.userInteractionEnabled = YES;
+                [_viewHome removeFromSuperview];
+                [_webView removeFromSuperview];
+            }];
+        }break;
+        case BarEventDidEndInputUrl:
+        {
+            _viewTopBar.viewTopBarStatus = ViewTopBarStatusWeb;
+            
+            [_viewHome removeFromSuperview];
+            _webView.frame = [self mainFrame];
+            [self.view insertSubview:_webView belowSubview:_viewBottomBar];
+            
+            [_viewSearchPanel dismiss];
+        }break;
+        case BarEventCancelInputUrl:
+        {
+            // 将搜索面板给隐藏了
+            _viewTopBar.viewTopBarStatus = _viewTopBar.viewTopBarStatusBeforeInput;
+            [_viewTopBar.textField resignFirstResponder];
+            
+            if (ViewTopBarStatusHome==_viewTopBar.viewTopBarStatus) {
+                [_webView removeFromSuperview];
+                _viewHome.frame = [self mainFrame];
+                [self.view insertSubview:_viewHome belowSubview:_viewBottomBar];
+            }
+            else if (ViewTopBarStatusWeb==_viewTopBar.viewTopBarStatus) {
+                [_viewHome removeFromSuperview];
+                _webView.frame = [self mainFrame];
+                [self.view insertSubview:_webView belowSubview:_viewBottomBar];
+            }
+            
+            [_viewSearchPanel dismiss];
+        }break;
+            
+        default:
+            break;
+    }
+}
+
+// ---------------------------------- 菜单事件 -----------------
+#pragma mark - UIViewMenuDelegate
+- (void)viewMenu:(UIViewMenu *)viewMenu seletedMenuItem:(MenuItem)menuItem
+{
+    switch (menuItem) {
+        case MenuItemBookmark:
+        {
+            if (viewMenu.viewMenuItemBookmark.selected) {
+                
+            }
+            else {
+                
+            }
+        }break;
+        case MenuItemBookmarkHistory:
+        {
+            UIControllerBookmarkHistory * controller = [[UIControllerBookmarkHistory alloc]initWithNibName:@"UIControllerBookmarkHistory" bundle:nil];
+            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case MenuItemLanguage:
+        {
+            UIControllerLanguage *controller = [[UIControllerLanguage alloc] initWithNibName:@"UIControllerLanguage" bundle:nil];
+            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case MenuItemRefresh:
+        {
+            
+        }break;
+        case MenuItemStop:
+        {
+            
+        }break;
+        case MenuItemScreenshot:
+        {
+            UIControllerScreenshot *controller = [UIControllerScreenshot controllerFromXib];
+            controller.delegate = self;
+            controller.screenshotType = ScreenshotDraw;
+            controller.imageOriginal = [UIImage imageFromView:self.view];
+            [self.navigationController pushViewController:controller animated:NO];
+        }break;
+        case MenuItemFindInPage:
+        {
+            
+        }break;
+        case MenuItemShare:
+        {
+            
+        }break;
+        case MenuItemProfile:
+        {
+            //个人中心
+            //如果有用户信息 直接跳转到个人中心 否则进入登陆
+            if ([UserManager shareUserManager].currUser) {
+               
+                UIControllerUserInfo *controllerUserInfo = [[UIControllerUserInfo alloc] initWithNibName:@"UIControllerUserInfo" bundle:nil];
+                controllerUserInfo.fromController = FromControllerRoot;
+                if(IsiPad)
+                {
+                    controllerUserInfo.modalPresentationStyle = UIModalPresentationFormSheet;
+                    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:controllerUserInfo];
+                    nav.modalPresentationStyle = UIModalPresentationFormSheet;
+                    nav.navigationBarHidden = YES;
+                    
+                    [self presentViewController:nav animated:YES completion:nil];
+                }
+                else
+                {
+                    self.navigationController.navigationBarHidden = YES;
+                    [self.navigationController pushViewController:controllerUserInfo animated:YES];
+                    
+                }
+            }
+            else
+            {
+                UIControllerLogin *ccontrollerLogin = [[UIControllerLogin alloc] initWithNibName:@"UIControllerLogin" bundle:nil];
+                ccontrollerLogin.fromController = FromControllerRoot;
+                if(IsiPad) {
+                    ccontrollerLogin.modalPresentationStyle = UIModalPresentationFormSheet;
+                    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:ccontrollerLogin];
+                    nav.modalPresentationStyle = UIModalPresentationFormSheet;
+                    nav.navigationBarHidden = YES;
+                    [self presentViewController:nav animated:YES completion:nil];
+                    
+                }
+                else
+                {
+                    [self.navigationController pushViewController:ccontrollerLogin animated:YES];
+                }
+            }
+        }break;
+        case MenuItemNoImageMode:
+        {
+            BOOL noImageMode = [AppSetting shareAppSetting].noImageMode;
+            [AppSetting shareAppSetting].noImageMode = !noImageMode;
+        }break;
+        case MenuItemFullscreenMode:
+        {
+            BOOL fullscreenMode = [AppSetting shareAppSetting].fullscreenMode;
+            [AppSetting shareAppSetting].fullscreenMode = !fullscreenMode;
+        }break;
+        case MenuItemSetBrightness:
+        {
+            
+        }break;
+        case MenuItemNoSaveHistory:
+        {
+            BOOL noSaveHistory = [AppSetting shareAppSetting].noSaveHistory;
+            [AppSetting shareAppSetting].noSaveHistory = !noSaveHistory;
+        }break;
+        case MenuItemQRCode:
+        {
+            UIControllerQRCode *controller = [self.storyboard instantiateViewControllerWithIdentifier:@"UIControllerQRCode"];
+            [self presentModalViewController:controller animated:YES];
+        }break;
+        case MenuItemSkinManage:
+        {
+            UIControllerSetSkin *controller = [self.storyboard instantiateViewControllerWithIdentifier:@"UIControllerSetSkin"];
+            controller.delegate = self;
+            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case MenuItemDesktopStyle:
+        {
+            UIControllerDesktopStyle *controller = [self.storyboard instantiateViewControllerWithIdentifier:@"UIControllerDesktopStyle"];
+            controller.title = LocalizedString(@"zhuomianyangshi");
+            
+            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case MenuItemSystemSettings:
+        {
+            UIControllerSysSettings *controller = [self.storyboard instantiateViewControllerWithIdentifier:@"UIControllerSysSettings"];
+            controller.title = LocalizedString(@"xitongshezhi");
+            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case MenuItemDownload:
+        {
+            
+        }break;
+        case MenuItemFeedback:
+        {
+            
+        }break;
+        case MenuItemSaveTraffic:
+        {
+            
+        }break;
+        case MenuItemCheckVersion:
+        {
+            [CheckVersion checkVersionAtLaunch:NO];
+        }break;
+        case MenuItemExit:
+        {
+            
+        }break;
+            
+        default:
+            break;
+    }
+    
+    _DEBUG_LOG(@"%s:%d", __FUNCTION__, menuItem);
+}
+
+// ---------------------------------- 点击地址栏书签按钮 事件 -----------------
+#pragma mark - UIViewBookmarkPopActionDelegate
+- (void)viewBookmarkPopAction:(UIViewBookmarkPopAction *)viewBookmarkPopAction bookmarkPopAction:(BookmarkPopAction)bookmarkPopAction
+{
+    switch (bookmarkPopAction) {
+        case BookmarkPopActionAddBookmark:
+        {
+            
+        }break;
+        case BookmarkPopActionRemoveBookmark:
+        {
+            
+        }break;
+        case BookmarkPopActionAddHome:
+        {
+            
+        }break;
+        case BookmarkPopActionRemoveHome:
+        {
+            
+        }break;
+            
+        default:
+            break;
+    }
+}
+
+// ---------------------------------- 搜索选项相关 事件 -----------------
+#pragma mark - UIViewSearchOptionDelegate
+- (void)viewSearchOption:(UIViewSearchOption *)viewSearchOption didSelectSearchOption:(NSDictionary *)dicSearchOption
+{
+    [_viewTopBar setSearchOption:dicSearchOption];
+    [_viewTopBar.textField becomeFirstResponder];
+    _viewTopBar.viewTopBarStatus = ViewTopBarStatusInput;
+}
+
+// ---------------------------------- 情景翻译分类 事件 -----------------
+#pragma mark - UIScrollViewTransDelegate
+- (void)scrollViewTrans:(UIScrollViewTrans *)scrollViewTrans onTouchCate:(ModelSentenceCate *)modelCate
+{
+    UIControllerTrans *controllerTrans = [UIControllerTrans controllerFromXib];
+    controllerTrans.title = LocalizedString(@"qingjingfanyi");
+    controllerTrans.modelCate = modelCate;
+    [self.navigationController pushViewController:controllerTrans animated:YES];
+}
+
+- (void)scrollViewTrans:(UIScrollViewTrans *)scrollViewTrans reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%@", link);
+}
+
+// ---------------------------------- 旅游模块 -----------------
+#pragma mark - UIScrollViewTravelDelegate
+- (void)scrollViewTravel:(UIScrollViewTravel *)scrollViewTravel reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%s:%@", __FUNCTION__, link);
+}
+
+- (void)scrollViewTravel:(UIScrollViewTravel *)scrollViewTravel selectProvince:(ModelTravelProvince *)province
+{
+    UIControllerTravelDetail *controller = [UIControllerTravelDetail controllerFromXib];
+    controller.delegate = self;
+    controller.provinceId = province.provinceId;
+    controller.imageUrl = province.image;
+    controller.imageSize = province.imageSize;
+    controller.title = province.name;
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+// ---------------------------------- 旅游模块 -----------------
+#pragma mark - UIControllerTravelDetailDelegate
+- (void)controllerTravelDetail:(UIControllerTravelDetail *)controllerTravelDetail reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%s:%@", __FUNCTION__, link);
+}
+
+// ---------------------------------- 推荐屏 -----------------
+#pragma mark - UIScrollViewRecommendDelegate
+- (void)scrollViewRecommend:(UIScrollViewRecommend *)scrollViewRecommend reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%s:%@", __FUNCTION__, link);
+}
+
+- (void)scrollViewRecommend:(UIScrollViewRecommend *)scrollViewRecommend reqNewsWithCateId:(NSInteger)cateId cateName:(NSString *)cateName;
+{
+    UIViewNews *viewNews = [UIViewNews viewFromXib];
+    viewNews.cateId = cateId;
+    viewNews.cateName = cateName;
+    viewNews.delegate = self;
+    [_viewHome pushView:viewNews completion:^{
+        [viewNews refreshData];
+    }];
+}
+
+- (void)scrollViewRecommend:(UIScrollViewRecommend *)scrollViewRecommend reqSubCateWithCateId:(NSInteger)cateId
+{
+    UIViewRecommendSubCate *viewRecommendSubCate = [UIViewRecommendSubCate viewFromXib];
+    viewRecommendSubCate.cateId = cateId;
+    viewRecommendSubCate.delegate = self;
+    [_viewHome pushView:viewRecommendSubCate completion:^{
+        [viewRecommendSubCate refreshData];
+    }];
+}
+
+// ---------------------------------- 推荐屏 新闻列表 -----------------
+#pragma mark - UIViewNewsDelegate
+- (void)viewNews:(UIViewNews *)viewNews reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%s:%@", __FUNCTION__, link);
+}
+
+// ---------------------------------- 推荐屏 子分类 -----------------
+#pragma mark - UIViewRecommendSubCateDelegate
+- (void)viewRecommendSubCate:(UIViewRecommendSubCate *)viewRecommendSubCate reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%s:%@", __FUNCTION__, link);
+}
+
+// ---------------------------------- 应用屏 -----------------
+#pragma mark - UIScrollViewAppDelegate
+- (void)scrollViewApp:(UIScrollViewApp *)scrollViewApp reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%s:%@", __FUNCTION__, link);
+}
+
+- (void)scrollViewApp:(UIScrollViewApp *)scrollViewApp edit:(BOOL)edit
+{
+    [_viewHome setScrollEnable:!edit];
+    
+    if (_tapGestureCancelEdit) {
+        [self.view removeGestureRecognizer:_tapGestureCancelEdit];
+        _tapGestureCancelEdit = nil;
+    }
+    
+    if (edit) {
+        _tapGestureCancelEdit = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureCancelEdit:)];
+        _tapGestureCancelEdit.cancelsTouchesInView = YES;
+        [self.view addGestureRecognizer:_tapGestureCancelEdit];
+    }
+}
+
+- (void)scrollViewAppWillAddItem:(UIScrollViewApp *)scrollViewAp
+{
+    UIControllerLabelsList *controller = [[UIControllerLabelsList alloc] initWithNibName:@"UIControllerLabelsList" bundle:[NSBundle mainBundle]];
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+- (void)tapGestureCancelEdit:(UITapGestureRecognizer *)gesture
+{
+    _scrollViewApp.edit = NO;
+    [self.view removeGestureRecognizer:_tapGestureCancelEdit];
+    _tapGestureCancelEdit = nil;
+}
+
+// ---------------------------------- 二维码扫描结果 事件 -----------------
+#pragma mark - QRCodeProtocol
+- (void)controller:(UIViewController *)controller didReadContent:(NSString *)content
+{
+    [controller dismissModalViewControllerAnimated:YES];
+    NSLog(@"%@", content);
+}
+
+// ---------------------------------- 截图 --------
+#pragma mark - UIControllerScreenshotDelegate
+- (void)controller:(UIControllerScreenshot *)controller didCaptureImage:(UIImage *)image
+{
+    UIControllerDrawView *vc = [UIControllerDrawView UIControllerDrawViewFromXib];
+    vc.bgImge = image;
+    [self.navigationController pushViewController:vc animated:NO];
+}
+
+- (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo
+{
+    if (error) {
+        [SVProgressHUD showErrorWithStatus:error.localizedRecoverySuggestion];
+    }
+    else {
+        [SVProgressHUD showSuccessWithStatus:LocalizedString(@"tupianbaocunchenggong")];
+    }
+}
+
+// ---------------------------------- 皮肤设置 --------
+#pragma mark - UIControllerSetSkinDelegate
+- (void)controllerSetSkinDidChanageSkin:(UIControllerSetSkin *)controllerSetSkin
+{
+    [self.view setBgImageWithScaleAspectFillImage:[AppSetting shareAppSetting].skinImage];
+    _DEBUG_LOG(@"%s", __FUNCTION__);
+}
+
+// ---------------------------------- 搜索面板 --------
+#pragma mark - UIViewSearchPanelDelegate
+- (void)viewSearchPanel:(UIViewSearchPanel *)viewSearchPanel reqLink:(NSString *)link
+{
+    _DEBUG_LOG(@"%@", link);
+}
+
+- (void)viewSearchPanelWillDismiss:(UIViewSearchPanel *)viewSearchPanel
+{
+    _viewTopBar.viewTopBarStatus = _viewTopBar.viewTopBarStatusBeforeInput;
+    [_viewTopBar.textField resignFirstResponder];
+    
+    if (ViewTopBarStatusHome==_viewTopBar.viewTopBarStatus) {
+        [_webView removeFromSuperview];
+        _viewHome.frame = [self mainFrame];
+        [self.view insertSubview:_viewHome belowSubview:_viewBottomBar];
+    }
+    else if (ViewTopBarStatusWeb==_viewTopBar.viewTopBarStatus) {
+        [_viewHome removeFromSuperview];
+        _webView.frame = [self mainFrame];
+        [self.view insertSubview:_webView belowSubview:_viewBottomBar];
+    }
+    
+    _viewTopBar.userInteractionEnabled = NO;
+    [_viewSearchPanel dismissWithCompletion:^{
+        _viewTopBar.userInteractionEnabled = YES;
+    }];
+}
+
+@end

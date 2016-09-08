@@ -1,0 +1,29 @@
+//
+//  UICellGroup.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/12/6.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellGroup.h"
+
+@implementation UICellGroup
+
+- (void)awakeFromNib {
+    // Initialization code
+    self.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
++ (instancetype)cellFromXib
+{
+    return  [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:nil options:nil][0];
+}
+
+@end

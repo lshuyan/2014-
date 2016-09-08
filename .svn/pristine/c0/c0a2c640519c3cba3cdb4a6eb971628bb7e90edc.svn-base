@@ -1,0 +1,523 @@
+//
+//  UIControllerSysSettings.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/7.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerSysSettings.h"
+
+#import "UINavigationBarCustom.h"
+#import "UIViewCellRightView.h"
+#import "UICellUserLogin.h"
+
+#import "UIViewPopUrlOpenStyle.h"
+#import "UIViewPopSearchEngine.h"
+#import "UIViewPopSetFontSize.h"
+#import "UIViewPopUserAgent.h"
+
+#import "UIControllerUserInfo.h"
+#import "UIControllerLogin.h"
+#import "UIControllerPageStyle.h"
+
+#import "ModelUser.h"
+#import "ModelSearchEngine.h"
+
+#define  kSectionTitle @"kSectionTitle"
+#define  kCells @"kCells"
+
+#define kTitle @"title"
+#define kSubTitle @"kSubTitle"
+#define kRightView @"kRightView"
+#define kRightHasArrow @"kRightHasArrow"
+#define kSettingsCellType @"kSettingsCellType"
+
+typedef NS_ENUM(NSInteger, SettingsCellType) {
+    SettingsCellUserLogin,
+    
+    SettingsCellOpenLastWeb,
+    SettingsCellUrlOpenStyle,
+    SettingsCellFontSize,
+    SettingsCellSearchEngine,
+    SettingsCellRemotePush,
+    SettingsCellAdBlocker,
+    SettingsCellScreenRotate,
+    SettingsCellDownload,
+    SettingsCellPageStyle,
+    
+    SettingsCellSaveForm,
+    SettingsCellClearHistory,
+    
+    SettingsCellDefaultBrowser,
+    SettingsCellUserAgent,
+    SettingsCellAbout,
+    
+    SettingsCellReset,
+    SettingsCellRate
+};
+
+@interface UIControllerSysSettings () <UITableViewDataSource, UITableViewDelegate, UIViewPopUrlOpenStyleDelegate, UIViewPopSearchEngineDelegate, UIViewPopSetFontSizeDelegate, UIViewPopUserAgentDelegate>
+
+@end
+
+@implementation UIControllerSysSettings
+{
+    NSArray *_arrDicCell;
+    
+    __weak IBOutlet UINavigationBarCustom *_navBar;
+    __weak IBOutlet UITableView *_tableView;
+    
+    UICellUserLogin *_cellUserLogin;
+    
+    UISwitch *_switchOpenLastWeb;
+    UISwitch *_switchRemotePush;
+    
+    UIViewCellRightView *_rightViewUserLogin;
+    UIViewCellRightView *_rightViewUrlOpenStyle;
+    UIViewCellRightView *_rightViewFontSize;
+    UIViewCellRightView *_rightViewSearchEngine;
+    UIViewCellRightView *_rightViewPageStyle;
+    
+    UIViewCellRightView *_rightViewClearHistory;
+    
+    UIViewCellRightView *_rightViewUserAgent;
+    UIViewCellRightView *_rightViewAbout;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didLoginNotification:) name:KNotificationDidLogin object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didLogoutNotification:) name:KNotificationDidLogout object:nil];
+    
+    {
+        _switchOpenLastWeb = [[UISwitch alloc] init];
+        [_switchOpenLastWeb addTarget:self action:@selector(onTouchValueChanged:) forControlEvents:UIControlEventValueChanged];
+        
+        _switchRemotePush = [[UISwitch alloc] init];
+        [_switchRemotePush addTarget:self action:@selector(onTouchValueChanged:) forControlEvents:UIControlEventValueChanged];
+        
+        _rightViewUserLogin = [UIViewCellRightView rightView];
+        
+        _rightViewUrlOpenStyle = [UIViewCellRightView rightView];
+        
+        _rightViewFontSize = [UIViewCellRightView rightView];
+        
+        _rightViewSearchEngine = [UIViewCellRightView rightView];
+        
+        _rightViewPageStyle = [UIViewCellRightView rightView];
+        
+        _rightViewClearHistory = [UIViewCellRightView rightView];
+        
+        _rightViewUserAgent = [UIViewCellRightView rightView];
+        
+        _rightViewAbout = [UIViewCellRightView rightView];
+        
+        
+        _switchRemotePush.on = [AppSetting shareAppSetting].remotePush;
+        _switchOpenLastWeb.on = [AppSetting shareAppSetting].openLastWebsite;
+        
+        _rightViewUrlOpenStyle.text = [AppSetting stringFromUrlOpenStyle:[AppSetting shareAppSetting].urlOpenStyle];
+        ModelSearchEngine *model = [AppSetting shareAppSetting].arrSearchEngine[[AppSetting shareAppSetting].searchIndex];
+        _rightViewSearchEngine.text = model.name;
+        _rightViewFontSize.text = [@([AppSetting shareAppSetting].fontsize) stringValue];
+        _rightViewUserAgent.text = LocalizedString([AppSetting shareAppSetting].userAgent);
+    }
+    
+    {
+        _arrDicCell = @[@{kSectionTitle:@"",
+                          kCells:@[@{kTitle:@"未登录",
+                                     kSettingsCellType:@(SettingsCellUserLogin),
+                                     kRightView:_rightViewUserLogin,
+                                     kRightHasArrow:@(YES)}]},
+                        @{kSectionTitle:@"",
+                          kCells:@[@{kTitle:@"开启时打开上次页面",
+                                     kRightView:_switchOpenLastWeb,
+                                     kSettingsCellType:@(SettingsCellOpenLastWeb),
+                                     kSubTitle:@"",
+                                     kRightHasArrow:@(NO)},
+                                   @{kTitle:@"链接打开方式",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellUrlOpenStyle),
+                                     kRightView:_rightViewUrlOpenStyle,
+                                     kRightHasArrow:@(YES)},
+                                   @{kTitle:@"字体大小",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellFontSize),
+                                     kRightView:_rightViewFontSize,
+                                     kRightHasArrow:@(YES)},
+                                   @{kTitle:@"默认搜索引擎",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellSearchEngine),
+                                     kRightView:_rightViewSearchEngine,
+                                     kRightHasArrow:@(YES)},
+                                   @{kTitle:@"消息推送",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellRemotePush),
+                                     kRightView:_switchRemotePush,
+                                     kRightHasArrow:@(NO)},
+                                   @{kTitle:@"翻页方式",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellPageStyle),
+                                     kRightView:_rightViewPageStyle,
+                                     kRightHasArrow:@(YES)}]},
+                        @{kSectionTitle:@"",
+                          kCells:@[@{kTitle:@"清除记录",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellClearHistory),
+                                     kRightView:_rightViewClearHistory,
+                                     kRightHasArrow:@(YES)}]},
+                        @{kSectionTitle:@"",
+                          kCells:@[@{kTitle:@"浏览器标识(UA)",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellUserAgent),
+                                     kRightView:_rightViewUserAgent,
+                                     kRightHasArrow:@(YES)},
+                                   @{kTitle:@"关于中华浏览器",
+                                     kSubTitle:@"",
+                                     kSettingsCellType:@(SettingsCellAbout),
+                                     kRightView:_rightViewAbout,
+                                     kRightHasArrow:@(YES)}]},
+                        @{kSectionTitle:@"",
+                          kCells:@[@{kTitle:@"恢复默认设置",
+                                     kSettingsCellType:@(SettingsCellReset),
+                                     kSubTitle:@"",
+                                     kRightHasArrow:@(NO)}]},
+                        @{kSectionTitle:@"",
+                          kCells:@[@{kTitle:@"亲，给个5星好评吧",
+                                     kSettingsCellType:@(SettingsCellRate),
+                                     kSubTitle:@"",
+                                     kRightHasArrow:@(NO)}]}
+                        ];
+    }
+    
+    [self layoutSubViewsWithInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
+    [self.view setBgImageWithScaleAspectFillImage:[AppSetting shareAppSetting].skinImage];
+    [self updateByLanguage];
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    CGRect rc = _navBar.frame;
+    rc.origin.x = 0;
+    rc.size.width = self.view.width;
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    if (IsiOS8) {
+        if (UIInterfaceOrientationIsLandscape(orientation)) {
+            rc.origin.y = 0;
+        }
+        else {
+            rc.origin.y = 20;
+        }
+    }
+    _navBar.frame = rc;
+    
+    rc = self.view.bounds;
+    rc.origin.y = _navBar.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)onTouchValueChanged:(UISwitch *)swt
+{
+    NSIndexPath *indexPath = [self indexPathFromTag:swt.tag];
+    NSDictionary *dicSection = _arrDicCell[indexPath.section];
+    NSArray *arrCellss = dicSection[kCells];
+    NSMutableDictionary *dicCell = arrCellss[indexPath.row];
+    SettingsCellType settingsCellType = (SettingsCellType)[dicCell[kSettingsCellType] integerValue];
+    switch (settingsCellType) {
+        case SettingsCellOpenLastWeb:
+        {
+            [AppSetting shareAppSetting].openLastWebsite = swt.on;
+        }break;
+        case SettingsCellRemotePush:
+        {
+            [AppSetting shareAppSetting].remotePush = swt.on;
+        }break;
+        default:
+            break;
+    }
+}
+
+- (NSInteger)tagFromIndexPath:(NSIndexPath *)indexPath
+{
+    return 1000*indexPath.section+indexPath.row;
+}
+
+- (NSIndexPath *)indexPathFromTag:(NSInteger)tag
+{
+    return [NSIndexPath indexPathForRow:tag%1000 inSection:tag/1000];
+}
+
+- (void)didLoginNotification:(NSNotification *)notification
+{
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    UICellUserLogin *cellUserLogin = (UICellUserLogin *)[_tableView cellForRowAtIndexPath:indexPath];
+    cellUserLogin.labelTitle.text = [UserManager shareUserManager].currUser.username;
+    cellUserLogin.imageViewIcon.image = [UIImage imageWithContentsOfFile:[GetDocumentDirAppend(kUserInfoDirName) stringByAppendingPathComponent:[UserManager shareUserManager].currUser.avatar]];
+}
+
+- (void)didLogoutNotification:(NSNotification *)notification
+{
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    NSDictionary *dicSection = _arrDicCell[indexPath.section];
+    NSArray *arrCellss = dicSection[kCells];
+    NSDictionary *dicCell = arrCellss[indexPath.row];
+    UICellUserLogin *cellUserLogin = (UICellUserLogin *)[_tableView cellForRowAtIndexPath:indexPath];
+    cellUserLogin.labelTitle.text = LocalizedString(dicCell[kTitle]);
+    cellUserLogin.imageViewIcon.image = [UIImage imageWithBundleFile:@"ad_default.jpg"];
+}
+
+#pragma mark - AppLanguageProtocol
+- (void)updateByLanguage
+{
+    _navBar.topItem.title = self.title;
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"fanhui") style:UIBarButtonItemStylePlain target:self action:@selector(onTouchBack)];
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return _arrDicCell.count;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    NSDictionary *dicSection = _arrDicCell[section];
+    return [dicSection[kCells] count];
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:indexPath.section==0?@"UICellUserLogin":@"UICellDefault"];
+    
+    NSDictionary *dicSection = _arrDicCell[indexPath.section];
+    NSArray *arrCell = dicSection[kCells];
+    NSDictionary *dicCell = arrCell[indexPath.row];
+    cell.detailTextLabel.textColor = [UIColor grayColor];
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    
+    if (indexPath.section==0) {
+        if (!_cellUserLogin)
+        {
+            _cellUserLogin = (UICellUserLogin *)cell;
+            if ([UserManager shareUserManager].currUser) {
+                _cellUserLogin.labelTitle.text = [UserManager shareUserManager].currUser.username;
+                _cellUserLogin.imageViewIcon.image = [UIImage imageWithContentsOfFile:[GetDocumentDirAppend(kUserInfoDirName) stringByAppendingPathComponent:[UserManager shareUserManager].currUser.avatar]];
+            }
+            else {
+                _cellUserLogin.labelTitle.text = LocalizedString(dicCell[kTitle]);
+                _cellUserLogin.imageViewIcon.image = [UIImage imageWithBundleFile:@"ad_default.jpg"];
+            }
+        }
+    }
+    else {
+        cell.textLabel.text = LocalizedString(dicCell[kTitle]);
+        cell.detailTextLabel.text = LocalizedString(dicCell[kSubTitle]);
+    }
+    
+    UIView *accessoryView = dicCell[kRightView];
+    if (accessoryView) {
+        cell.accessoryView = accessoryView;
+        cell.accessoryView.tag = [self tagFromIndexPath:indexPath];
+        if ([accessoryView isKindOfClass:[UISwitch class]]) {
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        }
+        else {
+            cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+        }
+    }
+    else {
+        cell.accessoryView = nil;
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+    }
+    
+    if (indexPath.section==_arrDicCell.count-1) {
+        cell.textLabel.textAlignment = NSTextAlignmentCenter;
+        cell.textLabel.textColor = [UIColor redColor];
+    }
+    else if (indexPath.section==_arrDicCell.count-2) {
+        cell.textLabel.textAlignment = NSTextAlignmentCenter;
+        cell.textLabel.textColor = [UIColor blackColor];
+    }
+    else {
+        cell.textLabel.textAlignment = NSTextAlignmentLeft;
+        cell.textLabel.textColor = [UIColor blackColor];
+    }
+    
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return indexPath.section==0?61:44;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    NSDictionary *dicSection = _arrDicCell[section];
+    return dicSection[kSectionTitle];
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    NSDictionary *dicSection = _arrDicCell[indexPath.section];
+    NSArray *arrCellss = dicSection[kCells];
+    NSMutableDictionary *dicCell = arrCellss[indexPath.row];
+    SettingsCellType settingsCellType = (SettingsCellType)[dicCell[kSettingsCellType] integerValue];
+    switch (settingsCellType) {
+        case SettingsCellUserLogin:
+        {
+            if ([UserManager shareUserManager].currUser) {
+                UIControllerUserInfo *controller = [[UIControllerUserInfo alloc] initWithNibName:@"UIControllerUserInfo" bundle:nil];
+                controller.fromController = FromControllerSystemSettings;
+                [self.navigationController pushViewController:controller animated:YES];
+            }
+            else {
+                UIControllerLogin *controllerLogin = [[UIControllerLogin alloc] initWithNibName:@"UIControllerLogin" bundle:nil];
+                controllerLogin.fromController = FromControllerSystemSettings;
+                [self.navigationController pushViewController:controllerLogin animated:YES];
+            }
+        }break;
+        case SettingsCellUrlOpenStyle:
+        {
+            UIViewPopUrlOpenStyle *viewPop = [UIViewPopUrlOpenStyle viewFromXib];
+            viewPop.delegate = self;
+            viewPop.labelTitle.text = LocalizedString(@"链接打开方式");
+            [viewPop.btnRight setTitle:LocalizedString(@"queding") forState:UIControlStateNormal];
+            [viewPop showInView:self.view completion:nil];
+        }break;
+        case SettingsCellFontSize:
+        {
+            UIViewPopSetFontSize *viewPop = [UIViewPopSetFontSize viewFromXib];
+            viewPop.delegate = self;
+            viewPop.labelTitle.text = LocalizedString(@"设置字体大小");
+            [viewPop.btnRight setTitle:LocalizedString(@"queding") forState:UIControlStateNormal];
+            [viewPop showInView:self.view completion:nil];
+        }break;
+        case SettingsCellSearchEngine:
+        {
+            UIViewPopSearchEngine *viewPop = [UIViewPopSearchEngine viewFromXib];
+            viewPop.deletate = self;
+            viewPop.labelTitle.text = LocalizedString(@"选择默认搜索引擎");
+            [viewPop.btnRight setTitle:LocalizedString(@"queding") forState:UIControlStateNormal];
+            [viewPop showInView:self.view completion:nil];
+        }break;
+        case SettingsCellScreenRotate:
+        {
+            
+        }break;
+        case SettingsCellDownload:
+        {
+            
+        }break;
+        case SettingsCellPageStyle:
+        {
+            UIControllerPageStyle *controller = [self.storyboard instantiateViewControllerWithIdentifier:@"UIControllerPageStyle"];
+            controller.title = LocalizedString(@"翻页方式");
+            [self.navigationController pushViewController:controller animated:YES];
+        }break;
+        case SettingsCellSaveForm:
+        {
+            
+        }break;
+        case SettingsCellClearHistory:
+        {
+            
+        }break;
+        case SettingsCellDefaultBrowser:
+        {
+            
+        }break;
+        case SettingsCellUserAgent:
+        {
+            UIViewPopUserAgent *viewPop = [UIViewPopUserAgent viewFromXib];
+            viewPop.delegate = self;
+            viewPop.labelTitle.text = LocalizedString(@"浏览器标识(UA)");
+            [viewPop.btnRight setTitle:LocalizedString(@"queding") forState:UIControlStateNormal];
+            [viewPop showInView:self.view completion:nil];
+            
+        }break;
+        case SettingsCellAbout:
+        {
+            
+        }break;
+        case SettingsCellReset:
+        {
+            [[AppSetting shareAppSetting] reset];
+            
+            _switchRemotePush.on = [AppSetting shareAppSetting].remotePush;
+            _switchOpenLastWeb.on = [AppSetting shareAppSetting].openLastWebsite;
+            
+            _rightViewUrlOpenStyle.text = [AppSetting stringFromUrlOpenStyle:[AppSetting shareAppSetting].urlOpenStyle];
+            ModelSearchEngine *model = [AppSetting shareAppSetting].arrSearchEngine[[AppSetting shareAppSetting].searchIndex];
+            _rightViewSearchEngine.text = model.name;
+            _rightViewFontSize.text = [@([AppSetting shareAppSetting].fontsize) stringValue];
+            _rightViewUserAgent.text = LocalizedString([AppSetting shareAppSetting].userAgent);
+            
+            [_tableView reloadData];
+            [[NSNotificationCenter defaultCenter] postNotificationName:KNotificationDidChanageDesktopStyle object:nil];
+        }break;
+        case SettingsCellRate:
+        {
+            
+        }break;
+            
+        default:
+            break;
+    }
+}
+
+#pragma mark - UIViewPopUrlOpenStyleDelegate
+- (void)viewPopUrlOpenStyle:(UIViewPopUrlOpenStyle *)viewPopUrlOpenStyle selectUrlOpenStyle:(UrlOpenStyle)urlOpenStyle
+{
+    [AppSetting shareAppSetting].urlOpenStyle = urlOpenStyle;
+    
+    _rightViewUrlOpenStyle.text = [AppSetting stringFromUrlOpenStyle:urlOpenStyle];
+}
+
+#pragma mark - UIViewPopSearchEngineDelegate
+- (void)viewPopSearchEngine:(UIViewPopSearchEngine *)viewPopSearchEngine selectSearchIndex:(NSInteger)searchIndex
+{
+    [AppSetting shareAppSetting].searchIndex = searchIndex;
+    ModelSearchEngine *model = [AppSetting shareAppSetting].arrSearchEngine[[AppSetting shareAppSetting].searchIndex];
+    _rightViewSearchEngine.text = model.name;
+}
+
+#pragma mark - UIViewPopSetFontSizeDelegate
+- (void)viewPopSetFontSize:(UIViewPopSetFontSize *)viewPopSetFontSize selectFontSize:(CGFloat)fontSize
+{
+    [AppSetting shareAppSetting].fontsize = fontSize;
+    _rightViewFontSize.text = [@((NSInteger)fontSize) stringValue];
+}
+
+#pragma mark - UIViewPopUserAgentDelegate
+- (void)viewPopUserAgent:(UIViewPopUserAgent *)viewPopUserAgent selectUserAgentIndex:(NSInteger)userAgentIndex
+{
+    [AppSetting shareAppSetting].userAgentIndex = userAgentIndex;
+    _rightViewUserAgent.text = [AppSetting shareAppSetting].userAgent;
+}
+
+@end

@@ -1,0 +1,204 @@
+//
+//  UIViewPopShareOption.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewPopShareOption.h"
+
+#import "UIControlItem.h"
+#import "ModelSNSItem.h"
+
+#define kItemW (60.0f)
+#define kItemH (80.0f)
+#define kPaddingLR (15.0)
+#define kMinSpaceX (15.0f)
+#define kSpaceY (10.0f)
+#define kPaddingTB (10.0f)
+
+@implementation UIViewPopShareOption
+{
+    NSArray *_arrShareItem;
+    NSArray *_arrViewItem;
+    
+    NSInteger _iColCount;
+    CGFloat _fSpaceX;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    _arrShareItem = [AppSetting shareAppSetting].arrShareItem;
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    
+    [self resizeItem];
+}
+
+- (void)showInView:(UIView *)view completion:(void (^)())completion
+{
+    self.frame = view.bounds;
+    self.backgroundColor = [UIColor clearColor];
+    
+    if (_arrShareItem.count>0) {
+        [self createShareItem];
+        
+        self.viewContent.transform = CGAffineTransformMakeTranslation(0, self.viewContent.height);
+    }
+    else {
+        self.viewContent.hidden = YES;
+    }
+
+    [view addSubview:self];
+    [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        self.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.3];
+        if (_arrShareItem.count>0) {
+            self.viewContent.transform = CGAffineTransformIdentity;
+        }
+    } completion:^(BOOL finished) {
+        if (completion) {
+            completion();
+        }
+        
+        if (_arrShareItem.count<=0) {
+            [SVProgressHUD showWithMaskType:SVProgressHUDMaskTypeClear];
+            
+            /**
+             *  下载分享选项数据
+             */
+            [AppSetting fetchShareItemWithCompletion:^{
+                [SVProgressHUD dismiss];
+                
+                _arrShareItem = [AppSetting shareAppSetting].arrShareItem;
+                [self createShareItem];
+                self.viewContent.transform = CGAffineTransformMakeTranslation(0, self.viewContent.height);
+                self.viewContent.hidden = NO;
+                
+                [UIView animateWithDuration:0.3 animations:^{
+                    self.viewContent.transform = CGAffineTransformIdentity;
+                }];
+            }];;
+        }
+    }];
+}
+
+- (void)onTouchShareItem:(UIControlItem *)item
+{
+    [self dismissWithCompletion:^{
+        if (_callbackSelectShareType) {
+            ModelSNSItem *model = _arrShareItem[item.tag];
+            _callbackSelectShareType(model.shareType);
+        }
+    }];
+}
+
+- (void)createShareItem
+{
+    _iColCount = [self getColCount];
+    if (_iColCount>=2) {
+        _fSpaceX = (self.width-(kPaddingLR*2)-_iColCount*kItemW)/(_iColCount-1);
+    }
+    
+    NSMutableArray *arrViewItem = [NSMutableArray arrayWithCapacity:_arrShareItem.count];
+    for (NSInteger i=0; i<_arrShareItem.count; i++) {
+        ModelSNSItem *model = _arrShareItem[i];
+        
+        UIControlItem *viewShareItem = [UIControlItem viewFromXibWithType:ControlItemTypeShare];
+        viewShareItem.tag = i;
+        viewShareItem.frame = [self frameAtIndex:i];
+        viewShareItem.labelTitle.text = SNSNameWithShareType(model.shareType);
+        viewShareItem.imageViewIcon.image = SNSIconWithShareType(model.shareType, YES);
+        viewShareItem.imageViewIcon.contentMode = UIViewContentModeCenter;
+        [viewShareItem setBgColorNormal:[UIColor clearColor] highlighted:[UIColor colorWithWhite:0.1 alpha:0.1]];
+        UIColor *color = [UIColor darkGrayColor];
+        [viewShareItem setTextColorNormal:color highlighted:[UIColor grayColor]];
+        [viewShareItem addTarget:self action:@selector(onTouchShareItem:) forControlEvents:UIControlEventTouchUpInside];
+        [self.viewBottom addSubview:viewShareItem];
+        [arrViewItem addObject:viewShareItem];
+    }
+    _arrViewItem = arrViewItem;
+    
+    CGRect rc = CGRectMake(0, self.viewTop.bottom, self.width, self.viewBottom.height);
+    if (_arrViewItem.count>0) {
+        UIControlItem *viewShareItem = [_arrViewItem lastObject];
+        rc.size.height = viewShareItem.bottom+kPaddingTB;
+    }
+    
+    self.viewBottom.frame = rc;
+    rc = self.viewContent.frame;
+    rc.origin.x = 0;
+    rc.size.width = self.width;
+    rc.size.height = self.viewBottom.bottom;
+    rc.origin.y = self.height-rc.size.height;
+    self.viewContent.frame = rc;
+}
+
+/**
+ *  计算允许容纳的最大列数
+ *
+ *  @return NSInteger 列数
+ */
+- (NSInteger)getColCount
+{
+    // 默认按横屏允许的最小宽高计算列数
+    CGFloat baseMinItemWidth = kItemW;
+    CGFloat w = kPaddingLR+baseMinItemWidth;
+    NSInteger colCount = 0;
+    while (w+kPaddingLR<=self.bounds.size.width) {
+        colCount++;
+        w+=baseMinItemWidth+kMinSpaceX;
+    }
+    return colCount;
+}
+
+/**
+ *  计算某项的frame
+ *
+ *  @param index 索引
+ *
+ *  @return CGRect
+ */
+- (CGRect)frameAtIndex:(NSInteger)index
+{
+    NSInteger col = GetColWithIndexCol(index, _iColCount);
+    NSInteger row = GetRowWithIndexCol(index, _iColCount);
+    CGRect rc = CGRectMake(kPaddingLR+(kItemW+_fSpaceX)*col,
+                           kPaddingTB+(kItemH+kSpaceY)*row,
+                           kItemW,
+                           kItemH);
+    return rc;
+}
+
+- (void)resizeItem
+{
+    _iColCount = [self getColCount];
+    if (_iColCount>=2) {
+        _fSpaceX = (self.width-(kPaddingLR*2)-_iColCount*kItemW)/(_iColCount-1);
+    }
+    
+    for (NSInteger i=0; i<_arrViewItem.count; i++) {
+        UIControlItem *viewShareItem = _arrViewItem[i];
+        viewShareItem.frame = [self frameAtIndex:i];
+    }
+    
+    CGRect rc = CGRectMake(0, self.viewTop.bottom, self.width, self.viewBottom.height);
+    if (_arrViewItem.count>0) {
+        UIControlItem *viewShareItem = [_arrViewItem lastObject];
+        rc.size.height = viewShareItem.bottom+kPaddingTB;
+    }
+    
+    self.viewBottom.frame = rc;
+    rc = self.viewContent.frame;
+    rc.origin.x = 0;
+    rc.size.width = self.width;
+    rc.size.height = self.viewBottom.bottom;
+    rc.origin.y = self.height-rc.size.height;
+    self.viewContent.frame = rc;
+}
+
+@end

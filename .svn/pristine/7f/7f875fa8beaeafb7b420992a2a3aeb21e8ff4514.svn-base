@@ -1,0 +1,199 @@
+//
+//  UIControllerCreateBookmark.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/10.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerCreateBookmark.h"
+
+#import "ModelBookmark.h"
+#import "ADOBookmark.h"
+
+@interface UIControllerCreateBookmark ()<UITextFieldDelegate>
+{
+    UITextField *_textFieldForder;
+    UITextField *_textFieldTitle;
+    UITextField *_textFieldLink;
+}
+@end
+
+@implementation UIControllerCreateBookmark
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:YES];
+    [self initUI];
+}
+
+//初始化界面
+-(void)initUI
+{
+    _navBar.topItem.title = LocalizedString(@"zhanghudenglu");
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"fanhui") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchBtnback)];
+    _navBar.topItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"baocun") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchRightBarButtonItem)];
+    if(self.newType == NewBookmark)
+    {
+        _navBar.topItem.title = LocalizedString(@"xinjianshuqian");
+    }
+    else
+    {
+        _navBar.topItem.title = LocalizedString(@"xinjianshoucangjia");
+    }
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    CGRect rc = _navBar.frame;
+    
+    rc.origin.x = 0;
+    rc.size.width = self.view.width;
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    rc.origin.y = 20;
+#ifdef __IPHONE_8_0
+    rc.origin.y = UIInterfaceOrientationIsPortrait(orientation)?20:0;
+#endif
+    
+    _navBar.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.x = 0;
+    rc.origin.y = _navBar.bottom;
+    rc.size.width = self.view.width;
+    
+    _tableView.frame = rc;
+    
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+/**
+ *  点击_nav右边按钮事件.  书签下为编辑,历史下为清除
+ */
+-(void)onTouchRightBarButtonItem
+{
+    [self.delegate controller:self createBookmarkTitle:_textFieldTitle.text link:_textFieldLink.text];
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+//按下return建的代理方法
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    if (textField == _textFieldTitle)
+    {
+        [_textFieldLink becomeFirstResponder];
+    }
+    else
+    {
+        [self onTouchRightBarButtonItem];
+    }
+    return NO;
+}
+
+//- (void)textFieldDidEndEditing:(UITextField *)textField
+//{
+//    _DEBUG_LOG(@"%@",textField.text);
+//}
+//- (void)textFieldDidBeginEditing:(UITextField *)textField
+//{
+//    _DEBUG_LOG(@"%@",textField.text);
+//}
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+     _DEBUG_LOG(@"%@",textField.text);
+    return YES;
+}
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    if (self.newType == NewBookmark) {
+        return 2;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if (self.newType == NewBookmark) {
+        if (section == 0) {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    else
+    {
+        return 1;
+    }
+    
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    UITextField *field=[[UITextField alloc] initWithFrame:CGRectMake(20, 0, ([UIScreen mainScreen].bounds.size.width>[UIScreen mainScreen].bounds.size.height?[UIScreen mainScreen].bounds.size.height:[UIScreen mainScreen].bounds.size.width)-20, 44)];
+    
+    field.delegate = self;
+    field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    field.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin;
+    if (self.newType == NewFolder) {
+        
+        field.placeholder = LocalizedString(@"xinjianshoucangjia");
+        [cell addSubview:field];
+        _textFieldForder = field;
+        _textFieldForder.returnKeyType = UIReturnKeyDone;
+        return cell;
+    }
+    
+    //这里都是新建书签
+    if (indexPath.row == 0  && indexPath.section == 0) {
+        field.placeholder = LocalizedString(@"shuqianneirong");
+        [cell addSubview:field];
+        _textFieldTitle = field;
+        _textFieldTitle.returnKeyType = UIReturnKeyNext;
+    }else if(indexPath.row == 1)
+    {
+        field.placeholder = LocalizedString(@"shuqianlianjie");
+        [cell addSubview:field];
+        _textFieldLink = field;
+        _textFieldLink.returnKeyType = UIReturnKeyDone;
+    }
+    
+    if (indexPath.section == 1) {
+        cell.textLabel.text = LocalizedString(@"shuqian");
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    }
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didEndEditingRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+}
+
+
+
+@end

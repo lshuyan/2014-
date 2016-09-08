@@ -1,0 +1,161 @@
+//
+//  UIControllerImageGroup.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/12/6.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerImageGroup.h"
+#import "UIControllerImageAssets.h"
+
+#import "UICellGroup.h"
+
+#import <AssetsLibrary/AssetsLibrary.h>
+
+#define kTitle @"title"
+#define kSubTitle @"subTitle"
+#define kImage @"image"
+#define kGroupID @"GroupID"
+
+@interface UIControllerImageGroup ()
+{
+    NSMutableArray *_arrAllGroup;
+}
+@end
+
+@implementation UIControllerImageGroup
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.title = LocalizedString(@"xiangce");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    //导航栏设置
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnback) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+    
+    _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
+    //相册数据源
+    _arrAllGroup = [NSMutableArray new];
+    
+    [self getImageGroup];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [_tableView reloadData];
+    });
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+/**
+ *  获得相册数据源.
+ */
+-(void)getImageGroup
+{
+    ALAssetsLibrary * assetsLibrary = [[ALAssetsLibrary alloc] init];
+    [assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupAll
+                                 usingBlock:^(ALAssetsGroup *group, BOOL *stop){
+                                     
+                                     NSMutableDictionary *dic = [NSMutableDictionary new];
+                                     if (group)
+                                     {
+                                         //不知道为什么,group不能拿出这个block用.  只能把有用的信息存在字典里了.
+                                         
+                                         [dic setObject:[group valueForProperty:ALAssetsGroupPropertyName] forKey:kTitle];
+                                         [dic setObject:@([group numberOfAssets]) forKey:kSubTitle];
+                                         [dic setObject:[UIImage imageWithCGImage:[group posterImage]] forKey:kImage];
+                                         [dic setObject:[group valueForProperty:ALAssetsGroupPropertyPersistentID] forKey:kGroupID];
+                                         [_arrAllGroup addObject:dic];
+                                         
+                                     }
+//                                     NSLog(@"---------------------------%@",_arrAllGroup);
+                                 }
+                               failureBlock:^(NSError *error) {
+                                   NSLog(@"Failed to enumerate the asset groups.");
+                               }];
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+#pragma mask   UITableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    NSLog(@"sssssss%@",_arrAllGroup);
+    return _arrAllGroup.count;
+    
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *cellIdD = @"Cell";
+    
+    UICellGroup *cell = [tableView dequeueReusableCellWithIdentifier:cellIdD];
+    if (!cell) {
+        cell = [UICellGroup cellFromXib];
+    }
+    NSDictionary *dic = _arrAllGroup[indexPath.row];
+    
+    cell.imageViewL.image = dic[kImage];
+    cell.labelName.text = dic[kTitle];
+    cell.labelNumber.text = [NSString stringWithFormat:@"%d",[dic[kSubTitle] integerValue]];
+    
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UIControllerImageAssets *controller = [[UIControllerImageAssets alloc]initWithNibName:@"UIControllerImageAssets" bundle:nil];
+    controller.dicGroup = _arrAllGroup[indexPath.row];
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 90;
+}
+
+
+@end

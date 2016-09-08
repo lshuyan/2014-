@@ -1,0 +1,35 @@
+//
+//  AppLaunchUtil.h
+//  ChinaBrowser
+//
+//  Created by David on 14/12/5.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@class ModelProgram;
+
+/**
+ *  程序启动工具类
+ */
+@interface AppLaunchUtil : NSObject
+
+/**
+ *  是否从通知 启动 节目
+ */
+@property (nonatomic, assign, readonly) BOOL shouldLaunchProgram;
+
+/**
+ *  是否播放FM
+ */
+@property (nonatomic, assign, readonly) BOOL shouldPlayFM;
+
+/**
+ *  启动节目
+ */
+@property (nonatomic, strong) ModelProgram *program;
+
++ (instancetype)shareAppLaunch;
+
+@end

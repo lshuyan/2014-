@@ -1,0 +1,121 @@
+//
+//  UIControllerEditNick.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerEditNick.h"
+#import "ModelUser.h"
+
+@interface UIControllerEditNick ()
+
+@end
+
+@implementation UIControllerEditNick
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+        
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    _navBar.topItem.title = LocalizedString(@"nicheng");
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"fanhui") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchBtnBack)];
+    _navBar.topItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"baocun") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchBtnSave)];
+   // [self layoutSubViewsWithInterfaceOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    
+ 
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    CGRect rc = _navBar.frame;
+    if (IsiPad) {
+        rc.origin = CGPointZero;
+        rc.size.width = self.view.width;
+        rc.size.height = 44;
+    }
+    else {
+        rc.origin.x = 0;
+        rc.size.width = self.view.width;
+        rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+        rc.origin.y = 20;
+#ifdef __IPHONE_8_0
+        rc.origin.y = UIInterfaceOrientationIsPortrait(orientation)?20:0;
+#endif
+    }
+    
+    _navBar.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.x = 0;
+    rc.origin.y = _navBar.bottom;
+    rc.size.width = self.view.width;
+    rc.size.height = self.view.height-_navBar.bottom;
+    _tableView.frame = rc;
+}
+
+//返回按钮
+-(void)onTouchBtnBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+//返回按钮
+-(void)onTouchBtnSave
+{
+    _DEBUG_LOG(@"%s",__FUNCTION__);
+}
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 1;
+    
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
+    
+    UITextField *field=[[UITextField alloc] initWithFrame:CGRectMake(20, 0, ([UIScreen mainScreen].bounds.size.width>[UIScreen mainScreen].bounds.size.height?[UIScreen mainScreen].bounds.size.height:[UIScreen mainScreen].bounds.size.width)-20, 44)];
+    
+    field.backgroundColor=[UIColor orangeColor];
+    field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    field.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin;
+    
+    ModelUser *user = [UserManager shareUserManager].currUser;
+    field.text = user.nickname;
+    
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    [cell addSubview:field];
+    
+    return cell;
+}
+
+@end

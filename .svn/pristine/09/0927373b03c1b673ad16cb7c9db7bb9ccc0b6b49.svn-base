@@ -1,0 +1,450 @@
+//
+//  UIControllerCreateBookmark.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/10.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerCreateBookmark.h"
+
+#import "ADOBookmark.h"
+
+@interface UIControllerCreateBookmark ()<UITextFieldDelegate,UIControllerSelectionForderDelegate>
+{
+    UITextField *_textFieldForder;
+    UITextField *_textFieldTitle;
+    UITextField *_textFieldLink;
+    //能否保存.  在输入框未填入的情况下为NO
+    BOOL _canSave;
+    //选择保存的文件夹编号
+    NSInteger _folderParen_pkid;
+    
+    UITableViewCell *_cell;
+}
+@end
+
+@implementation UIControllerCreateBookmark
+
+-(void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    //注册键盘通知
+    [self registerForKeyboardNotifications];
+    //初始化UI
+    [self initUI];
+    
+    _textFieldForder.delegate = self;
+    _textFieldLink.delegate = self;
+    _textFieldTitle.delegate = self;
+    //判断输入框有没有值.  没有就保持按钮变灰
+    if (self.type == typeEditBookmark || self.type == typeNewBookmark) {
+        [self textField:_textFieldTitle shouldChangeCharactersInRange:NSMakeRange(0, 0) replacementString:nil];
+        [self textField:_textFieldLink shouldChangeCharactersInRange:NSMakeRange(0, 0) replacementString:nil];
+    }
+    else{
+        [self textField:_textFieldForder shouldChangeCharactersInRange:NSMakeRange(0, 0) replacementString:nil];
+    }
+    
+    if(self.type == typeEditBookmark || self.type == typeNewBookmark)
+    {
+        ModelBookmark *model = [ADOBookmark queryWithPkid:self.model.parent_pkid];
+        if (self.type == typeNewBookmark && self.model)
+        {
+            _folderParen_pkid = self.model.pkid;
+        }
+        else if(self.type == typeEditBookmark && model)
+        {
+            _folderParen_pkid = model.pkid;
+        }
+        else
+        {
+            _folderParen_pkid = 0;
+        }
+    }
+}
+
+//初始化界面
+-(void)initUI
+{
+
+    _viewNav = [UIViewNav viewNav];
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnback) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+    
+    [_btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [_btnSave addTarget:self action:@selector(onTouchRightBarButtonItem) forControlEvents:UIControlEventTouchUpInside];
+  
+    _btnSave.tintColor = [UIColor whiteColor];
+    _btnSave.userInteractionEnabled = YES;
+
+    if(self.type == typeNewBookmark)
+    {
+        self.title = LocalizedString(@"xinjianshuqian");
+    }
+    else if(self.type == typeNewFolder)
+    {
+        self.title = LocalizedString(@"xinjianwenjianjia");
+    }
+    else if(self.type == typeEditBookmark)
+    {
+        self.title = LocalizedString(@"bianjishuqian");
+
+    }
+    else if(self.type == typeEditFolder)
+    {
+        self.title = LocalizedString(@"bianjiwenjianjia");
+
+    }
+    
+    _viewNav.title = self.title;
+    [self.view bringSubviewToFront:_btnSave];
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+//    CGRect rc = _navBar.frame;
+//    
+//    rc.origin.x = 0;
+//    rc.size.width = self.view.width;
+//    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+//    rc.origin.y = 20;
+//#ifdef __IPHONE_8_0
+//    rc.origin.y = UIInterfaceOrientationIsPortrait(orientation)?20:0;
+//#endif
+//    
+//    _navBar.frame = rc;
+//    
+//    float y = rc.origin.y + (rc.size.height - _btnSave.frame.size.height)*0.5;
+//    
+//    rc = _btnSave.frame;
+//    rc.origin.y = y;
+//    rc.origin.x = _navBar.frame.size.width - rc.size.width - 9;
+//    _btnSave.frame = rc;
+//    
+//    rc = _tableView.frame;
+//    rc.origin.x = 0;
+//    rc.origin.y = _navBar.bottom;
+//    rc.size.width = self.view.width;
+//    
+//    _tableView.frame = rc;
+    
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    rc.size.width = _viewNav.frame.size.width;
+    _tableView.frame = rc;
+    
+    rc = _btnSave.frame;
+    if (_viewNav.frame.size.height>44) {
+        rc.origin.y = _viewNav.frame.origin.y + 20 + (_viewNav.frame.size.height -20 - rc.size.height)*0.5;
+    }else
+    {
+        rc.origin.y = _viewNav.top + (_viewNav.frame.size.height - rc.size.height)*0.5;
+    }
+    
+    rc.origin.x = _viewNav.frame.size.width - rc.size.width - 9;
+    _btnSave.frame = rc;
+    
+}
+
+/**
+ *  注册键盘通知
+ */
+- (void)registerForKeyboardNotifications
+{
+    //使用NSNotificationCenter 鍵盤出現時
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWasShown:)
+                                                 name:UIKeyboardDidShowNotification
+                                               object:nil];
+    
+    //使用NSNotificationCenter 鍵盤隐藏時
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillBeHidden:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
+}
+
+//实现当键盘出现的时候计算键盘的高度大小。用于设置scrollView的contentSize;
+- (void)keyboardWasShown:(NSNotification*)aNotification
+{
+    NSDictionary* info = [aNotification userInfo];
+    float kbheight;
+    
+    kbheight = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height;
+    //得到鍵盤的高度
+    if (kbheight>300) {
+        kbheight = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size.width;
+    }
+    CGRect rect = _tableView.frame;
+    
+    rect.size.height = self.view.bounds.size.height-rect.origin.y-kbheight;
+    _tableView.frame = rect;
+    
+}
+
+//当键盘隐藏的时候
+- (void)keyboardWillBeHidden:(NSNotification*)aNotification
+{
+    
+    CGRect rect =_tableView.frame;
+    rect.size.height = self.view.bounds.size.height-rect.origin.y;
+    _tableView.frame = rect;
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+/**
+ *  点击_nav右边按钮事件.  保存
+ */
+-(void)onTouchRightBarButtonItem
+{
+    if (self.type == typeNewBookmark || self.type  == typeEditBookmark)
+    {
+        [self.delegate controller:self createBookmarkTitle:_textFieldTitle.text link:_textFieldLink.text type:self.type modekBookmark:self.model selectionParen_pkid:_folderParen_pkid];
+    }
+    else
+    {
+        if (![ADOBookmark isExistFolderWithTitil:_textFieldForder.text userId:[UserManager shareUserManager].currUser.uid]) {
+            [self.delegate controller:self createBookmarkTitle:_textFieldForder.text link:nil type:self.type modekBookmark:self.model selectionParen_pkid:_folderParen_pkid];
+        }
+        else
+        {
+            UIActionSheet *as = [[UIActionSheet alloc] initWithTitle:LocalizedString(@"yicunzaitongmingwenjianjia") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:nil otherButtonTitles:nil, nil];
+            [as showInView:self.view];
+            return;
+        }
+        
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+//按下return建的代理方法
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    if (textField == _textFieldTitle)
+    {
+        [_textFieldLink becomeFirstResponder];
+    }
+    else
+    {
+        if (_btnSave.userInteractionEnabled) {
+            [self onTouchRightBarButtonItem];
+        }
+        
+    }
+    return NO;
+}
+
+//监控输入框有没有输入
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    NSString *text = [textField.text stringByReplacingCharactersInRange:range withString:string];
+
+        if (self.type == typeEditBookmark || self.type == typeNewBookmark) {
+            if (_textFieldTitle == textField) {
+                if (_textFieldLink.text.length == 0 || text.length == 0) {
+                    [_btnSave setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
+                    _btnSave.userInteractionEnabled = NO;
+                }
+                else
+                {
+                    [_btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+                    _btnSave.userInteractionEnabled = YES;
+                }
+                return YES;
+            }
+            else
+            {
+                if (_textFieldTitle.text.length == 0 || text.length == 0) {
+                    [_btnSave setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
+                    _btnSave.userInteractionEnabled = NO;
+                }
+                else
+                {
+                    [_btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+                    _btnSave.userInteractionEnabled = YES;
+                }
+                return YES;
+            }
+            
+        }
+        else
+        {
+          
+            if (text.length==0) {
+                [_btnSave setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
+                _btnSave.userInteractionEnabled = NO;
+            }
+            else
+            {
+                [_btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+                _btnSave.userInteractionEnabled = YES;
+            }
+        }
+
+    
+    return YES;
+}
+
+#pragma mark - uicontrollerselectionfolderDelegate
+-(void)controller:(UIControllerSelectionForder *)controller SelectionForder:(NSInteger)paren_pkid
+{
+
+    _folderParen_pkid = paren_pkid;
+    ModelBookmark *model = [ADOBookmark queryWithPkid:_folderParen_pkid];
+    if (model)
+    {
+        _cell.textLabel.text = model.title;
+    }
+    else
+    {
+        _cell.textLabel.text = LocalizedString(@"xuanzewenjianjia");
+    }
+}
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    if (self.type == typeNewBookmark || self.type == typeEditBookmark) {
+        return 2;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if (self.type == typeNewBookmark || self.type ==typeEditBookmark) {
+        if (section == 0) {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    else
+    {
+        return 1;
+    }
+    
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"cell"];
+    if(!cell)
+    {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"cell"];
+    }
+    cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+    
+    UITextField *field=[[UITextField alloc] initWithFrame:CGRectMake(20, 0, ([UIScreen mainScreen].bounds.size.width>[UIScreen mainScreen].bounds.size.height?[UIScreen mainScreen].bounds.size.height:[UIScreen mainScreen].bounds.size.width)-30, 44)];
+    field.delegate = self;
+    field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    field.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin;
+    field.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    field.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+    if (indexPath.row == 0) {
+        [field becomeFirstResponder];
+    }
+    //这里是文件
+    if (self.type == typeNewFolder || self.type == typeEditFolder) {
+        if (self.model && self.type == typeEditFolder) {
+            field.text = self.model.title;
+        }
+        field.placeholder = LocalizedString(@"xinjianwenjianjia");
+        [cell addSubview:field];
+        _textFieldForder = field;
+        _textFieldForder.returnKeyType = UIReturnKeyDone;
+        return cell;
+    }
+    
+    //这里都是书签
+    if (indexPath.row == 0  && indexPath.section == 0) {
+        if (self.model && self.type == typeEditBookmark) {
+            field.text = self.model.title;
+        }
+        field.placeholder = LocalizedString(@"shuqianneirong");
+        [cell addSubview:field];
+        _textFieldTitle = field;
+        _textFieldTitle.returnKeyType = UIReturnKeyNext;
+    }else if(indexPath.row == 1)
+    {
+        if (self.model && self.type == typeEditBookmark) {
+            field.text = self.model.link;
+        }
+        field.placeholder = LocalizedString(@"shuqianlianjie");
+        [cell addSubview:field];
+        _textFieldLink = field;
+        _textFieldLink.returnKeyType = UIReturnKeyDone;
+    }
+    //选择文件的cell
+    if (indexPath.section == 1) {
+        _cell = cell;
+        ModelBookmark *model = [ADOBookmark queryWithPkid:_folderParen_pkid];
+        if (model)
+        {
+            cell.textLabel.text = model.title;
+        }
+        else
+        {
+            cell.textLabel.text = LocalizedString(@"xuanzewenjianjia");
+        }
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.userInteractionEnabled =YES;
+        cell.imageView.image = [UIImage imageWithBundleFile:@"iPhone/Settings/Bookmark/folder.png"];
+    }
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if(indexPath.section == 1)
+    {
+        
+        UIControllerSelectionForder *controller = [[UIControllerSelectionForder alloc]initWithNibName:@"UIControllerSelectionForder" bundle:nil];
+        controller.delegate =self;
+        if(self.type == typeEditBookmark || self.type == typeNewBookmark)
+        {
+            controller.pkid = _folderParen_pkid;
+        }
+        
+        [self.navigationController pushViewController:controller animated:YES];
+    }
+}
+
+
+
+@end

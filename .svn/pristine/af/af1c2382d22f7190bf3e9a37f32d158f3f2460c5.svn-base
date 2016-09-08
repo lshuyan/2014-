@@ -1,0 +1,80 @@
+//
+//  DatabaseUtil.m
+//  ChinaBrowser
+//
+//  Created by David on 12-7-24.
+//  Copyright (c) 2012年 KOTO Inc. All rights reserved.
+//
+
+#import "DatabaseUtil.h"
+#import <sqlite3.h>
+
+@implementation DatabaseUtil
+
++ (void)createDatabase {
+    void (^newDB)()=^{
+        char * error = nil;
+        sqlite3 *db = nil;
+        
+        // 应用
+        char *sql_app = "CREATE TABLE IF NOT EXISTS tab_app ("
+        "pkid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,"
+        "app_type INTEGER,"
+        "name TEXT,"
+        "icon TEXT,"
+        "link TEXT,"
+        "url_schemes TEXT,"
+        "download_link TEXT,"
+        "order_index INTEGER)";
+        
+        // 新闻阅读状态
+        char *sql_news_status = "CREATE TABLE IF NOT EXISTS tab_news_status ("
+        "pkid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,"
+        "newsid INTEGER,"
+        "status INTEGER DEFAULT 0)";
+        
+        // 搜索历史记录
+        char *sql_search_history = "CREATE TABLE IF NOT EXISTS tab_search_history ("
+        "pkid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,"
+        "keyword TEXT)";
+        
+        // 书签
+        char *sql_bookmark = "CREATE TABLE IF NOT EXISTS tab_bookmark ("
+        "pkid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,"
+        "parent_pkid INTEGER,"
+        "sort INTEGER,"
+        "title TEXT,"
+        "link TEXT,"
+        "icon TEXT,"
+        "is_folder INTEGER,"
+        "can_edit INTEGER,"
+        "userid INTEGER,"
+        "time INTEGER)";
+        
+        // 历史
+        char *sql_history = "CREATE TABLE IF NOT EXISTS tab_history ("
+        "pkid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT DEFAULT 1,"
+        "title TEXT,"
+        "link TEXT,"
+        "icon TEXT,"
+        "time DOUBLE,"
+        "userid INTEGER,"
+        "times DOUBLE)";
+        
+        char * arrSql[] = {sql_app, sql_search_history, sql_history, sql_bookmark, sql_news_status};
+        int nSql = sizeof(arrSql)/sizeof(char*);
+        
+        if (SQLITE_OK == sqlite3_open([GetDBPathWithName(DB_NAME) UTF8String], &db)) {
+            for (int i=0; i<nSql; i++) {
+                sqlite3_exec(db, arrSql[i], NULL, NULL, &error);
+            }
+        }
+        
+        if (error) sqlite3_free(error);
+        if (db) sqlite3_close(db);
+    };
+    
+    newDB();
+}
+
+@end

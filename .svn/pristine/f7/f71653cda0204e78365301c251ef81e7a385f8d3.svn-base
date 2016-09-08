@@ -1,0 +1,41 @@
+//
+//  UIViewBannerItem.m
+//  DailyHeadlines
+//
+//  Created by David on 2011-12-16.
+//  Copyright 2011年 com.veryapps. All rights reserved.
+//
+
+#import "UIViewBannerItem.h"
+
+#define kBannerAnimationDuration 0.5
+
+@implementation UIViewBannerItem
+
+@synthesize labelTitle = _labelTitle;
+
+#pragma mark - Init
+
+- (id)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
+        CGRect rc = self.bounds;
+        _imageView = [[UIImageView alloc] initWithFrame:rc];
+        _imageView.clipsToBounds = YES;
+        _imageView.contentMode = UIViewContentModeScaleToFill;
+        _imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+        
+//        rc.size.height = 30;
+//        rc.origin.y = self.bounds.size.height-rc.size.height;
+//        _labelTitle = [[UILabel alloc] initWithFrame:rc];
+//        _labelTitle.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
+//        _labelTitle.textColor = [UIColor whiteColor];
+//        _labelTitle.font = [UIFont boldSystemFontOfSize:14];
+        
+        [self addSubview:_imageView];
+//        [self addSubview:_labelTitle];
+    }
+    
+    return self;
+}
+
+@end

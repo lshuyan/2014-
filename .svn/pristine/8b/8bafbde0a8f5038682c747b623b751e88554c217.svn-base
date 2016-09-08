@@ -1,0 +1,181 @@
+//
+//  ADOMode.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/22.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOMode.h"
+
+#import "DBHelper.h"
+#import "ModelMode.h"
+
+#import "ADOModeProgram.h"
+
+@implementation ADOMode
+
++ (BOOL)isExistWithName:(NSString *)name sysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId
+{
+    NSInteger pkid = [[DBHelper shareDBHelper].db intForQuery:@"select pkid from tab_mode where name=? and sys_recommend=? and user_id=? and lan=?", name, @(sysRecommend), @(userId), [LocalizationUtil currLanguage]];
+    return pkid>0;
+}
+
++ (BOOL)isExistWithPkidServer:(NSInteger)pkidServer
+{
+    NSInteger pkid = [[DBHelper shareDBHelper].db intForQuery:@"select pkid from tab_mode where pkid_server=? and lan=?", @(pkidServer), [LocalizationUtil currLanguage]];
+    return pkid>0;
+}
+
++ (NSInteger)addModel:(ModelMode *)model
+{
+    NSInteger lastInsertId = -1;
+    if ([ADOMode isExistWithName:model.name sysRecommend:model.sysRecommend userId:model.userid]) {
+        return lastInsertId;
+    }
+    
+    BOOL flag = [[DBHelper shareDBHelper].db executeUpdate:@"insert into tab_mode (user_id, lan, name, sys_recommend, pkid_server, update_time, update_time_server) values (?,?,?,?,?,?,?)", @(model.userid), model.lan?:@"", model.name, @(model.sysRecommend), @(model.pkid_server), @(model.updateTime), @(model.updateTimeServer)];
+    if (flag) {
+        lastInsertId = (NSInteger)[[DBHelper shareDBHelper].db lastInsertRowId];
+    }
+    return lastInsertId;
+}
+
++ (BOOL)updateName:(NSString *)name withPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_mode set name=? where pkid=?", name, @(pkid)];
+}
+
++ (BOOL)updateName:(NSString *)name withPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_mode set name=? where pkid_server=? and lan=? and user_id=?", name, @(pkidServer), [LocalizationUtil currLanguage], @(userId)];
+}
+
++ (BOOL)updatePkidServer:(NSInteger)pkidServer updateTimeServer:(NSInteger)updateTimeServer withPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_mode set pkid_server=?, update_time_server=? where pkid=?", @(pkidServer), @(updateTimeServer), @(pkid)];
+}
+
++ (BOOL)updateModel:(ModelMode *)model
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_mode set name=?, update_time=?, update_time_server=?, pkid_server=? where pkid=?", model.name, @(model.updateTime), @(model.updateTimeServer), @(model.pkid_server), @(model.pkid)];
+}
+
++ (ModelMode *)queryWithPkid:(NSInteger)pkid
+{
+    ModelMode *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where pkid=?", @(pkid)];
+    while ([set next]) {
+        model= [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (ModelMode *)queryWithPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId
+{
+    ModelMode *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where pkid_server=? and lan=? and user_id=?", @(pkidServer), [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        model= [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (ModelMode *)queryWithPkidServer:(NSInteger)pkidServer
+{
+    ModelMode *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where pkid_server=? and lan=?", @(pkidServer), [LocalizationUtil currLanguage]];
+    while ([set next]) {
+        model= [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (ModelMode *)queryWithName:(NSString *)name sysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId exceptPkid:(NSInteger)exceptPkid
+{
+    ModelMode *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where user_id=? and lan=? and sys_recommend=? and name=? and pkid<>?", @(userId), [LocalizationUtil currLanguage], @(sysRecommend), name, @(exceptPkid)];
+    while ([set next]) {
+        model= [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (NSArray *)queryWithUserId:(NSInteger)userId sysRecommend:(BOOL)sysRecommend
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where sys_recommend=? and user_id=? and lan=?", @(sysRecommend), @(userId), [LocalizationUtil currLanguage]];
+    while ([set next]) {
+        ModelMode *model = [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
++ (NSArray *)queryWillUpdateWithUserId:(NSInteger)userId
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where pkid_server>0 and update_time>update_time_server and sys_recommend=0 and user_id=? and lan=?", @(userId), [LocalizationUtil currLanguage]];
+    while ([set next]) {
+        ModelMode *model = [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
++ (NSArray *)queryWillAddWithUserId:(NSInteger)userId
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_mode where pkid_server=0 and sys_recommend=0 and user_id=? and lan=?", @(userId), [LocalizationUtil currLanguage]];
+    while ([set next]) {
+        ModelMode *model = [ModelMode modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_mode where pkid=?", @(pkid)];
+}
+
++ (BOOL)deleteWithPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_mode where pkid_server=? and lan=? and user_id=?", @(pkidServer), [LocalizationUtil currLanguage], @(userId)];
+}
+
++ (BOOL)deleteWithArrPkidServer:(NSArray *)arrPkidServer userId:(NSInteger)userId
+{
+    NSString *pkidServers = [arrPkidServer componentsJoinedByString:@","];
+    if (pkidServers.length<=0) {
+        pkidServers = @"0";
+    }
+    NSString *sql = [NSString stringWithFormat:@"delete from tab_mode where user_id=%d and lan='%@' and pkid_server>0 and pkid_server not in (%@)", userId, [LocalizationUtil currLanguage], pkidServers];
+    return [[DBHelper db] executeUpdate:sql];
+}
+
++ (BOOL)deleteWithUserId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_mode where user_id=? and lan=?", @(userId), [LocalizationUtil currLanguage]];
+}
+
++ (BOOL)deleteWithSysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId;
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_mode where sys_recommend=? and user_id=? and lan=?", @(sysRecommend), @(userId), [LocalizationUtil currLanguage]];
+}
+
++ (BOOL)clear
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_mode where lan=?", [LocalizationUtil currLanguage]];
+}
+
++ (BOOL)clearWithUserId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_mode where lan=? and user_id=?", [LocalizationUtil currLanguage], @(userId)];
+}
+
+@end

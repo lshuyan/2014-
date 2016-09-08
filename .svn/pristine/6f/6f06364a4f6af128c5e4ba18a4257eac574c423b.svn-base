@@ -1,0 +1,86 @@
+//
+//  UICellSelectionFolder.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/13.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellBookmarkHisoty.h"
+#define kWidthDefault 269;
+#define kWidthEidt 190;
+
+@implementation UICellBookmarkHisoty
+
+- (void)awakeFromNib
+{
+    self.cellSeparatorStyle = CellSeparatorStyleNone;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+- (void)drawRect:(CGRect)rect
+{
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithRed:0xE2/255.0f green:0xE2/255.0f blue:0xE2/255.0f alpha:1].CGColor);
+    float x;
+    if (self.cellSeparatorStyle == CellSeparatorStyleFill) {
+        x=0;
+    }
+    else if (self.cellSeparatorStyle == CellSeparatorStyleFolder) {
+        x = self.labelFolderTitle.frame.origin.x;
+    }
+    else
+    {
+        x = self.labelBookmarkTitle.frame.origin.x;
+    }
+    CGContextStrokeRect(context, CGRectMake(x, rect.size.height - 1, rect.size.width, 1));
+
+}
+
+//编辑 or 非编辑状态
+- (void)willTransitionToState:(UITableViewCellStateMask)state NS_AVAILABLE_IOS(3_0)
+{
+    [super willTransitionToState:state];
+    CGRect rc = self.labelBookmarkTitle.frame;
+    if(state == UITableViewCellStateDefaultMask)
+    {
+        rc.size.width = kWidthDefault;
+        
+    }
+    else
+    {
+        rc.size.width = kWidthEidt;
+    }
+    
+    self.labelBookmarkTitle.frame = rc;
+    rc.origin.y = self.labelBookmarkDetail.frame.origin.y;
+    self.labelBookmarkDetail.frame = rc;
+
+}
+
+- (void)setCellStyle:(CellStyle)cellStyle
+{
+    _cellStyle = cellStyle;
+    CGRect rc = self.labelBookmarkTitle.frame;
+    if (cellStyle == CellStyleNone) {
+        rc.origin.y = 1;
+        self.backgroundColor = [UIColor whiteColor];
+        self.accessoryType = UITableViewCellAccessoryNone;
+        self.labelBookmarkDetail.hidden = NO;
+    }else{
+        
+        rc.origin.y = 9;
+        self.imageViewLeftIcon.image = [UIImage imageWithBundleFile:@"iPhone/App/folder.png"];
+        self.labelBookmarkDetail.hidden = YES;
+    }
+    self.labelBookmarkTitle.frame = rc;
+}
+
+
+@end

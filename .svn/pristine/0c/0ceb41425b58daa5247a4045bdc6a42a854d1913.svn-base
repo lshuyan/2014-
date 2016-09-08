@@ -1,0 +1,140 @@
+//
+//  UIControllerPlayer.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-18.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerPlayer.h"
+
+#import "UIViewNav.h"
+#import <MediaPlayer/MediaPlayer.h>
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+
+@interface UIControllerPlayer ()
+{
+    UIViewNav *_viewNav;
+    MPMoviePlayerController *_moviePlayer;
+    UIImageView *_imageViewLoading;
+}
+
+@end
+
+@implementation UIControllerPlayer
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(playerLoadStateDidChangeNotification:)
+                                                 name:MPMoviePlayerLoadStateDidChangeNotification
+                                               object:nil];
+    
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    
+    _DEBUG_LOG(@"%@", _url);
+    _DEBUG_LOG(@"%@", _thumb);
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    _moviePlayer = [[MPMoviePlayerController alloc] init];
+    _moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
+    _moviePlayer.view.frame = self.view.bounds;//CGRectInset(self.view.bounds, 20, 20);
+    _moviePlayer.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    _moviePlayer.allowsAirPlay = NO;
+    _moviePlayer.shouldAutoplay = YES;
+    _moviePlayer.repeatMode = MPMovieRepeatModeOne;
+    _moviePlayer.movieSourceType = MPMovieSourceTypeStreaming;
+    [self.view insertSubview:_moviePlayer.view belowSubview:_viewNav];
+    _moviePlayer.contentURL = [NSURL URLWithString:_url];
+    
+    UIButton *btnClose = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnClose setTitle:LocalizedString(@"guanbi") forState:UIControlStateNormal];
+    [btnClose sizeToFit];
+    [btnClose addTarget:self action:@selector(onTouchClose) forControlEvents:UIControlEventTouchUpInside];
+    UIBarButtonItem *bbiClose = [[UIBarButtonItem alloc] initWithCustomView:btnClose];
+    
+    _viewNav.leftBarButtonItem = bbiClose;
+    
+    _imageViewLoading = [[UIImageView alloc] initWithFrame:self.view.bounds];
+    _imageViewLoading.backgroundColor = [UIColor blackColor];
+    _imageViewLoading.autoresizingMask = UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth;
+    _imageViewLoading.contentMode = UIViewContentModeScaleAspectFit;
+    [_imageViewLoading setImageWithURL:[NSURL URLWithString:_thumb] usingActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+    [self.view insertSubview:_imageViewLoading belowSubview:_viewNav];
+    
+    [_moviePlayer prepareToPlay];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - private methods
+- (void)onTouchClose
+{
+    [_moviePlayer stop];
+    [self dismissModalViewControllerAnimated:YES];
+    
+    if ([UIApplication sharedApplication].statusBarHidden) {
+        [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    }
+    
+    if (IsiPad) {
+        [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    }
+}
+
+- (void)playerLoadStateDidChangeNotification:(NSNotification *)notification
+{
+    if ((MPMovieLoadStatePlayable|MPMovieLoadStatePlaythroughOK)==_moviePlayer.loadState) {
+        _imageViewLoading.alpha = 0;
+    }
+    _DEBUG_LOG(@"%s:%d:%d", __FUNCTION__, _moviePlayer.loadState, _moviePlayer.playbackState);
+}
+
+#pragma mark - rotate
+- (BOOL)shouldAutorotate
+{
+    return NO;
+}
+
+- (NSUInteger)supportedInterfaceOrientations
+{
+    return UIInterfaceOrientationMaskLandscape;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+    return UIInterfaceOrientationIsLandscape(toInterfaceOrientation);
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (IsiPad) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+}
+
+@end

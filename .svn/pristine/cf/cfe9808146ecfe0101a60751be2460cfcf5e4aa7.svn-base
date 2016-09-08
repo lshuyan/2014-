@@ -1,0 +1,26 @@
+//
+//  UIImage+Ex.h
+//  ChinaBrowser
+//
+//  Created by David on 14-2-14.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UIImage (Extension)
+
+/**
+ *  去bundle里的图片
+ *
+ *  @param file bundle中文件的相对路径
+ *
+ *  @return UIImage
+ */
++ (UIImage *)imageWithBundleFile:(NSString *)file;
+
++ (UIImage *)imageFromView:(UIView *)view;
+
++ (UIImage *)imageFromView:(UIView *)view rect:(CGRect)rect;
+
+@end

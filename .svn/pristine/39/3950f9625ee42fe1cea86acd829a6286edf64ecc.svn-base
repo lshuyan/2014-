@@ -1,0 +1,58 @@
+//
+//  ADOUserSettings.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/24.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOUserSettings.h"
+
+@implementation ADOUserSettings
+
++ (BOOL)isExistWithUserId:(NSInteger)userId
+{
+    return NO;
+}
+
++ (BOOL)isExistWithPkidServer:(NSInteger)pkidServer
+{
+    return NO;
+}
+
++ (NSInteger)addModel:(ModelUserSettings *)model
+{
+    return 0;
+}
+
++ (BOOL)updateModel:(ModelUserSettings *)model
+{
+    return NO;
+}
+
++ (ModelUserSettings *)queryWithPkid:(NSInteger)pkid;
+{
+    return nil;
+}
+
++ (ModelUserSettings *)queryWithUserId:(NSInteger)userId
+{
+    return nil;
+}
+
++ (BOOL)deleteWithPkid:(NSInteger)pkid;
+{
+    return NO;
+}
+
++ (BOOL)deleteWithUserId:(NSInteger)userId
+{
+    return NO;
+}
+
++ (BOOL)clear
+{
+    return NO;
+}
+
+@end

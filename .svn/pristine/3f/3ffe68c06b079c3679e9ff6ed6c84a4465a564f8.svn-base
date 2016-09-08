@@ -1,0 +1,643 @@
+//
+//  AppSetting.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "AppSetting.h"
+
+#import "ModelSearchEngine.h"
+#import "ModelSNSItem.h"
+
+#import "SDWebImageDownloader.h"
+#import "SDWebImageManager.h"
+
+#define kOpenLastWebsite @"kOpenLastWebsite"
+#define kUrlOpenStyle @"kUrlOpenStyle"
+#define kFontsize @"kFontsize"
+#define kSearchIndex @"kSearchIndex"
+#define kRemotePush @"kRemotePush"
+#define kAdBlockers @"kAdBlockers"
+#define kRotateScreen @"kRotateScreen"
+#define kPageStyle @"kPageStyle"
+#define kPageStyleKeyShowPageBtn @"kPageStyleKeyShowPageBtn"
+#define kPageStyleKeyShouldTouchPage @"kPageStyleKeyShouldTouchPage"
+#define kSaveForm @"kSaveForm"
+#define kUserAgentIndex @"kUserAgentIndex"
+
+#define kBrightness @"kBrightness"
+#define kNoImageMode @"kNoImageMode"
+#define kNoSaveHistory @"kNoSaveHistory"
+#define kDesktopStyle @"kDesktopStyle"
+#define kSkinInfo   @"kSkinInfo"
+#define kSkinInfoKeyIsAppInternal   @"kSkinInfoKeyIsAppInternal"
+#define kSkinInfoKeySkinIndex   @"kSkinInfoKeySkinIndex"
+
+#define kSysUserAgent @"kSysUserAgent"
+
+
+static AppSetting *appSetting;
+AFJSONRequestOperation *_afReqSearchEngine;
+AFJSONRequestOperation *_afReqShareItems;
+
+@implementation AppSetting
+{
+    /**
+     *  实例化的时候初始化AppSettings数据，且一直存在，读取设置信心从内存读取，不直接读取文件；
+     */
+    NSMutableDictionary *_dicAppSettings;
+
+}
+
+@synthesize skinImage = _skinImage;
+
++ (instancetype)shareAppSetting
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        appSetting = [[AppSetting alloc] init];
+    });
+    return appSetting;
+}
+
++ (void)init
+{
+    [AppSetting shareAppSetting];
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.arrUserAgent = [NSArray arrayWithContentsOfFile:[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"UserAgent.plist"]];
+        
+        /**
+         *  从本地读取 设置文件
+         */
+        NSData *data = [NSData dataWithContentsOfFile:[self filepath]];
+        if (data) {
+            _dicAppSettings = [NSPropertyListSerialization propertyListWithData:data
+                                                                        options:NSPropertyListMutableContainersAndLeaves
+                                                                         format:NULL
+                                                                          error:nil];
+            _openLastWebsite = [_dicAppSettings[kOpenLastWebsite] boolValue];
+            _urlOpenStyle = [_dicAppSettings[kUrlOpenStyle] integerValue];
+            _fontsize = [_dicAppSettings[kFontsize] floatValue];
+            _remotePush = [_dicAppSettings[kRemotePush] boolValue];
+            _adBlockers = [_dicAppSettings[kAdBlockers] boolValue];
+            _rotateScreen = [_dicAppSettings[kRotateScreen] boolValue];
+            _saveForm = [_dicAppSettings[kSaveForm] integerValue];
+            _userAgentIndex = [_dicAppSettings[kUserAgentIndex] integerValue];
+            
+            _brightness = [_dicAppSettings[kBrightness] floatValue];
+            _noImageMode = [_dicAppSettings[kNoImageMode] boolValue];
+            _noSaveHistory = [_dicAppSettings[kNoSaveHistory] boolValue];
+            _desktopStyle = [_dicAppSettings[kDesktopStyle] integerValue];
+            
+            NSDictionary *dicPageStyle = _dicAppSettings[kPageStyle];
+            if (dicPageStyle) {
+                _pageStyle.showPageBtn = [dicPageStyle[kPageStyleKeyShowPageBtn] integerValue];
+                _pageStyle.shouldTouchPage = [dicPageStyle[kPageStyleKeyShouldTouchPage] integerValue];
+            }
+            else {
+                _pageStyle = (PageStyle){YES, NO};
+                
+                _dicAppSettings[kPageStyle] = @{kPageStyleKeyShowPageBtn:@(_pageStyle.showPageBtn),kPageStyleKeyShouldTouchPage:@(_pageStyle.shouldTouchPage)};
+                
+                [self saveAppSettings];
+            }
+            
+            NSDictionary *dicSkinInfo = _dicAppSettings[kSkinInfo];
+            if (dicSkinInfo) {
+                _skinInfo.isAppInternal = [dicSkinInfo[kSkinInfoKeyIsAppInternal] boolValue];
+                _skinInfo.skinIndex = [dicSkinInfo[kSkinInfoKeySkinIndex] integerValue];
+            }
+            else {
+                _skinInfo.isAppInternal = YES;
+                _skinInfo.skinIndex = 0;
+                
+                _dicAppSettings[kSkinInfo] = @{kSkinInfoKeyIsAppInternal:@(_skinInfo.isAppInternal),
+                                               kSkinInfoKeySkinIndex:@(_skinInfo.skinIndex)};
+                [self saveAppSettings];
+            }
+            
+            if (!_dicAppSettings[kSysUserAgent]) {
+                _dicAppSettings[kSysUserAgent] = [[[UIWebView alloc] init] stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+            }
+            
+            NSMutableDictionary *dicSearchIndex = _dicAppSettings[kSearchIndex];
+            if (dicSearchIndex[[LocalizationUtil currLanguage]]) {
+                _searchIndex = [dicSearchIndex[[LocalizationUtil currLanguage]] integerValue];
+            }
+            else {
+                _searchIndex = 0;
+                dicSearchIndex[[LocalizationUtil currLanguage]] = @(_searchIndex);
+                
+                [self saveAppSettings];
+            }
+            
+            // 注册 UserAgent
+            [self registerUserAgent:self.userAgent];
+            [self enableAPNS:_remotePush];
+        }
+        else {
+            // 如果本地不存在 设置文件，则使用默认值创建一个 设置文件
+            [self reset];
+        }
+        
+        _fullscreenMode = NO;
+    }
+    return self;
+}
+
+/**
+ *  获取设置文件的路径
+ *
+ *  @return NSString 文件路径
+ */
+- (NSString *)filepath
+{
+    return [GetDocumentDir() stringByAppendingPathComponent:@"AppSetting.plist"];
+}
+
+/**
+ *  保存设置
+ */
+- (void)saveAppSettings
+{
+    // 序列化设置
+    NSData *dataSetting = [NSPropertyListSerialization dataFromPropertyList:_dicAppSettings
+                                                                     format:NSPropertyListXMLFormat_v1_0
+                                                           errorDescription:nil];
+    // 保存设置
+    [dataSetting writeToFile:[self filepath] atomically:NO];
+}
+
+// ------------------- 设置属性
+- (void)setOpenLastWebsite:(BOOL)openLastWebsite
+{
+    _openLastWebsite = openLastWebsite;
+    _dicAppSettings[kOpenLastWebsite] = [NSNumber numberWithBool:_openLastWebsite];
+    [self saveAppSettings];
+}
+
+- (void)setUrlOpenStyle:(UrlOpenStyle)urlOpenStyle
+{
+    _urlOpenStyle = urlOpenStyle;
+    _dicAppSettings[kUrlOpenStyle] = @(_urlOpenStyle);
+    [self saveAppSettings];
+}
+
+- (void)setFontsize:(CGFloat)fontsize
+{
+    _fontsize = fontsize;
+    _dicAppSettings[kFontsize] = @(_fontsize);
+    [self saveAppSettings];
+}
+
+- (void)setRemotePush:(BOOL)remotePush
+{
+    _remotePush = remotePush;
+    _dicAppSettings[kRemotePush] = [NSNumber numberWithBool:_remotePush];
+    [self saveAppSettings];
+    
+    [self enableAPNS:_remotePush];
+}
+
+- (void)setAdBlockers:(BOOL)adBlockers
+{
+    _adBlockers = adBlockers;
+    _dicAppSettings[kAdBlockers] = [NSNumber numberWithBool:_adBlockers];
+    [self saveAppSettings];
+}
+
+- (void)setRotateScreen:(BOOL)rotateScreen
+{
+    _rotateScreen = rotateScreen;
+    _dicAppSettings[kRotateScreen] = [NSNumber numberWithBool:_rotateScreen];
+    [self saveAppSettings];
+}
+
+- (void)setPageStyle:(PageStyle)pageStyle
+{
+    _pageStyle = pageStyle;
+    _dicAppSettings[kPageStyle] = @{kPageStyleKeyShowPageBtn:@(_pageStyle.showPageBtn),
+                                    kPageStyleKeyShouldTouchPage:@(_pageStyle.shouldTouchPage)};
+    [self saveAppSettings];
+}
+
+- (void)setSaveForm:(SaveForm)saveForm
+{
+    _saveForm = saveForm;
+    _dicAppSettings[kSaveForm] = @(_saveForm);
+    [self saveAppSettings];
+}
+
+- (void)setUserAgentIndex:(NSInteger)userAgentIndex
+{
+    _userAgentIndex = userAgentIndex;
+    _dicAppSettings[kUserAgentIndex] = @(_userAgentIndex);
+    [self saveAppSettings];
+    
+    [self registerUserAgent:self.userAgent];
+}
+
+- (NSString *)userAgent
+{
+    return _arrUserAgent[_userAgentIndex];
+}
+
+- (ModelSearchEngine *)searchEngine
+{
+    if (_arrSearchEngine.count>0 && _searchIndex<_arrSearchEngine.count) {
+        return _arrSearchEngine[_searchIndex];
+    }
+    else {
+        return nil;
+    }
+}
+
+- (NSArray *)arrSNSLogin
+{
+    return [AppSetting snsLoginItem];
+}
+
+- (void)setSearchIndex:(NSInteger)searchIndex
+{
+    _searchIndex = searchIndex;
+    NSMutableDictionary *dicSearchIndex = _dicAppSettings[kSearchIndex];
+    dicSearchIndex[[LocalizationUtil currLanguage]] = @(_searchIndex);
+    _dicAppSettings[kSearchIndex] = dicSearchIndex;
+    [self saveAppSettings];
+}
+
+- (void)setSkinInfo:(SkinInfo)skinInfo
+{
+    _skinInfo = skinInfo;
+    _dicAppSettings[kSkinInfo] = @{kSkinInfoKeyIsAppInternal:@(_skinInfo.isAppInternal),
+                                   kSkinInfoKeySkinIndex:@(_skinInfo.skinIndex)};
+    [self saveAppSettings];
+    
+    _skinImage = [self getSkinImageWithSkinInfo:_skinInfo];
+}
+
+// -----------
+- (void)setBrightness:(CGFloat)brightness
+{
+    _brightness = brightness;
+    _dicAppSettings[kBrightness] = @(_brightness);
+    [self saveAppSettings];
+}
+
+- (void)setNoImageMode:(BOOL)noImageMode
+{
+    _noImageMode = noImageMode;
+    _dicAppSettings[kNoImageMode] = [NSNumber numberWithBool:_noImageMode];
+    [self saveAppSettings];
+}
+
+- (void)setNoSaveHistory:(BOOL)noSaveHistory
+{
+    _noSaveHistory = noSaveHistory;
+    _dicAppSettings[kNoSaveHistory] = [NSNumber numberWithBool:_noSaveHistory];
+    [self saveAppSettings];
+}
+
+- (void)setDesktopStyle:(DesktopStyle)desktopStyle
+{
+    _desktopStyle = desktopStyle;
+    _dicAppSettings[kDesktopStyle] = @(_desktopStyle);
+    [self saveAppSettings];
+}
+
+#pragma mark - private methods
+/**
+ *  注册UserAgent
+ *
+ *  @param userAgent UserAgent
+ */
+- (void)registerUserAgent:(NSString *)userAgent
+{
+    // 注册 UserAgent
+    // 获取 iOS 默认的 UserAgent，可以很巧妙地创建一个空的UIWebView来获取：
+    NSString *sysUserAgent = _dicAppSettings[kSysUserAgent];
+    NSString *version = [[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"];
+    NSString *customUserAgent = [sysUserAgent stringByAppendingFormat:@" %@/%@", userAgent, version];
+    [[NSUserDefaults standardUserDefaults] registerDefaults:@{@"UserAgent":customUserAgent}];
+    
+    _DEBUG_LOG(@"%@", [[[UIWebView alloc] init] stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"]);
+}
+
+/**
+ *  是否启用APNS
+ *
+ *  @param enable YES|NO
+ */
+- (void)enableAPNS:(BOOL)enable
+{
+    if (enable) {
+        if (IsiOS8) {
+#ifdef __IPHONE_8_0
+            /*
+             NSMutableSet *categories = [NSMutableSet set];
+             
+             UIMutableUserNotificationCategory *category = [[UIMutableUserNotificationCategory alloc] init];
+             category.identifier = @"identifier";
+             
+             UIMutableUserNotificationAction *action = [[UIMutableUserNotificationAction alloc] init];
+             action.identifier = @"test2";
+             action.title = @"test";
+             action.activationMode = UIUserNotificationActivationModeBackground;
+             action.authenticationRequired = YES;
+             
+             //YES显示为红色，NO显示为蓝色
+             action.destructive = NO;
+             NSArray *actions = @[ action ];
+             [category setActions:actions forContext:UIUserNotificationActionContextMinimal];
+             [categories addObject:category];
+             */
+            [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound categories:nil]];
+#endif
+        }
+        else {
+            [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeSound];
+        }
+        
+    }
+    else {
+        [[UIApplication sharedApplication] unregisterForRemoteNotifications];
+    }
+}
+
+- (UIImage *)getSkinImageWithSkinInfo:(SkinInfo)skinInfo
+{
+    NSString *dirName = nil;
+    //skinInfo.isAppInternal=YES;
+    if (skinInfo.isAppInternal) {
+        dirName = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:kSkinDirName];
+    }
+    else {
+        dirName = GetDocumentDirAppend(kSkinDirName);
+    }
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSArray *arrFileName = [fm contentsOfDirectoryAtPath:dirName error:nil];
+    
+    if (skinInfo.isAppInternal) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELf MATCHES[cd] %@", @"\\w*(?!@2x).jpg"];
+        arrFileName = [arrFileName filteredArrayUsingPredicate:predicate];
+    }
+    skinInfo.skinIndex = MIN(skinInfo.skinIndex, arrFileName.count-1);
+    NSString *filepath = [dirName stringByAppendingPathComponent:arrFileName[skinInfo.skinIndex]];
+    UIImage *image = [UIImage imageWithContentsOfFile:filepath];
+//    image = [image applyBlurWithRadius:20
+//                                  tintColor:[[UIColor whiteColor] colorWithAlphaComponent:0.08]
+//                      saturationDeltaFactor:1.8
+//                                  maskImage:nil];
+    
+    return image;
+}
+
+- (UIImage *)skinImage
+{
+    if (!_skinImage) {
+        _skinImage = [self getSkinImageWithSkinInfo:_skinInfo];
+    }
+    
+    return _skinImage;
+}
+
+#pragma mark - public methods
+/**
+ *  重置设置
+ */
+- (void)reset
+{
+    // 重置设置
+    _openLastWebsite = NO;
+    _urlOpenStyle = UrlOpenStyleAuto;
+    _fontsize = kDefaultFontsize;
+    _remotePush = YES;
+    _adBlockers = YES;
+    _rotateScreen = YES;
+    _pageStyle = (PageStyle){YES, NO};
+    _saveForm = SaveFormAlert;
+    _userAgentIndex = 0;
+    _searchIndex = 0;
+    
+    _brightness = 1;
+    _noImageMode = NO;
+    _noSaveHistory = NO;
+    _desktopStyle = DesktopStyleDefault;
+    
+    _skinInfo = (SkinInfo){YES, 0};
+    
+    if (!_dicAppSettings) {
+        // 如果设置为nil，则初始化一个空的设置
+        _dicAppSettings = [NSMutableDictionary dictionary];
+    }
+    /**
+     *  所有语言的搜索选项
+     */
+    NSMutableDictionary *dicSearchIndex = [NSMutableDictionary dictionaryWithDictionary:_dicAppSettings[kSearchIndex]];
+    dicSearchIndex[[LocalizationUtil currLanguage]] = @(_searchIndex);
+    // 重置设置
+    _dicAppSettings[kOpenLastWebsite] = [NSNumber numberWithBool:_openLastWebsite];
+    _dicAppSettings[kUrlOpenStyle] = @(_urlOpenStyle);
+    _dicAppSettings[kFontsize] = @(_fontsize);
+    _dicAppSettings[kRemotePush] = [NSNumber numberWithBool:_remotePush];
+    _dicAppSettings[kAdBlockers] = [NSNumber numberWithBool:_adBlockers];
+    _dicAppSettings[kRotateScreen] = [NSNumber numberWithBool:_rotateScreen];
+    _dicAppSettings[kPageStyle] = @{kPageStyleKeyShowPageBtn:@(_pageStyle.showPageBtn),
+                                    kPageStyleKeyShouldTouchPage:@(_pageStyle.shouldTouchPage)};
+    _dicAppSettings[kSaveForm] = @(_saveForm);
+    _dicAppSettings[kUserAgentIndex] = @(_userAgentIndex);
+    _dicAppSettings[kSearchIndex] = dicSearchIndex;
+    
+    _dicAppSettings[kBrightness] = @(_brightness);
+    _dicAppSettings[kNoImageMode] = [NSNumber numberWithBool:_noImageMode];
+    _dicAppSettings[kNoSaveHistory] = [NSNumber numberWithBool:_noSaveHistory];;
+    _dicAppSettings[kDesktopStyle] = @(_desktopStyle);
+    
+    _dicAppSettings[kSkinInfo] = @{kSkinInfoKeyIsAppInternal:@(_skinInfo.isAppInternal),
+                                   kSkinInfoKeySkinIndex:@(_skinInfo.skinIndex)};
+    
+    if (!_dicAppSettings[kSysUserAgent]) {
+        _dicAppSettings[kSysUserAgent] = [[[UIWebView alloc] init] stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+    }
+    
+    [self saveAppSettings];
+    
+    // 注册 UserAgent
+    [self registerUserAgent:self.userAgent];
+    [self enableAPNS:_remotePush];
+}
+
+/**
+ *  将网页链接打开方式转成字符串
+ *
+ *  @param urlOpenStyle
+ *
+ *  @return NSString
+ */
++ (NSString *)stringFromUrlOpenStyle:(UrlOpenStyle )urlOpenStyle
+{
+    NSString *string = nil;
+    switch (urlOpenStyle) {
+        case UrlOpenStyleCurrent:
+        {
+            string = @"dangqianchuangkou";
+        }break;
+        case UrlOpenStyleNewTab:
+        {
+            string = @"xinchuangkou";
+        }break;
+        case UrlOpenStyleBackground:
+        {
+            string = @"houtai";
+        }break;
+        case UrlOpenStyleAuto:
+        {
+            string = @"wangyemoren";
+        }break;
+        default:
+            break;
+    }
+    
+    return LocalizedString(string);
+}
+
+/**
+ *  第三方登录项
+ *
+ *  @return NSArray
+ */
++ (NSArray *)snsLoginItem
+{
+    NSDictionary *dicArrLoginItem = [NSDictionary dictionaryWithContentsOfFile:[[[NSBundle mainBundle] resourcePath]  stringByAppendingPathComponent:@"SNS_LoginItem.plist"]];
+    NSArray *arrItem = dicArrLoginItem[[LocalizationUtil currLanguage]];
+    return arrItem;
+}
+
+// ------------------ 搜索引擎/分享选项
+
+/**
+ *  从网络获取搜索引擎列表
+ *
+ *  @param completion 获取完成
+ */
++ (void)fetchSeachEngineWithCompletion:(void(^)())completion;
+{
+    [_afReqSearchEngine cancel];
+    _afReqSearchEngine = nil;
+    
+    BOOL (^resolve)(NSDictionary *) = ^(NSDictionary *dicResult){
+        BOOL retVal = NO;
+        do {
+            if (![dicResult isKindOfClass:[NSDictionary class]]) break;
+            NSArray *arrDicSearch = dicResult[@"data"];
+            if (![arrDicSearch isKindOfClass:[NSArray class]]||arrDicSearch.count<=0) break;
+            
+            NSMutableArray *arrItem = [NSMutableArray arrayWithCapacity:arrDicSearch.count];
+            for (NSDictionary *dicSearch in arrDicSearch) {
+                ModelSearchEngine *model = [ModelSearchEngine modelWithDict:dicSearch];
+                [arrItem addObject:model];
+                
+                [[SDWebImageDownloader sharedDownloader] downloadImageWithURL:[NSURL URLWithString:model.icon] options:0 progress:nil completed:^(UIImage *image, NSData *data, NSError *error, BOOL finished) {
+                    _DEBUG_LOG(@"%d", [data length]);
+                }];
+            }
+            [AppSetting shareAppSetting].arrSearchEngine = arrItem;
+            
+            retVal  = YES;
+        } while (NO);
+        return retVal;
+    };
+    
+    NSDictionary *dicParam = @{@"device":IsiPad?@"ipad":@"iphone"};
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client requestWithMethod:@"GET" path:GetApiWithName(API_SearchEngine) parameters:dicParam];
+    req.timeoutInterval = 5;
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    _afReqSearchEngine = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if (resolve(JSON)) {
+            [_afReqSearchEngine.responseData writeToFile:filepath atomically:NO];
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            resolve([NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil]);
+        }
+        else {
+            resolve(nil);
+        }
+        if (completion) {
+            completion();
+        }
+    }];
+    [_afReqSearchEngine start];
+}
+
+/**
+ *  从网络获取分享选项列表
+ *
+ *  @param completion 获取王城
+ */
++ (void)fetchShareItemWithCompletion:(void(^)())completion;
+{
+    [_afReqShareItems cancel];
+    _afReqShareItems = nil;
+    
+    BOOL (^resolve)(NSDictionary *) = ^(NSDictionary *dicResult){
+        BOOL retVal = NO;
+        do {
+            if (![dicResult isKindOfClass:[NSDictionary class]]) break;
+            NSArray *arrDicItem = dicResult[@"data"];
+            if (![arrDicItem isKindOfClass:[NSArray class]]||arrDicItem.count<=0) break;
+            
+            NSMutableArray *arrItem = [NSMutableArray arrayWithCapacity:arrDicItem.count];
+            for (NSDictionary *dicItem in arrDicItem) {
+                ModelSNSItem *model = [ModelSNSItem modelWithDict:dicItem];
+                [arrItem addObject:model];
+            }
+            [AppSetting shareAppSetting].arrShareItem = arrItem;
+            
+            retVal  = YES;
+        } while (NO);
+        return retVal;
+    };
+    
+    NSDictionary *dicParam = @{@"device":IsiPad?@"ipad":@"iphone"};
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client requestWithMethod:@"GET" path:GetApiWithName(API_ShareList) parameters:dicParam];
+    req.timeoutInterval = 3;
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    _afReqShareItems = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if (resolve(JSON)) {
+            [_afReqShareItems.responseData writeToFile:filepath atomically:NO];
+        }
+        if (completion) {
+            completion();
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            resolve([NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil]);
+        }
+        else {
+            resolve(nil);
+        }
+        if (completion) {
+            completion();
+        }
+    }];
+    [_afReqShareItems start];
+}
+
+@end

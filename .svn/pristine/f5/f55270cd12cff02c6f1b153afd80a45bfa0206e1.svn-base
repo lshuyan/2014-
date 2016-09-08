@@ -1,0 +1,175 @@
+//
+//  UIViewSync.m
+//  ChinaBrowser
+//
+//  Created by David on 15/1/4.
+//  Copyright (c) 2015年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewSync.h"
+
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+
+#import "UIControllerLogin.h"
+
+@implementation UIViewSync
+{
+    IBOutlet UILabel *_labelSyncTime;
+    IBOutlet UILabel *_labelUserName;
+    IBOutlet UIImageView *_imageViewAvatar;
+    IBOutlet UIButton *_btnSync;
+}
+
+#pragma mark - property
+- (void)setSyncTime:(NSInteger)syncTime
+{
+    _syncTime = syncTime;
+}
+
+#pragma mark - super method
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    self.backgroundColor = [UIColor colorWithWhite:0.97 alpha:1];
+    
+    _imageViewAvatar.layer.borderWidth = 0.5;
+    _imageViewAvatar.layer.borderColor = [UIColor colorWithWhite:0.8 alpha:1].CGColor;
+    
+    [_btnSync setTitle:LocalizedString(@"tongbu") forState:UIControlStateNormal];
+    UIColor *color = [UIColor colorWithRed:0.000 green:0.463 blue:0.667 alpha:1.000];
+    [_btnSync setTitleColor:color forState:UIControlStateNormal];
+    [_btnSync setTitleColor:[color colorByMultiplyingBy:1.2] forState:UIControlStateHighlighted];
+    
+    [_btnSync setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/Settings/Bookmark/synchronous_0.png"] stretchableImageWithLeftCapWidth:4 topCapHeight:4] forState:UIControlStateNormal];
+    [_btnSync setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/Settings/Bookmark/synchronous_1.png"] stretchableImageWithLeftCapWidth:4 topCapHeight:4] forState:UIControlStateHighlighted];
+    
+    ModelUser *user = [UserManager shareUserManager].currUser;
+    if (user) {
+        [_imageViewAvatar setImageWithURL:[NSURL URLWithString:user.avatar]
+                         placeholderImage:[UIImage imageWithBundleFile:@"iPhone/User/avatar_default.png"]
+              usingActivityIndicatorStyle:UIActivityIndicatorViewStyleGray
+                                completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+            if (!image) {
+                image = [UIImage imageWithBundleFile:@"iPhone/User/avatar_default.png"];
+            }
+        }];
+        _labelUserName.text = user.nickname;
+        _labelSyncTime.text = [NSString stringWithTimeInterval:user.syncTime];
+    }
+    else {
+        _imageViewAvatar.image = [UIImage imageWithBundleFile:@"iPhone/User/avatar_default.png"];
+        _labelUserName.text = LocalizedString(@"weidenglu");
+        _labelSyncTime.text = nil;
+    }
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    
+    [self setNeedsDisplay];
+}
+
+- (void)drawRect:(CGRect)rect
+{
+    [super drawRect:rect];
+    
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetAllowsAntialiasing(context, NO);
+    CGContextSetShouldAntialias(context, NO);
+    
+    CGContextSetLineWidth(context, 0.5);
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithWhite:0.8 alpha:1].CGColor);
+    
+    CGContextMoveToPoint(context, 0, 0.5);
+    CGContextAddLineToPoint(context, self.width, 0.5);
+    CGContextStrokePath(context);
+}
+
+#pragma mark - private methods
+- (IBAction)onTouchSync
+{
+    ModelUser *user = [UserManager shareUserManager].currUser;
+    if (user) {
+        
+        switch (_syncDataType) {
+            case SyncDataTypeBookmark:
+            {
+                [[SyncHelper shareSync] syncBookmarkWithCompletion:^{
+                    if (_callbackSyncCompletion) _callbackSyncCompletion();
+                } fail:^(NSError *error) {
+                    if (_callbackSyncFail) _callbackSyncFail();
+                }];
+            }break;
+            case SyncDataTypeHistory:
+            {
+                [[SyncHelper shareSync] syncHistoryWithCompletion:^{
+                    if (_callbackSyncCompletion) _callbackSyncCompletion();
+                } fail:^(NSError *error) {
+                    if (_callbackSyncFail) _callbackSyncFail();
+                }];
+            }break;
+            case SyncDataTypeMode:
+            {
+                [[SyncHelper shareSync] syncModeWithCompletion:^{
+                    if (_callbackSyncCompletion) _callbackSyncCompletion();
+                } fail:^(NSError *error) {
+                    if (_callbackSyncFail) _callbackSyncFail();
+                }];
+            }break;
+            case SyncDataTypeModeProgram:
+            {
+                [[SyncHelper shareSync] syncModeWithCompletion:^{
+                    if (_callbackSyncCompletion) _callbackSyncCompletion();
+                } fail:^(NSError *error) {
+                    if (_callbackSyncFail) _callbackSyncFail();
+                }];
+            }break;
+            case SyncDataTypeReminder:
+            {
+                [[SyncHelper shareSync] syncReminderWithCompletion:^{
+                    if (_callbackSyncCompletion) _callbackSyncCompletion();
+                } fail:^(NSError *error) {
+                    if (_callbackSyncFail) _callbackSyncFail();
+                }];
+            }break;
+            case SyncDataTypeAll:
+            {
+                [[SyncHelper shareSync] syncAllIfNeededWithCompletion:^{
+                    if (_callbackSyncCompletion) _callbackSyncCompletion();
+                } fail:^(NSError *error) {
+                    if (_callbackSyncFail) _callbackSyncFail();
+                }];
+            }break;
+                
+            default:
+                if (_callbackSyncCompletion) _callbackSyncCompletion();
+                break;
+        }
+    }
+    else {
+        UIControllerLogin *controller = [UIControllerLogin controllerFromXib];
+        controller.fromController = FromControllerSync;
+        controller.title = LocalizedString(@"yonghudenglu");
+        [_controllerRoot.navigationController pushViewController:controller animated:YES];
+    }
+}
+
+#pragma mark - public methods
++ (instancetype)viewFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:nil options:nil][0];
+}
+
+/**
+ *  调整大小，位于指定父视图的底部
+ *
+ */
+- (void)resizeBottomSuperView
+{
+    CGRect rc = CGRectMake(0, self.superview.height-self.height, self.superview.width, self.height);
+    self.frame = rc;
+}
+
+@end

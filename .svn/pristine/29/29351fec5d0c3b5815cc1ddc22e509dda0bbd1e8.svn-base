@@ -1,0 +1,198 @@
+//
+//  API.m
+//  WKBrowser
+//
+//  Created by David on 13-10-18.
+//  Copyright (c) 2013年 VeryApps. All rights reserved.
+//
+
+#import "API.h"
+
+static NSDictionary *dicHost;
+
+/**
+ *  得到完整api
+ *
+ *  @param api api名称
+ *
+ *  @return 完整的api路径
+ */
+inline NSString * GetApiWithName(NSString *api)
+{
+    NSString *host = GetApiBaseUrl();
+    NSString *retApi = [host stringByAppendingString:api];
+    _DEBUG_LOG(@"------：%@", retApi);
+    return retApi;
+}
+
+inline NSString * GetApiBaseUrl()
+{
+    NSString *lan = [LocalizationUtil currLanguage];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dicHost = [NSDictionary dictionaryWithContentsOfFile:[[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:_DEBUG?@"api_host_debug.plist":@"api_host_release.plist"]];
+    });
+    NSString *host = dicHost[lan];
+    if (!host) {
+        // 如果没对应的语种的主机地址，那就是用App默认语种
+        host = dicHost[kDefaultLanguage];
+    }
+    return host;
+}
+
+// -------------------- 启动图
+/**
+ *  启动图接口
+ *  device=android|iphone|iphone5|iphone6|iphone6plus|ipad
+ */
+NSString * const API_LaunchImg = @"/zhie/index.php?m=index&a=start";
+
+// -------------------- 检查更新
+/**
+ *  检查更新
+ *  device=android|iphone|ipad
+ */
+NSString * const API_CheckVersion = @"/zhie/index.php?m=index&a=check_version";
+
+// -------------------- 推荐屏
+/**
+ *  推荐屏广告
+ *  device=android|iphone|ipad
+ */
+NSString * const API_RecommendAd = @"/zhie/index.php?m=index&a=home_ad";
+
+/**
+ *  推荐屏分类
+ *  device=android|iphone|ipad
+ */
+NSString * const API_RecommendCate = @"/zhie/index.php?m=index&a=home_cate_header";
+
+/**
+ *  推荐屏子分类
+ *  device=android|iphone|ipad
+ *  catid：分类id
+ */
+NSString * const API_RecommendSubCate = @"/zhie/index.php?m=index&a=home_cate_cri";
+
+/**
+ *  新闻列表
+ *  device=android|iphone|ipad
+ *  catid：分类id
+ *  pagesize：不传默认 10 条
+ *  sid：最后一条数据id
+ */
+NSString * const API_RecommendNews = @"/zhie/index.php?m=index&a=news_list";
+
+// -------------------- 应用屏
+/**
+ *  应用分类
+ *  device=android|iphone|ipad
+ */
+NSString *const API_AppCate = @"/zhie/index.php?m=index&a=home_app_show";
+
+/**
+ *  大家都在搜的App
+ *  device=android|iphone|ipad
+ *  pagesize:
+ *  Keyword:
+ */
+NSString *const API_AppHotSearch = @"/zhie/index.php?m=index&a=home_app_dsearch";
+
+/**
+ *  应用搜索
+ *  device=android|iphone|ipad
+ *  Keyword:
+ *  page:
+ *  pagesize:
+ *  sid:
+ */
+NSString *const API_AppSearch = @"/zhie/index.php?m=index&a=home_app_search";
+
+/**
+ *  默认推荐应用
+ *  device=android|iphone|ipad
+ */
+NSString *const API_AppDefault = @"/zhie/index.php?m=index&a=home_app";
+
+
+// -------------------- 情景翻译
+/**
+ *  翻译顶部图
+ *  device=android|iphone|ipad
+ */
+NSString * const API_TransTopImg = @"/zhie/index.php?m=index&a=scene";
+
+// -------------------- 旅游模块
+/**
+ *  旅游顶部图片
+ *  device=android|iphone|ipad
+ */
+NSString * const API_TravelAd = @"/zhie/index.php?m=index&a=travelad";
+
+/**
+ *  旅游城市瀑布流列表
+ *  device=android|iphone|ipad
+ */
+NSString * const API_Travel = @"/zhie/index.php?m=index&a=travel";
+
+/**
+ *  旅游城市详细，视频瀑布流列表
+ *  device=android|iphone|ipad
+ *  cid: 省份ID
+ */
+NSString * const API_TravelDetail = @"/zhie/index.php?m=index&a=travel_show";
+
+// -------------------- 搜索模块
+/**
+ *  搜索引擎
+ *  device=android|iphone|ipad
+ */
+NSString * const API_SearchEngine = @"/zhie/index.php?m=index&a=app_search";
+
+/**
+ *  【热门话题/热门搜索关键字】
+ *  device=android|iphone|ipad
+ */
+NSString * const API_SearchHot = @"";
+
+// -------------------- 分享项
+/**
+ *  分享项列表
+ *  device=android|iphone|ipad
+ */
+NSString * const API_ShareList = @"/zhie/index.php?m=index&a=app_share";
+
+// -------------------- 用户接口
+/**
+ *  用户注册
+ *  username:邮箱/手机号
+ *  nickname:昵称
+ *  passwd:密码
+ */
+NSString * const API_UserRegister = @"/zhie/index.php?m=member&a=register";
+
+/**
+ *  用户登录
+ *  username:邮箱/手机号 
+ *  passwd:密码
+ */
+NSString * const API_UserLogin = @"/zhie/index.php?m=member&a=login";
+
+/**
+ *  第三方登陆
+ *  uid:登录id
+ *  access_token:授权access_token(必须)
+ *  expires_in:授权access_token过期时间(必须)
+ *  nickname:昵称
+ *  avatar:图像
+ */
+NSString * const API_UserSDKLogin = @"/zhie/index.php?m=member&a=sdklogin";
+
+/**
+ *  资料修改
+ *  nickname:昵称
+ *  Email:邮箱
+ *  pwd:密码
+ *  avatar:图像
+ */
+NSString * const API_UserEdit = @"/zhie/index.php?m=member&a=edit";

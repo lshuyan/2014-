@@ -1,0 +1,203 @@
+//
+//  SyncHelper.h
+//  ChinaBrowser
+//
+//  Created by David on 14/12/19.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+typedef void (^SyncCompletion) ();
+typedef void (^SyncAddCompletion) (NSArray *arrPkidServer);
+typedef void (^SyncGetCompletion) (NSArray *arrModel);
+typedef void (^SyncGetUserSettingsCompletion) (ModelUserSettings *modelUserSettings);
+typedef void (^SyncFail) (NSError *error);
+
+@class ModelUserSettings;
+@class ModelHistory;
+@class ModelBookmark;
+@class ModelMode;
+@class ModelModeProgram;
+
+/**
+ *  同步助手，同步用户设置、书签、最近浏览、个性化定制；其中用户设置是及时同步的，修改用户设置则立即反馈到服务器，忽略失败的操作
+ *  提交失败后
+ */
+@interface SyncHelper : NSObject
+
+/**
+ *
+ */
+@property (nonatomic, assign) BOOL isSyncing;
+
++ (instancetype)shareSync;
+
+/**
+ *  根据用户设置同步所有能同步的数据
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncAllIfNeededWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+// --------------------- 批处理 get=>compare=>submit
+/**
+ *  同步用户设置
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncUserSettingsWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  同步最近浏览
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncHistoryWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  同步书签
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncBookmarkWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  同步定制提醒(个性化定制)
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncReminderWithCompletion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+// --------------------- 批处理同步 submit
+/**
+ *  往服务器添加最近浏览的历史记录，添加成功后更新本地的pkid_server
+ *
+ *  @param modelHistory 历史记录实体
+ *  @param completion   completion description
+ *  @param fail         fail description
+ */
+- (void)synAddModelHistory:(ModelHistory *)modelHistory completion:(SyncAddCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  往服务器添加书签(文件件)，添加成功后，更新本地相关的pkid_server和parent_pkid_server
+ *
+ *  @param modelBookmark 书签实体
+ *  @param completion    完成block
+ *  @param fail          失败block
+ */
+- (void)synAddModelBookmark:(ModelBookmark *)modelBookmark completion:(SyncAddCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  往服务器添加 定制 模式，添加成功后，更新本地的相关的pkid_server和 ModelModeProgram 中的 mode_pkid_server
+ *
+ *  @param modelMode  模式实体
+ *  @param completion 完成block
+ *  @param fail       失败block
+ */
+- (void)synAddModelMode:(ModelMode *)modelMode completion:(SyncAddCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  往服务器添加 模式-节目，添加成功后，更新本地相关的pkid_server
+ *
+ *  @param modelMode  modelMode description
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)synAddModelModeProgram:(ModelModeProgram *)modelMode completion:(SyncAddCompletion)completion fail:(SyncFail)fail;
+
+// --------------------- 批处理同步 delete
+/**
+ *  删除服务器上的 历史记录（最近浏览）
+ *
+ *  @param pkidServer pkidServer description
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncDeleteHistoryWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  删除服务器上的 书签(文件夹)
+ *
+ *  @param pkidServer pkidServer description
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncDeleteBookmarkWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  删除服务器上的定制 模式
+ *
+ *  @param pkidServer pkidServer description
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncDeleteModeWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  删除服务器上的 模式-节目
+ *
+ *  @param pkidServer pkidServer description
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncDeleteModeProgramWithPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+// --------------------- 单条同步 update
+- (void)syncUpdateUserSetting:(ModelUserSettings *)userSetting completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+- (void)syncUpdateHistory:(ModelHistory *)history withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+- (void)syncUpdateBookmark:(ModelBookmark *)bookmark withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+- (void)syncUpdateMode:(ModelMode *)mode withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+- (void)syncUpdateModeProgram:(ModelModeProgram *)modeProgram withPkidServer:(NSInteger)pkidServer completion:(SyncCompletion)completion fail:(SyncFail)fail;
+
+// --------------------- 同步 get
+/**
+ *  下载用户设置
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetUserSettingsWithCompletion:(SyncGetUserSettingsCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  下载 历史记录
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetHistoryWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  下载 书签数据
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetBookmarkWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  下载个性化定制模式
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetModeWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail;
+
+/**
+ *  下载 个性化定制 模式中的节目
+ *
+ *  @param completion completion description
+ *  @param fail       fail description
+ */
+- (void)syncGetModeProgramWithCompletion:(SyncGetCompletion)completion fail:(SyncFail)fail;
+
+@end

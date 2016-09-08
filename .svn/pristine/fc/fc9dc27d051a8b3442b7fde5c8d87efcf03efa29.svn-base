@@ -1,0 +1,364 @@
+//
+//  UIControllerAddProgram.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerAddProgram.h"
+
+#import "UIViewNav.h"
+#import "UIViewReminderEdit.h"
+
+#import "ModelMode.h"
+#import "ModelModeProgram.h"
+#import "ModelProgram.h"
+
+#import "ADOMode.h"
+#import "ADOModeProgram.h"
+
+#import "UIControllerProgramList.h"
+
+@interface UIControllerAddProgram () <UITableViewDataSource, UITableViewDelegate>
+{
+    IBOutlet UITableView *_tableView;
+    UIViewNav *_viewNav;
+    UIViewReminderEdit *_viewReminderEdit;
+    
+    CGFloat _fMarginBottom;
+}
+
+@property (nonatomic, strong, readonly) ModelMode *modelMode;
+@property (nonatomic, strong, readonly) ModelModeProgram *modelModeProgram;
+
+@end
+
+@implementation UIControllerAddProgram
+
+- (void)setActionType:(ProgramActionType)actionType
+{
+    _actionType = actionType;
+    
+    [self updateWithProgramActionType];
+}
+
+- (void)setModeProgramModePkid:(NSInteger)modeProgramModePkid
+{
+    _modeProgramModePkid = modeProgramModePkid;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    _fMarginBottom = 0;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShowNotification:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHideNotification:) name:UIKeyboardWillHideNotification object:nil];
+    
+    // ----------------
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    UIButton *btnSave = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [btnSave setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];
+    [btnSave addTarget:self action:@selector(onTouchSave) forControlEvents:UIControlEventTouchUpInside];
+    [btnSave sizeToFit];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnSave];
+    [self.view addSubview:_viewNav];
+    
+    _viewReminderEdit = [UIViewReminderEdit viewFromXib];
+    _tableView.tableFooterView = _viewReminderEdit;
+    
+    __weak typeof(self) wSelf = self;
+    [_viewReminderEdit setCallbackChangeModeName:^(NSString *modeName) {
+        wSelf.modelMode.name = modeName;
+    }];
+    [_viewReminderEdit setCallbackSelectRepeatMode:^(RemindRepeatMode repeatMode) {
+        wSelf.modelModeProgram.repeatMode = repeatMode;
+    }];
+    [_viewReminderEdit setCallbackSelectTime:^(NSInteger time) {
+        wSelf.modelModeProgram.time = time;
+    }];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self updateWithProgramActionType];
+    });
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin = CGPointMake(0, _viewNav.bottom);
+    rc.size = CGSizeMake(self.view.width, self.view.height-rc.origin.y-_fMarginBottom);
+    _tableView.frame = rc;
+    
+//    if (_fMarginBottom>0) {
+//        _tableView.contentOffset = CGPointMake(0, _tableView.contentSize.height-_tableView.height);
+//    }
+}
+
+#pragma mark - keyboard notification
+- (void)keyboardWillShowNotification:(NSNotification *)notifiercation
+{
+    CGRect rcKeyboard = [notifiercation.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    NSTimeInterval duration = [notifiercation.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationCurve curve = [notifiercation.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    
+    [UIView beginAnimations:nil context:nil];
+    [UIView setAnimationCurve:curve];;
+    [UIView setAnimationDuration:duration];
+    
+    _fMarginBottom = MIN(rcKeyboard.size.height, rcKeyboard.size.width);
+    
+    CGRect rc = _tableView.frame;
+    rc.size.height = self.view.height-_tableView.top-_fMarginBottom;
+    _tableView.frame = rc;
+    
+    if (_fMarginBottom>0) {
+        _tableView.contentOffset = CGPointMake(0, _tableView.contentSize.height-_tableView.height);
+    }
+    
+    [UIView commitAnimations];
+}
+
+- (void)keyboardWillHideNotification:(NSNotification *)notifiercation
+{
+    NSTimeInterval duration = [notifiercation.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationCurve curve = [notifiercation.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    
+    [UIView beginAnimations:nil context:nil];
+    [UIView setAnimationCurve:curve];;
+    [UIView setAnimationDuration:duration];
+    
+    _fMarginBottom = 0;
+    
+    CGRect rc = _tableView.frame;
+    rc.size.height = self.view.height-_tableView.top-_fMarginBottom;
+    _tableView.frame = rc;
+    
+    [UIView commitAnimations];
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)onTouchSave
+{
+    switch (_actionType) {
+        case ProgramActionTypeAddMode:
+        {
+            if (!_modelModeProgram.modelProgram) {
+                [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingxuanzeneirong")];
+                return;
+            }
+            if (_modelMode.name.length<=0) {
+                [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingshurumoshiming")];
+                return;
+            }
+            NSInteger modePkid = [ADOMode addModel:_modelMode];
+            if (modePkid>0) {
+                _modelMode.pkid = modePkid;
+                
+                _modelModeProgram.modePkid = modePkid;
+                NSInteger mpPkid = [ADOModeProgram addModel:_modelModeProgram];
+                if (mpPkid>0) {
+                    _modelModeProgram.pkid = mpPkid;
+//                    [_modelMode.arrModeProgram addObject:_modelModeProgram];
+                    
+                    if (_callbackDidAddMode) {
+                        _callbackDidAddMode(_modelMode);
+                    }
+                    
+                    if (_callbackDidAddModeProgram) {
+                        _callbackDidAddModeProgram(_modelModeProgram);
+                    }
+                }
+            }
+        }break;
+        case ProgramActionTypeAddProgram:
+        {
+            if (!_modelModeProgram.modelProgram) {
+                [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingxuanzeneirong")];
+                return;
+            }
+            _modelModeProgram.modePkid = _modeProgramModePkid;
+            NSInteger mpPkid = [ADOModeProgram addModel:_modelModeProgram];
+            if (mpPkid>0) {
+                _modelModeProgram.pkid = mpPkid;
+                if (_callbackDidAddModeProgram) {
+                    _callbackDidAddModeProgram(_modelModeProgram);
+                }
+            }
+        }break;
+        case ProgramActionTypeEditProgram:
+        {
+            BOOL flag = [ADOModeProgram updateRepeatMode:_modelModeProgram.repeatMode
+                                                    time:_modelModeProgram.time
+                                                      on:_modelModeProgram.on
+                                                withPkid:_modelModeProgram.pkid];
+            if (flag) {
+                if (_callbackDidEditModeProgram) {
+                    _callbackDidEditModeProgram(_modelModeProgram);
+                }
+            }
+        }break;
+        default:
+            break;
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)updateWithProgramActionType
+{
+    if (ProgramActionTypeNone==_actionType) {
+        return;
+    }
+    
+    _viewReminderEdit.actionType = _actionType;
+    
+    switch (_actionType) {
+        case ProgramActionTypeAddMode:
+        {
+            _modelMode = [ModelMode model];
+            _modelMode.userid = [UserManager shareUserManager].currUser.uid;
+            
+            _modelModeProgram = [ModelModeProgram model];
+            _modelModeProgram.userid = [UserManager shareUserManager].currUser.uid;
+            _modelModeProgram.repeatMode = RemindRepeatModeEveryDay;
+            _modelModeProgram.on = YES;
+            
+            NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSMinuteCalendarUnit|NSHourCalendarUnit fromDate:[NSDate date]];
+            _modelModeProgram.time = dateComp.hour*3600+dateComp.minute*60;
+            [_viewReminderEdit setTime:_modelModeProgram.time];
+        }break;
+        case ProgramActionTypeAddProgram:
+        {
+            _modelModeProgram = [ModelModeProgram model];
+            _modelModeProgram.modePkid = _modeProgramModePkid;
+            _modelModeProgram.userid = [UserManager shareUserManager].currUser.uid;
+            _modelModeProgram.repeatMode = RemindRepeatModeEveryDay;
+            _modelModeProgram.on = YES;
+            
+            NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSMinuteCalendarUnit|NSHourCalendarUnit fromDate:[NSDate date]];
+            _modelModeProgram.time = dateComp.hour*3600+dateComp.minute*60;
+            [_viewReminderEdit setTime:_modelModeProgram.time];
+        }break;
+        case ProgramActionTypeEditProgram:
+        {
+            if (_modelModeProgram) {
+                [_viewReminderEdit setRepeatMode:_modelModeProgram.repeatMode];
+                [_viewReminderEdit setTime:_modelModeProgram.time];
+                [_viewReminderEdit setCanSelectTime:_modelModeProgram.modelProgram.parent_pkid_server==0];
+            }
+        }break;
+        default:
+            break;
+    }
+}
+
+#pragma mark - public methos
+- (void)setEditModelMode:(ModelMode *)modelMode
+{
+    _modelMode = modelMode;
+}
+
+- (void)setEditModelModeProgram:(ModelModeProgram *)modelModeProgram
+{
+    _modelModeProgram = modelModeProgram;
+    UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+    cell.detailTextLabel.text = _modelModeProgram.modelProgram.title;
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 1;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *Identifier = @"UICellAddProgram";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:Identifier];
+    if (!cell) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:Identifier];
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.textLabel.text = LocalizedString(@"diantai_zixun");
+        cell.detailTextLabel.textColor = [UIColor darkGrayColor];
+    }
+    if (_modelModeProgram.modelProgram.title.length>0) {
+        cell.detailTextLabel.text = _modelModeProgram.modelProgram.title;
+    }
+    else {
+        cell.detailTextLabel.text = LocalizedString(@"qingxuanzeneirong");
+    }
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self.view endEditing:YES];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    UIControllerProgramList *controllerProgramList = [[UIControllerProgramList alloc] initWithNibName:@"UIControllerProgramList" bundle:nil];
+    
+    controllerProgramList.selectProgramServerId = _modelModeProgram.modelProgram.pkid_server;
+    [controllerProgramList setCallbackSelectProgram:^(ModelProgram *modelProgram) {
+        UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        cell.detailTextLabel.text = modelProgram.title;
+        
+        if ([ADOModeProgram updateProgramPkidServer:modelProgram.pkid_server withPkid:_modelModeProgram.pkid]) {
+            _modelModeProgram.modelProgram = modelProgram;
+        }
+        
+        BOOL canNotSelectTime = (ProgramSrcTypeFM == _modelModeProgram.modelProgram.srcType
+                              && 0<_modelModeProgram.modelProgram.parent_pkid_server);
+        [_viewReminderEdit setCanSelectTime:!canNotSelectTime];
+        if (canNotSelectTime) {
+            [_viewReminderEdit setTime:_modelModeProgram.modelProgram.time];
+            _modelModeProgram.time = _modelModeProgram.modelProgram.time;
+        }
+    }];
+    controllerProgramList.title = LocalizedString(@"diantai_zixun");
+    [self.navigationController pushViewController:controllerProgramList animated:YES];
+}
+
+@end

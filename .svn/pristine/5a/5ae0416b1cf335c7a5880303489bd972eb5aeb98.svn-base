@@ -1,0 +1,445 @@
+/* 
+  Localizable.strings
+  ChinaBrowser
+
+  Created by David on 14-9-25.
+  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+ */
+
+// ------------- 语言
+zh-Hans = "简体中文";
+zh-Hanz = "繁体中文";
+en = "英语";
+tr = "土耳其语";
+
+// ------------- SNS 分享项
+ShareType_1 = "新浪微博";
+ShareType_2 = "腾讯微博";
+ShareType_5 = "豆瓣社区";
+ShareType_6 = "QQ空间";
+ShareType_7 = "人人";
+ShareType_9 = "朋友网";
+ShareType_10 = "Facebook";
+ShareType_11 = "Twitter";
+ShareType_14 = "Google+";
+ShareType_18 = "邮件";
+ShareType_19 = "短信";
+ShareType_21 = "复制";
+ShareType_22 = "微信好友";
+ShareType_23 = "微信朋友圈";
+ShareType_24 = "QQ";
+
+// -------------- App 启动介绍文字
+jieshao0 = "为信息海洋导航";
+jieshao1 = "带着我去环游世界";
+jieshao2 = "请您体验中华浏览器";
+
+// ------------- 菜单
+jiarushuqian = "加入书签";
+yichushuqian = "移除书签";
+tianjiadaoshouping = "添加到首屏";
+congshoupingyichu = "从首屏移除";
+shuqian_lishi = "书签/历史";
+yuyanshezhi = "语言设置";
+shuaxin = "刷新";
+tingzhi = "停止";
+jietutuya = "截图涂鸦";
+yeneichazhao = "页内查找";
+fenxiang = "分享";
+gerenzhongxin = "个人中心";
+
+wutumoshi = "无图模式";
+quanpingmoshi = "全屏模式";
+liangdutiaojie = "亮度调节";
+wuhenliulan = "无痕浏览";
+saoerweima = "扫二维码";
+pifuguanli = "皮肤管理";
+zhuomianyangshi = "桌面样式";
+xitongshezhi = "系统设置";
+
+xiazaiguanli = "下载管理";
+yijianfankui = "意见反馈";
+shengliuchaxun = "省流查询";
+jianchagengxin = "检查更新";
+tuichu = "退出";
+
+// ----------------- 情景翻译
+qingjingfanyi = "情景翻译";
+
+jichang = "机场";
+banlidengji = "办理登机";
+xinglituoyun = "行李托运";
+zhuanji = "转机";
+quxingli = "取行李";
+duihuanwaibi = "兑换外币";
+
+jiaotong = "交通";
+gongjiaoche = "公交车";
+chuzuche = "出租车";
+ditie = "地铁";
+huoche = "火车";
+lunchuan = "轮船";
+zijiache = "自驾车";
+
+binguan = "宾馆";
+dengjiruzhu = "登记入住";
+kefangfuwu = "客房服务";
+tousu = "投诉";
+tuifang = "退房";
+
+canting = "餐厅";
+souluomeishi = "搜罗美食";
+diancai = "点餐";
+fuwu = "服务";
+maidan = "买单";
+
+jingdian = "景点";
+
+yule = "娱乐";
+meishuguan = "美术馆";
+bowuguan = "博物馆";
+
+shangchang = "商场";
+tiaoxuan = "挑选";
+jiage = "价格";
+tuihuan = "退换";
+fukuan = "付款";
+
+yinhang = "银行";
+
+youju = "邮局";
+
+zuche = "租车";
+
+shenghuo = "生活";
+jiaoji = "交际";
+chaoshi = "超市";
+dadianhua = "打电话";
+xunzhaoxishoujian = "寻找洗手间";
+
+yiyuan = "医院";
+guahao = "挂号";
+kanzhen = "看诊";
+jiaofei = "缴费";
+
+jinji = "紧急";
+
+duanju = "短句";
+
+yuanyuyan = "源语言";
+mubiaoyuyan = "目标语言";
+
+// ----------- 旅游省份
+anhui = "安徽";
+aomen = "澳门";
+beijing = "北京";
+fujian = "福建";
+gansu = "甘肃";
+guangdong = "广东";
+guangxi = "广西";
+guizhou = "贵州";
+hainan = "海南";
+haiwai = "海外";
+hebei = "河北";
+henan = "河南";
+heilongjiang = "黑龙江";
+hubei = "湖北";
+hunan = "湖南";
+jilin = "吉林";
+jiangsu = "江苏";
+jiangxi = "江西";
+liaoning = "辽宁";
+neimenggu = "内蒙古";
+ningxia = "宁夏";
+shandong = "山东";
+shanxi = "山西";
+shaanxi = "陕西";
+shanghai = "上海";
+sichuan = "四川";
+taiwan = "台湾";
+tianjin = "天津";
+xizang = "西藏";
+xianggang = "香港";
+xinjiang = "新疆";
+yunnan = "云南";
+zhejiang = "浙江";
+chongqing = "重庆";
+
+// ------------------- 首页 David
+sousuohuoshuruwangzhi = "搜索或输入网址";
+shuruchazhaoneirong = "输入查找内容";
+erlanmoshi = "二栏模式";
+sanlanmoshi = "三栏模式";
+silanmoshi = "四栏模式";
+tianjiayingyong = "添加应用";
+fenxiangdao = "分享到";
+fenxiangchenggong = "分享成功";
+shoudongshuru = "手动输入";
+feiwangyeappbunengxiugaibiaotihelianjie = "非网页App不能修改标题和链接";
+shouyeyingyongshuliangyidadaoshangxian = "首页应用数量已达到上限";
+yitianjiadaoshuqian = "已添加到书签";
+yicongshuqianyichu = "已从书签移除";
+yitianjiadaoshouyeyingyongping = "已添加到首页应用屏";
+yicongshouyeyingyongpingshanchu = "已从首页应用屏删除";
+
+// ------------------ 个性化定制 David
+zanwujiemu = "暂无节目";
+shouting = "收听";
+yuedu = "阅读";
+xiayijiemuyugao = "下一节目预告";
+chongfufangshi = "重复方式";
+xinjianmoshi = "新建模式";
+xinzengyuyue = "新增预约";
+bianjiyuyue = "编辑预约";
+diantai_zixun = "电台/资讯";
+qingxuanzeneirong = "请选择内容";
+qingshurumoshiming = "请输入模式名";
+bianjimoshiming = "编辑模式名";
+qingxuanzeneirong = "请选择内容";
+shi = "时";
+fen = "分";
+zhou0 = "周日";
+zhou1 = "周一";
+zhou2 = "周二";
+zhou3 = "周三";
+zhou4 = "周四";
+zhou5 = "周五";
+zhou6 = "周六";
+buchongfu = "不重复";
+gongzuori = "工作日";
+zhoumo = "周末";
+meitian = "每天";
+diantai = "电台";
+zixun = "资讯";
+huifu = "恢复";
+gaishijianyijingcunzaiyuyue_shifoutihuan = "该时间已经存在预约，是否替换？";
+tihuan = "替换";
+butihuan = "不替换";
+nindingyuede_jijiangkaishi_shifoushouting = "您订阅的【%@】即将开始，是否收听？";
+nindingyuede_shijianyidao_shifouyuedu = "您订阅的【%@】时间已到，是否阅读？";
+
+// -------------------  系统设置 David
+zitidaxiaoshezhi_tishi= "较大字号设置会影响部分网页排版美观";
+zitidaxiaoshezhi_shiliwenzi = "拖动滑竿以调节字体大小，网页中大部分字体将按此大小显示。";
+moren = "默认";
+fanyeanniu_tishi = "浏览网页时，在页面中显示上下翻页按钮。";
+fanyeanniu = "翻页按钮";
+chupingfanye_tishi = "浏览网页时，允许点击屏幕上方或下方让页面翻页滚动。";
+chupingfanye = "触屏翻页";
+weidenglu = "未登录";
+kaiqishidakaishangciyemian = "开启时打开上次页面";
+lianjiedakaifangshi = "链接打开方式";
+dangqianchuangkou = "当前窗口";
+wangyemoren = "网页默认";
+xinchuangkou = "新窗口";
+houtai = "后台";
+zitidaxiao = "字体大小";
+morensousuoyinqing = "默认搜索引擎";
+xiaoxituisong = "消息推送";
+fanyefangshi = "翻页方式";
+xiaochujilu = "清除记录";
+liulanqibiaozhi = "浏览器标识(UA)";
+guanyuzhonghualiulanqi = "关于中华浏览器";
+huifumorenshezhi = "恢复默认设置";
+qin_geige5xinghaopingba = "亲，给个5星好评吧";
+shezhizitidaxiao = "设置字体大小";
+xuanzemorensousuoyinqing = "选择默认搜索引擎";
+quedingyaohuifumorenshezhi = "确定要恢复默认设置？";
+guanyuzhonghualiulanqi = "关于中华浏览器";
+zhonghualiulanqi = "中华浏览器";
+bangzhuzhongxin = "帮助中心";
+chanpinjieshao = "产品介绍";
+
+// ------------------- 检查更新 David
+jianchayouxinbanben = "检查有新版本";
+buzaitishi = "不再提示";
+lijishengji = "立即升级";
+bushengji = "不升级";
+wuxushengji = "您已经拥有最新版本";
+weizhaodaoapp = "AppStore上未找到该App";
+
+// -------------------  语言设置 David
+gensuixitong = "跟随系统";
+gensuixitongyuyan = "跟随系统语言";
+qiehuanyuyan_quedingqiehuan = "切换语言将会退出当前账号并切换服务器地址，确定切换？";
+
+// ------------------- 登陆 Huyan
+zhanghudenglu = "账户登陆";
+denglu = "登陆";
+mianfeizhuce = "免费注册";
+wangjimima = "忘记密码";
+shuqian = "书签";
+shiyonghezuozhanghaodenglu = "使用合作账号登陆";
+dengluzhonghualiulanqizhanghao_keyitongbuyixiashuju = "登录中华浏览器账号,可以同步以下数据";
+biaoqianye_chuangkou_ = "标签页(窗口)";
+gengduofuwu ="更多服务";
+youxiang_shoujihao = "邮箱/手机号";
+mima = "密码";
+nicheng = "昵称";
+tongyi = "同意";
+zhonghualiulanqiyonghufuwuxieyi = "中华浏览器用户服务协议";
+6_16weishuzihuozimu = "6-16位数字或字母";
+qingshuru6_16weishuzihuozimudemima = "请输入6-16位数字或字母的密码";
+qingshuruzhengquedeyouxiangdizhi_shoujihao = "请输入正确的邮箱地址/手机号";
+qingshurumima = "请输入密码";
+qingshuruyouxiang_shouji = "请输入邮箱地址/手机号";
+shuqian = "书签";
+zhuce = "注册";
+denglushibai = "登陆失败";
+dengluchenggong = "登陆成功";
+zhengzaidenglu = "正在登陆";
+zhengzaizhuce = "正在注册";
+
+// ------------------- 个人中心 Huyan
+zueijinfangwen = "最近访问";
+zhinengtianbiao = "智能填表";
+shebeitongbu = "设备同步";
+zhuxiaodangqianzhanghao = "注销当前账号";
+touxiang = "头像";
+xingbie = "性别";
+nan = "男";
+nv = "女";
+shangcitongbu = "上次同步";
+gerenzhongxin = "个人中心";
+tongbufangshi = "同步方式";
+jinzaiWifixiazidong = "仅在Wifi下自动";
+zongshizidong = "总是自动";
+zongshishoudong = "总是手动";
+baomi = "保密";
+tongbu = "同步";
+zhengzaitongbu = "正在同步";
+tongbushibai = "同步失败";
+tongbuchenggong = "同步成功";
+gerenxinxi = "个人信息";
+paizhao = "拍照";
+congxiangcexuanqu = "从相册选择";
+xuanzexingbie = "选择性别";
+baocunshibai = "保存失败";
+baocunchenggong = "保存成功";
+lianjieshibai = "链接失败";
+gexinghuadingzhi = "个性化定制";
+zhouqian = "周前";
+tianqian = "天前";
+xiaoshiqian = "小时前";
+fenzhongqian = "分钟前";
+miaoqian = "秒前";
+zhengzaitongbu_ = "正在同步...";
+shangcitongbu_ = "上次同步:";
+ninhaiweitongbu = "您还未同步";
+
+// ------------------- 历史书签 Huyan
+lishi = "历史";
+baocun = "保存";
+xinjianwenjianjia = "新建文件夹";
+xinjianshuqian = "新建书签";
+xuanzewenjianjia = "选择文件夹";
+bianjishuqian = "编辑书签";
+bianjiwenjianjia = "编辑文件夹";
+shuqianneirong = "书签内容";
+shuqianlianjie = "书签链接";
+wenjianjia = "文件夹";
+jintian = "今天";
+zuotian = "昨天";
+gengzao = "更早";
+ninquedingyaoqingkongliulanlishima = "您确定要清空浏览历史吗?";
+zanwulishi = "暂无历史";
+zanwushuqian = "暂无书签";
+tianjiachenggong = "添加成功";
+yicunzaixiangtongshuqian = "已存在相同书签";
+shuqianyicunzai = "书签已存在";
+yicunzaitongmingwenjianjia = "已存在同名文件夹";
+qingshuruzhengquedeshuqianlianjie = "请输入正确的书签链接";
+yicunzaixiangtonglianjieshuqian = "已存在相同链接书签";
+
+// ------------------- 画图涂鸦 Huyan
+huabi = "画笔";
+xiangpi = "橡皮";
+qingchu = "清除";
+baocun_fenxiang = "保存/分享";
+ninquedingyaoqingkongsuoyoutuyama = "您确定要清空所有涂鸦吗";
+qingchusuoyoutuya = "清除所有涂鸦";
+fenxiangdao = "分享到";
+baocuntupian = "保存图片";
+fangqituya = "放弃涂鸦";
+quanping = "全屏";
+jiequ = "截取";
+yulan = "预览";
+juzhong = "居中";
+chongman = "充满";
+baocunchenggong = "保存成功";
+tupianbaocunchenggong = "图片保存成功";
+zhengzaibaocuntupian = "正在保存图片...";
+shiyongzhonghualiulanqijietutuyagongnengbingfenxiang = "使用中华浏览器截图涂鸦功能并分享";
+
+// ------------------- 皮肤 Huyan
+bunengshanchudanqianpifu = "不能删除当前皮肤";
+xitongpifu = "系统皮肤";
+pifu = "皮肤";
+tianjiapifu = "添加皮肤";
+meiyouxiangcehuochengxubunengfangwennindexiangce = "没有相册或程序不能访问相册";
+ninkeyizaishezhiyinsizhongyunxufangwen = "您可以在设置隐私中允许访问";
+xiangce = "相册";
+zhangtupian = "张图片";
+zhaoxiangjibukeyong = "照相机不可用";
+xiangce = "相册";
+meiyoutupian = "没有图片";
+
+// ------------------- 通用语句 David
+queding = "确定";
+quxiao = "取消";
+guanbi = "关闭";
+fanhui = "返回";
+bianji = "编辑";
+wancheng = "完成";
+tianjia = "添加";
+shanchu = "删除";
+yichu = "移除";
+sousuo = "搜索";
+chazhao = "查找";
+qignchu = "清除";
+qingkong = "清空";
+dakai = "打开";
+chongmingming = "重命名";
+tishi = "提示";
+jinggao = "警告";
+chakan = "查看";
+
+// ------------------- 应用模块
+zidingyi = "自定义";
+shoudongtianjia = "手动添加";
+biaoti = "标题";
+wangzhi = "网址";
+gaiwangzhiyicunzai = "该网址已存在";
+qingshurubiaoti = "请输入标题";
+qingshuruwangzhi = "请输入网址";
+qingshuruzhengquedewangzhi = "请输入正确的网址";
+
+// ------------------- UIWebPage 网页相关
+jixuyoulahoutui = "继续右拉后退";
+jixuyoulahuidaoshouye = "继续右拉回到首页";
+jixuzuolaqianjin = "继续左拉前进";
+bunengqianjinle = "不能前进了";
+songkaihuidaoshouye = "松开回到首页";
+songkaihoutui = "松开后退";
+songkaiqianjin = "松开前进";
+lianjiehetupianyifuzhi = "链接和图片已复制";
+xinjianchuangkou = "新建窗口";
+qishiye = "起始页";
+shouye = "首页";
+zhengzaijiazai_ = "正在加载...";
+
+safari_dakai = "Safari 打开";
+dangqianchuangkoudakai = "当前窗口打开";
+xinchuangkoudakai = "新窗口打开";
+houtaidakai = "后台打开";
+fuzhilianjie = "复制链接";
+fuzhitupianlianjie = "复制图片链接";
+xiazaitupian = "下载图片";
+
+// -------------------- 下拉刷新
+shanglakeyijiazaigengduoshuju = "上拉可以加载更多数据";
+songkailijijiazaigengduoshuju = "松开立即加载更多数据";
+zhengzaijiazaishuju = "正在加载数据...";
+xialakeyishuaxin = "下拉可以刷新";
+songkailijishuaxin = "松开立即刷新";
+zhengzaishuaxin = "正在刷新...";

@@ -1,0 +1,57 @@
+//
+//  ViewShareItem.m
+//
+
+#import "UIViewShareItem.h"
+
+#import <QuartzCore/QuartzCore.h>
+
+@implementation UIViewShareItem
+
+- (id)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
+        self.layer.cornerRadius = 4;
+    }
+    
+    return self;
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    
+    self.layer.cornerRadius = 4;
+}
+
++ (UIViewShareItem *)viewShareItemFromXib {
+    return [[NSBundle mainBundle] loadNibNamed:@"UIViewShareItem" owner:nil options:nil][0];
+}
+
+
+
+- (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
+    BOOL b = [super beginTrackingWithTouch:touch withEvent:event];
+    if (self.enabled) {
+        //        self.layer.cornerRadius = 4;
+        self.backgroundColor = [UIColor colorWithWhite:0.2 alpha:0.2];
+    }
+    return b;
+}
+
+- (void)endTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
+    [UIView animateWithDuration:0.1 animations:^{
+        //        self.layer.cornerRadius = 0;
+        self.backgroundColor = [UIColor colorWithWhite:0.96 alpha:0];
+    } completion:nil];
+    [super endTrackingWithTouch:touch withEvent:event];
+}
+
+- (void)cancelTrackingWithEvent:(UIEvent *)event {
+    [UIView animateWithDuration:0.1 animations:^{
+        //        self.layer.cornerRadius = 0;
+        self.backgroundColor = [UIColor colorWithWhite:0.96 alpha:0];
+    } completion:nil];
+    
+    [super cancelTrackingWithEvent:event];
+}
+
+@end

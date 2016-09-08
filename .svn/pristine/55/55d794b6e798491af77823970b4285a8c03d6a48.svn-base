@@ -1,0 +1,107 @@
+//
+//  ADOBookmark.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+#import "ModelBookmark.h"
+
+@interface ADOBookmark : NSObject
+/**
+ *  判断是否存在
+ *
+ *  @param link 地址
+ *  @param title 标题
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithlink:(NSString *)link userId:(NSInteger)userId;
+
+/**
+ *  添加
+ *
+ *  @param model modleBookmark
+ *
+ *  @return NSInteger  最后添加的id； < 0，表示错误； >= 0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelBookmark *)model;
+
+/**
+ *  删除App
+ *
+ *  @param aid 本地数据库AppBookmark
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid;
+
+/**
+ *  清空数据表
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)clear;
+
++ (BOOL)clearWithUserId:(NSInteger)userId;
+
+/**
+ *  通过唯一键更新排序索引
+ *
+ *  @param orderIndex 排序索引
+ *  @param pkid       唯一键id
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)updateSort:(NSInteger)sort withPkid:(NSInteger)pkid;
+
+/**
+ *  通过唯一键更新 标题，链接地址
+ *
+ *  @param title 标题
+ *  @param link  链接地址
+ *  @param parentPkid 父级id(文件夹id)
+ *  @param pkid  pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateTitle:(NSString *)title link:(NSString *)link parentPkid:(NSInteger)parentPkid withPkid:(NSInteger)pkid;
+
+/**
+ *  查询所有bookmark+文件夹
+ *
+ *  @return NSArray 所有bookmark
+ */
++ (NSArray *)queryWithUserId:(NSInteger)userId;
+
+/**
+ *  查询所有文件夹
+ *
+ *  @return NSArray 所有文件夹
+ */
++ (NSArray *)queryAllFolderWithUserId:(NSInteger)userId;
+
+/**
+ *  按文件夹查询书签
+ *
+ *  @param parent_pkid 文件夹编号
+ *
+ *  @return NSArray bookmark
+ */
++ (NSArray *)queryWithParent_pkid:(NSInteger )parent_pkid;
+
+/**
+ *  按唯一ID查询某一条数据
+ *
+ *  @param pkid 唯一ID
+ *
+ *  @return
+ */
++ (ModelBookmark *)queryWithPkid:(NSInteger)pkid;
+
++ (NSInteger)queryMaxSortIndexWithUserId:(NSInteger)userId;
+
+@end

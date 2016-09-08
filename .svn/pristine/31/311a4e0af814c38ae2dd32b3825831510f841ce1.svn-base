@@ -1,0 +1,138 @@
+//
+//  UIControllerSelectionForder.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/13.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerSelectionForder.h"
+#import "UICellSelectionFolder.h"
+
+#import "ADOBookmark.h"
+
+
+@interface UIControllerSelectionForder ()
+{
+    NSArray *_allFolder;
+}
+@end
+
+@implementation UIControllerSelectionForder
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewDidAppear:YES];
+    [self initUI];
+    
+    _allFolder = [[NSArray alloc]init];
+    _allFolder = [ADOBookmark queryAllFolder];
+}
+
+//初始化界面
+-(void)initUI
+{
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"xinjianshuqian") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchBtnback)];
+    _navBar.topItem.title = LocalizedString(@"xuanzewenjianjia");
+    
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    CGRect rc = _navBar.frame;
+    
+    rc.origin.x = 0;
+    rc.size.width = self.view.width;
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    rc.origin.y = 20;
+#ifdef __IPHONE_8_0
+    rc.origin.y = UIInterfaceOrientationIsPortrait(orientation)?20:0;
+#endif
+    
+    _navBar.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.x = 0;
+    rc.origin.y = _navBar.bottom;
+    rc.size.width = self.view.width;
+    
+    _tableView.frame = rc;
+    
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+
+}
+
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+
+
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+
+    return _allFolder.count+1;
+}
+
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *cellIdD = @"Cell";
+    
+    UICellSelectionFolder *cell = [tableView dequeueReusableCellWithIdentifier:cellIdD];
+    if (!cell) {
+        cell = [[[NSBundle mainBundle] loadNibNamed:@"UICellSelectionFolder" owner:self options:nil] lastObject];
+    }
+    
+    if (indexPath.row == 0) {
+//        cell.imageView
+        cell.textLabel.text = LocalizedString(@"shoucang");
+    }
+    else
+    {
+         ModelBookmark *model = _allFolder[indexPath.row-1];
+//        cell.imageVIewIcon =
+        cell.LabelTitle.text = model.title;
+    }
+    
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if(indexPath.row == 0)
+    {
+        [self.delegate controller:self SelectionForder:0];
+    }
+    else
+    {
+        ModelBookmark *model = _allFolder[indexPath.row-1];
+        [self.delegate controller:self SelectionForder:model.pkid];
+    }
+}
+
+
+@end

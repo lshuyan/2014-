@@ -1,0 +1,456 @@
+/* 
+  Localizable.strings
+  ChinaBrowser
+
+  Created by David on 14-9-25.
+  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+ */
+
+// ------------- 语言
+zh-Hans = "simplified Chinese";
+zh-Hant = "traditional Chinese";
+en = "English";
+tr = "Turkish";
+
+// ------------- SNS 分享项
+ShareType_1 = "Sina microblog";
+ShareType_2 = "Tencent microblog";
+ShareType_5 = "Douban community";
+ShareType_6 = "Q-Zone";
+ShareType_7 = "Renren";
+ShareType_9 = "Pengyou";
+ShareType_10 = "Facebook";
+ShareType_11 = "Twitter";
+ShareType_14 = "Google+";
+ShareType_15 = "Instagram";
+ShareType_16 = "LinkedIn";
+ShareType_18 = "Email";
+ShareType_19 = "SMS";
+ShareType_21 = "Replication";
+ShareType_22 = "Wechat";
+ShareType_23 = "Wechat group";
+ShareType_24 = "QQ";
+ShareType_43 = "WhatsApp";
+
+// -------------- App 启动介绍文字
+jieshao0 = "Guidance for Information Ocean";
+jieshao1 = "Take Me to Travel Around the World";
+jieshao2 = "Please Enjoy China Browser";
+
+// ------------- 菜单
+jiarushuqian = "Add a bookmark";
+yichushuqian = "Remove the bookmark";
+tianjiadaoshouping = "Add to the first screen";
+congshoupingyichu = "Remove from the first screen";
+shuqian_lishi = "bookmark/history";
+yuyanshezhi = "Language setting";
+shuaxin = "Refresh";
+tingzhi = "Stop";
+jietutuya = "Printscreen and graffiti";
+yeneichazhao = "Search in-page";
+fenxiang = "Share";
+gerenzhongxin = "My Center";
+
+wutumoshi = "Patternless mode";
+quanpingmoshi = "Fullscreen mode";
+liangdutiaojie = "Brightness control";
+wuhenliulan = "Incognito mode";
+saoerweima = "Scan QR code";
+pifuguanli = "Skin management";
+zhuomianyangshi = "Desktop mode";
+xitongshezhi = "System settings";
+
+xiazaiguanli = "Download management";
+yijianfankui = "Feedback";
+shengliuchaxun = "Traffic query";
+jianchagengxin = "Check for updates";
+tuichu = "Quit";
+
+// ----------------- 情景翻译
+qingjingfanyi = "Situational Translation";
+
+jichang = "Airport";
+banlidengji = "Check in";
+xinglituoyun = "Checking luggage";
+zhuanji = "Transfer";
+quxingli = "Luggage reclaim";
+duihuanwaibi = "Foreign currency exchange";
+
+jiaotong = "Transportation";
+gongjiaoche = "Bus";
+chuzuche = "Taxi";
+ditie = "Subway";
+huoche = "Train";
+lunchuan = "Ship";
+zijiache = "Car";
+
+binguan = "Hotel";
+dengjiruzhu = "Check in";
+kefangfuwu = "Room service";
+tousu = "Complaint";
+tuifang = "Check out";
+
+canting = "Restaurant";
+souluomeishi = "Searching food";
+diancai = "Ordering";
+fuwu = "Service";
+maidan = "Pay the bill";
+
+jingdian = "Scenic spots";
+
+yule = "Entertainment";
+meishuguan = "Gallery";
+bowuguan = "Museum";
+
+shangchang = "Shopping mall";
+tiaoxuan = "Choose";
+jiage = "Price";
+tuihuan = "Returns";
+fukuan = "Payment";
+
+yinhang = "Bank";
+
+youju = "Post office";
+
+zuche = "Car rental";
+
+shenghuo = "Life";
+jiaoji = "Communication";
+chaoshi = "Supermarket";
+dadianhua = "Making a call";
+xunzhaoxishoujian = "Looking for a restroom";
+
+yiyuan = "Hospital";
+guahao = "Registration";
+kanzhen = "Inspection";
+jiaofei = "Payment";
+
+jinji = "Emergency";
+
+duanju = "Clauses";
+
+yuanyuyan = "Source language";
+mubiaoyuyan = "Target language";
+
+// ----------- 旅游省份
+anhui = "Anhui";
+aomen = "Macao";
+beijing = "Beijing";
+fujian = "Fujian";
+gansu = "Gansu";
+guangdong = "Guangdong";
+guangxi = "Guangxi";
+guizhou = "Guizhou";
+hainan = "Hainan";
+haiwai = "Overseas";
+hebei = "Hebei";
+henan = "Henan";
+heilongjiang = "Heilongjiang";
+hubei = "Hubei";
+hunan = "Hunan";
+jilin = "Jilin";
+jiangsu = "Jiangsu";
+jiangxi = "Jiangxi";
+liaoning = "Liaoning";
+neimenggu = "Inner Mongolia";
+ningxia = "Ningxia";
+shandong = "Shandong";
+shanxi = "Shanxi";
+shaanxi = "Shaanxi";
+shanghai = "Shanghai";
+sichuan = "Sichuan";
+taiwan = "Taiwan";
+tianjin = "Tianjin";
+xizang = "Tibet";
+xianggang = "Hongkong";
+xinjiang = "Xinjiang";
+yunnan = "Yunnan";
+zhejiang = "Zhejiang";
+chongqing = "Chongqing";
+
+// ------------------- 首页 David
+sousuohuoshuruwangzhi = "Search or input URL";
+shuruchazhaoneirong = "Input content searched";
+erlanmoshi = "Two-column mode";
+sanlanmoshi = "Three-column mode";
+silanmoshi = "Four-column mode";
+tianjiayingyong = "Add an application";
+fenxiangdao = "Share to";
+fenxiangchenggong = "Share completed";
+shoudongshuru = "Manual input";
+feiwangyeappbunengxiugaibiaotihelianjie = "Title and link can not be modified for non webpage APP";
+shouyeyingyongshuliangyidadaoshangxian = "Applications on home page reach a limit";
+yitianjiadaoshuqian = "Has been added to bookmark";
+yicongshuqianyichu = "Has been removed from bookmark";
+yitianjiadaoshouyeyingyongping = "Has been added to the first page";
+yicongshouyeyingyongpingshanchu = "Has been deleted from the first page";
+
+// ------------------ 个性化定制 David
+zanwujiemu = "No content";
+shouting = "Listen in";
+yuedu = "Read";
+xiayijiemuyugao = "Next program forecast";
+chongfufangshi = "Repetitive mode";
+xinjianmoshi = "New-built mode";
+xinzengyuyue = "New order";
+bianjiyuyue = "Edit order";
+diantai_zixun = "Radio/News";
+qingxuanzeneirong = "Please choose";
+qingshurumoshiming = "Input mode name";
+bianjimoshiming = "Edit mode name";
+qingxuanzeneirong = "Please choose";
+shi = "Hour";
+fen = "Minute";
+zhou0 = "Sunday";
+zhou1 = "Monday";
+zhou2 = "Tuesday";
+zhou3 = "Wednesday";
+zhou4 = "Thursday";
+zhou5 = "Friday";
+zhou6 = "Saturday";
+buchongfu = "Non-repetition";
+gongzuori = "Working days";
+zhoumo = "Weekends";
+meitian = "Everyday";
+diantai = "Radio";
+zixun = "News";
+huifu = "Recovery";
+gaishijianyijingcunzaiyuyue_shifoutihuan = "Order exists for this time, if replacing£¿";
+tihuan = "Yes";
+butihuan = "No";
+nindingyuede_jijiangkaishi_shifoushouting = "Your subscription to【%@】is about to begin, listen now£¿";
+nindingyuede_shijianyidao_shifouyuedu = "Your subscription to【%@】is about to begin, read now£¿";
+
+// -------------------  系统设置 David
+zitidaxiaoshezhi_tishi= "Larger font affects the beautiy of parts of the page layouts.";
+zitidaxiaoshezhi_shiliwenzi = "Drag the slide to adjust the font size, most of the web page will be shown according to the size of the font.";
+moren = "Default";
+fanyeanniu_tishi = "When browsing the web page, the scroll button should be shown.";
+fanyeanniu = "Scroll button";
+chupingfanye_tishi = "When browsing the web page, scroll the page with clicking on the above or below screen.";
+chupingfanye = "Scroll with touching";
+weidenglu = "Not login";
+kaiqishidakaishangciyemian = "Open the last page when starting.";
+lianjiedakaifangshi = "Way of opening the link";
+dangqianchuangkou = "Current window";
+wangyemoren = "Default page";
+xinchuangkou = "New window";
+houtai = "Background";
+zitidaxiao = "Font size";
+morensousuoyinqing = "Default search engine";
+xiaoxituisong = "Message push";
+fanyefangshi = "Scrolling mode";
+xiaochujilu = "Clear history";
+liulanqibiaozhi = "UA";
+guanyuzhonghualiulanqi = "About China Browser";
+huifumorenshezhi = "Default settings";
+qin_geige5xinghaopingba = "Please give a 5 star praise.";
+shezhizitidaxiao = "Set font size";
+xuanzemorensousuoyinqing = "Choose default search engine";
+quedingyaohuifumorenshezhi = "Are you sure to restore default settings£¿";
+guanyuzhonghualiulanqi = "About China Browser";
+zhonghualiulanqi = "China Browser";
+bangzhuzhongxin = "Help";
+chanpinjieshao = "Introduction";
+qingchujilu = "Clear history";
+qinggouxuanqingchuxiang = "Please check the clear-item. ";
+lishijilu = "History";
+cookie = "Cookie";
+yemianhuancun = "Page cache";
+zhanghaomima = "Account password";
+
+// ------------------- 检查更新 David
+jianchayouxinbanben = "New version is available";
+buzaitishi = "Not tips";
+lijishengji = "Update now";
+bushengji = "Not upgrade";
+wuxushengji = "Your version is the latest one";
+weizhaodaoapp = "This APP can not be found on Appstore";
+
+// -------------------  语言设置 David
+gensuixitong = "Follow system";
+gensuixitongyuyan = "Follow system language";
+qiehuanyuyan_quedingqiehuan = "When switching language, the current account will be pulled out and the address of the server will be changed. Are you sure to switch£¿";
+
+// ------------------- 登陆 Huyan
+zhanghudenglu = "Open ID";
+denglu = "Log in";
+mianfeizhuce = "Free registration";
+wangjimima = "Forget password";
+shuqian = "Bookmark";
+shiyonghezuozhanghaodenglu = "Log in with cooperatied accounts";
+dengluzhonghualiulanqizhanghao_keyitongbuyixiashuju = "Logining in the China Browser account, the following data can be synchronized";
+biaoqianye_chuangkou_ = "Label page(window)";
+gengduofuwu ="More";
+youxiang_shoujihao = "E-mail/phone number";
+mima = "Password";
+nicheng = "Nickname";
+tongyi = "Agree";
+zhonghualiulanqiyonghufuwuxieyi = "China Browser user service agreement";
+6_16weishuzihuozimu = "6-16 numbers or letters";
+qingshuru6_16weishuzihuozimudemima = "Please input 6-16 numbers or letters as password ";
+qingshuruzhengquedeyouxiangdizhi_shoujihao = "Please input correct email ID or phone number";
+qingshurumima = "Please enter password";
+qingshuruyouxiang_shouji = "Please input email ID or phone number";
+shuqian = "Bookmark";
+zhuce = "Registration";
+denglushibai = "Login failed";
+dengluchenggong = "Login succeeded";
+zhengzaidenglu = "Landing";
+zhengzaizhuce = "Registering";
+quedingtuichu = "确定退出";
+
+// ------------------- 个人中心 Huyan
+zueijinfangwen = "Last visit";
+zhinengtianbiao = "Intelligent form filler";
+shebeitongbu = "Device synchronization";
+zhuxiaodangqianzhanghao = "Cancell the current account";
+touxiang = "Portrait";
+xingbie = "Gender";
+nan = "Male";
+nv = "Female";
+shangcitongbu = "Last synchronization";
+gerenzhongxin = "My center";
+tongbufangshi = "Synchronization method";
+jinzaiWifixiazidong = "Automatic synchronization only for Wifi";
+zongshizidong = "Always automatic synchronization";
+zongshishoudong = "Always manual synchronization";
+baomi = "Security";
+tongbu = "Synchronization";
+zhengzaitongbu = "Synchronizing";
+tongbushibai = "Synchronization failed";
+tongbuchenggong = "Synchronization suceeded";
+gerenxinxi = "Personal information";
+paizhao = "Camera";
+congxiangcexuanqu = "Choose from album";
+xuanzexingbie = "Choose agender";
+baocunshibai = "Save failed";
+baocunchenggong = "Save succeeded";
+lianjieshibai = "Link dead";
+gexinghuadingzhi = "Individual customization";
+zhouqian = "Weeks ago";
+tianqian = "Days ago";
+xiaoshiqian = "Hours ago";
+fenzhongqian = "Minutes ago";
+miaoqian = "Seconds ago";
+zhengzaitongbu_ = "Synchronizing...";
+shangcitongbu_ = "Last synchronization:";
+ninhaiweitongbu = "Not synchronization yet";
+
+// ------------------- 历史书签 Huyan
+lishi = "History";
+baocun = "Save";
+xinjianwenjianjia = "New folder";
+xinjianshuqian = "New bookmark";
+xuanzewenjianjia = "Choose the folder";
+bianjishuqian = "Edit the bookmark";
+bianjiwenjianjia = "Edit the folder";
+shuqianneirong = "Bookmark content";
+shuqianlianjie = "Bookmark link";
+wenjianjia = "Folder";
+jintian = "Today";
+zuotian = "Yesterday";
+gengzao = "Earlier";
+ninquedingyaoqingkongliulanlishima = "Are you sure to clear your history?";
+zanwulishi = "No history";
+zanwushuqian = "No bookmark";
+tianjiachenggong = "Added successfully";
+yicunzaixiangtongshuqian = "A bookmark with this name already exists.";
+shuqianyicunzai = "This bookmark already exists.";
+yicunzaitongmingwenjianjia = "A folder with this name already exists.";
+qingshuruzhengquedeshuqianlianjie = "Please input correct bookmark link.";
+yicunzaixiangtonglianjieshuqian = "The same bookmark exists";
+genmulu = "根目录";
+
+// ------------------- 画图涂鸦 Huyan
+huabi = "Paintingbrush";
+xiangpi = "Eraser";
+qingchu = "Clear";
+baocun_fenxiang = "Save/Share";
+ninquedingyaoqingkongsuoyoutuyama = "Are you sure to clear all the graffiti?";
+qingchusuoyoutuya = "Clear all the graffiti";
+fenxiangdao = "Share to";
+baocuntupian = "Save the picture";
+fangqituya = "Give up the graffiti.";
+quanping = "Fullscreen";
+jiequ = "Interception";
+yulan = "Preview";
+juzhong = "Centering";
+chongman = "Overspread";
+baocunchenggong = "Save succeeded";
+tupianbaocunchenggong = "Pictures saved successfully";
+zhengzaibaocuntupian = "Saving pictures...";
+shiyongzhonghualiulanqijietutuyagongnengbingfenxiang = "Use the function of graffiti and share.";
+
+// ------------------- 皮肤 Huyan
+tupianzhengzaishiyong_bunengshanchu = "图片正在使用，不能删除！";
+xitongpifu = "System skin";
+pifu = "Skin";
+tianjiapifu = "Add skin";
+meiyouxiangcehuochengxubunengfangwennindexiangce = "The album cannot be visited without album or program.";
+ninkeyizaishezhiyinsizhongyunxufangwen = "You can allow access in the privacy of settings.";
+xiangce = "Album";
+zhangtupian = "Pictures";
+zhaoxiangjibukeyong = "The camera cannot be used";
+xiangce = "Album";
+meiyoutupian = "There is no any picture";
+
+// ------------------- 通用语句 David
+queding = "OK";
+quxiao = "Cancel";
+guanbi = "Off";
+fanhui = "Back";
+bianji = "Edit";
+wancheng = "Complete";
+tianjia = "Add";
+shanchu = "Delete";
+yichu = "Remove";
+sousuo = "Search";
+chazhao = "Lookup";
+qingchu = "Clear";
+qingkong = "Empty";
+dakai = "Open";
+chongmingming = "Rename";
+tishi = "Hint";
+jinggao = "Warning";
+chakan = "Check";
+
+// ------------------- 应用模块
+zidingyi = "Self-define";
+shoudongtianjia = "Add manually";
+biaoti = "Title";
+wangzhi = "Website";
+gaiwangzhiyicunzai = "This website already exits.";
+qingshurubiaoti = "Please input the title.";
+qingshuruwangzhi = "Please input the website.";
+qingshuruzhengquedewangzhi = "Please input the correct website.";
+
+// ------------------- UIWebPage 网页相关
+jixuyoulahoutui = "Back with pulling to the right";
+jixuyoulahuidaoshouye = "Back to the home page with pulling to the right";
+jixuzuolaqianjin = "Go on with pulling to the left";
+bunengqianjinle = "You cannot move forward.";
+songkaihuidaoshouye = "Loosen and go back the home page.";
+songkaihoutui = "Loosen and retreat";
+songkaiqianjin = "Loosen and go forward";
+lianjiehetupianyifuzhi = "Links and pictures have been replicated.";
+xinjianchuangkou = "New window";
+qishiye = "Start page";
+shouye = "Home page";
+zhengzaijiazai_ = "Loading...";
+
+safari_dakai = "Open in Safari";
+dangqianchuangkoudakai = "Open in current window";
+xinchuangkoudakai = "Open in a new window";
+houtaidakai = "Open in background window";
+fuzhilianjie = "Copy the link";
+fuzhitupianlianjie = "Copy the link of the picture";
+xiazaitupian = "Download the picture";
+
+// -------------------- 下拉刷新
+shanglakeyijiazaigengduoshuju = "Pull up to load more data.";
+songkailijijiazaigengduoshuju = "Loosen to load more data immediately";
+zhengzaijiazaishuju = "Loading data...";
+xialakeyishuaxin = "Pull to refresh";
+songkailijishuaxin = "Loosen to refresh immediately";
+zhengzaishuaxin = "Refreshing...";

@@ -1,0 +1,108 @@
+//
+//  UIViewFMPlayer.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/19.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewFMPlayer.h"
+
+#import "ModelModeProgram.h"
+#import "ModelProgram.h"
+
+#import "CBAudioPlayer.h"
+
+@interface UIViewFMPlayer ()
+{
+    IBOutlet UIImageView *_imageViewBgPlayer;
+    IBOutlet UIView *_viewContentPlayer;
+    IBOutlet UIImageView *_imageViewWave;
+    IBOutlet UIButton *_btnAdd;
+    
+    UIImageView *_bgFM;
+    IBOutlet UILabel *_labelFM;
+    IBOutlet UILabel *_labelTitle;
+    IBOutlet UILabel *_labelNextTitle;
+    IBOutlet UILabel *_labelTime;
+    IBOutlet UIButton *_btnPlayPause;
+}
+
+@end
+
+@implementation UIViewFMPlayer
+
+#pragma mark - instance
++ (instancetype)viewFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:nil options:nil][0];
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    _imageViewBgPlayer.image = [UIImage imageWithBundleFile:@"iPhone/FM/bg_player.png"];
+    _imageViewWave.image = [UIImage imageWithBundleFile:@"iPhone/FM/list_0.png"];
+    
+    [_btnAdd setImage:[UIImage imageWithBundleFile:@"iPhone/FM/add_0.png"] forState:UIControlStateNormal];
+    [_btnAdd setImage:[UIImage imageWithBundleFile:@"iPhone/FM/add_1.png"] forState:UIControlStateHighlighted];
+    
+    [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_0.png"] forState:UIControlStateNormal];
+    [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_1.png"] forState:UIControlStateHighlighted];
+    
+    _labelFM.textColor = [UIColor grayColor];
+    _imageViewBgPlayer = [[UIImageView alloc] initWithImage:[[UIImage imageWithBundleFile:@"iPhone/FM/bg_fm_0.png"] stretchableImageWithLeftCapWidth:14 topCapHeight:10]];
+    [_viewContentPlayer insertSubview:_imageViewBgPlayer belowSubview:_labelFM];
+    
+    _viewContentPlayer.backgroundColor = [UIColor colorWithWhite:0 alpha:0];
+    CAShapeLayer *mask = [CAShapeLayer layer];
+    mask.frame = _viewContentPlayer.bounds;
+    mask.path = [UIBezierPath bezierPathWithRoundedRect:_viewContentPlayer.bounds cornerRadius:MIN(_viewContentPlayer.width, _viewContentPlayer.height)/2].CGPath;
+    _viewContentPlayer.layer.mask = mask;
+    
+    [self updateUI];
+}
+
+#pragma mark - private methods
+- (IBAction)onTouchAdd
+{
+    if (_callbackWillAdd) {
+        _callbackWillAdd();
+    }
+}
+
+- (IBAction)onTouchPlayOrPause
+{
+    if ([CBAudioPlayer isPlaying]) {
+        [CBAudioPlayer pause];
+    }
+    else {
+        [CBAudioPlayer play];
+    }
+    
+    if ([CBAudioPlayer isPlaying]) {
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/stop_0.png"] forState:UIControlStateNormal];
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/stop_1.png"] forState:UIControlStateHighlighted];
+    }
+    else {
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_0.png"] forState:UIControlStateNormal];
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_1.png"] forState:UIControlStateHighlighted];
+    }
+}
+
+- (void)updateUI
+{
+    CGFloat fY = _labelFM.top;
+    CGFloat fH = _labelFM.height;
+    [_labelFM sizeToFit];
+    CGRect rc = _labelFM.frame;
+    rc.size.height = fH;
+    rc.size.width = MIN(_labelFM.width, 100);
+    rc.origin.y = fY;
+    rc.origin.x = (_viewContentPlayer.width-rc.size.width)*0.5;
+    _labelFM.frame = rc;
+    _imageViewBgPlayer.frame = CGRectOffset(CGRectIntegral(CGRectInset(_labelFM.frame, -5, (_labelFM.height-_imageViewBgPlayer.height)*0.5)), 0, 1);
+}
+
+@end

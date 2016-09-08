@@ -1,0 +1,19 @@
+//
+//  UIControllerEditNick.h
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+
+#import "UINavigationBarCustom.h"
+
+@interface UIControllerEditNick : UIViewController<UITabBarDelegate, UITableViewDataSource>
+{
+    
+    IBOutlet UITableView *_tableView;
+    IBOutlet UINavigationBarCustom *_navBar;
+}
+@end

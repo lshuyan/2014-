@@ -1,0 +1,158 @@
+//
+//  UIViewReminderEdit.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewReminderEdit.h"
+
+@interface UIViewReminderEdit () <UIPickerViewDataSource, UIPickerViewDelegate>
+{
+    IBOutlet UIPickerView *_pickView;
+    IBOutlet UILabel *_labelFieldRepeat;
+    IBOutlet UILabel *_labelFieldModeName;
+    
+    IBOutlet UIView *_viewRepeat;
+    IBOutlet UITextField *_textFieldModeName;
+    
+    IBOutletCollection(UIButton) NSArray *_arrBtnRepeat;
+}
+
+@end
+
+@implementation UIViewReminderEdit
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    _labelFieldRepeat.text = LocalizedString(@"chongfumoshi");
+    _labelFieldModeName.text = LocalizedString(@"qingshurumoshiming");
+    
+    _textFieldModeName.layer.borderColor = [UIColor colorWithWhite:0.9 alpha:1].CGColor;
+    _textFieldModeName.layer.borderWidth = 0.6;
+    _textFieldModeName.placeholder = LocalizedString(@"qingshurumoshiming");
+    
+    UIView *viewLeft = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 5, 10)];
+    _textFieldModeName.leftView = viewLeft;
+    _textFieldModeName.leftViewMode = UITextFieldViewModeAlways;
+    
+    
+    NSArray *arrRepeat = @[@{@"title":@"xingqiyi",
+                             @"repeat":@(RemindRepeatMode1)},
+                           @{@"title":@"xingqier",
+                             @"repeat":@(RemindRepeatMode2)},
+                           @{@"title":@"xingqisan",
+                             @"repeat":@(RemindRepeatMode3)},
+                           @{@"title":@"xingqisi",
+                             @"repeat":@(RemindRepeatMode4)},
+                           @{@"title":@"xingqiwu",
+                             @"repeat":@(RemindRepeatMode5)},
+                           @{@"title":@"xingqiliu",
+                             @"repeat":@(RemindRepeatMode6)},
+                           @{@"title":@"xingqiri",
+                             @"repeat":@(RemindRepeatMode0)}
+                           ];
+    
+    _viewRepeat.backgroundColor = [UIColor colorWithWhite:0.4 alpha:1];
+    NSInteger count = MIN(arrRepeat.count, _arrBtnRepeat.count);
+    for (NSInteger i=0; i<count; i++) {
+        UIButton *btnRepeat = _arrBtnRepeat[i];
+        NSDictionary *dicRepeat = arrRepeat[i];
+        [btnRepeat setTitle:LocalizedString(dicRepeat[@"title"]) forState:UIControlStateNormal];
+        btnRepeat.tag = [dicRepeat[@"repeat"] integerValue];
+        [btnRepeat setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+        [btnRepeat setTitleColor:[UIColor whiteColor] forState:UIControlStateHighlighted];
+        [btnRepeat setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        btnRepeat.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1];
+        
+        [btnRepeat addTarget:self action:@selector(onTouchRepeat:) forControlEvents:UIControlEventTouchUpInside];
+    }
+}
+
++ (instancetype)viewFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:nil options:nil][0];
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    
+    [self setNeedsDisplay];
+    
+    CGFloat fWidth = (_viewRepeat.width-(_arrBtnRepeat.count-1)*1)/_arrBtnRepeat.count;
+    for (NSInteger i=0; i<_arrBtnRepeat.count; i++) {
+        CGRect rc = CGRectMake((fWidth+1)*i, 0, fWidth, _viewRepeat.height);
+        UIButton *btnRepeat = _arrBtnRepeat[i];
+        btnRepeat.frame = rc;
+    }
+}
+
+- (void)drawRect:(CGRect)rect
+{
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithWhite:0.8 alpha:1].CGColor);
+    CGContextSetLineWidth(context, 1);
+    CGContextMoveToPoint(context, 0, 0);
+    CGContextAddLineToPoint(context, self.width, 0);
+    CGContextStrokePath(context);
+}
+
+#pragma mark - UIPickerViewDataSource, UIPickerViewDelegate
+- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
+{
+    return 4;
+}
+
+- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
+{
+    NSInteger numb = 1;
+    switch (component) {
+        case 0: numb=1; break;
+        case 1: numb=24; break;
+        case 2: numb=60; break;
+        case 3: numb=1; break;
+        default:
+            break;
+    }
+    return numb;
+}
+
+- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
+{
+    NSString *title;
+    switch (component) {
+        case 0: title = LocalizedString(@"shi"); break;
+        case 1:
+        case 2: title = [NSString stringWithFormat:@"%02d", row]; break;
+        case 3: title = LocalizedString(@"fen"); break;
+        default:
+            break;
+    }
+    return title;
+}
+
+- (void)onTouchRepeat:(UIButton *)btnRepeat
+{
+    btnRepeat.selected = !btnRepeat.selected;
+    if (btnRepeat.selected) {
+        btnRepeat.backgroundColor = [UIColor colorWithRed:0.196 green:0.686 blue:1.000 alpha:1.000];
+    }
+    else {
+        btnRepeat.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1];
+    }
+}
+
+@end

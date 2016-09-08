@@ -1,0 +1,37 @@
+//
+//  UICellFMMode.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/18.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellFMMode.h"
+
+@implementation UICellFMMode
+
+- (void)awakeFromNib {
+    // Initialization code
+    [super awakeFromNib];
+    
+    _imageViewRadio.image = [UIImage imageWithBundleFile:@"iPhone/FM/fn_0.png"];
+    _imageViewRadio.highlightedImage = [UIImage imageWithBundleFile:@"iPhone/FM/fn_2.png"];
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+    _imageViewRadio.highlighted = selected;
+}
+
+- (void)setFrame:(CGRect)frame {
+    [super setFrame:frame];
+}
+
++ (instancetype)cellFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:nil options:nil][0];
+}
+
+@end

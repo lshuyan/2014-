@@ -1,0 +1,159 @@
+//
+//  common.h
+//
+
+#import <Foundation/Foundation.h>
+
+#import <ShareSDK/ShareSDKTypeDef.h>
+
+#define _DEBUG 0
+
+// Debug Logging
+#if (TARGET_IPHONE_SIMULATOR|_DEBUG) // Set to 1 to enable debug logging
+    #ifndef _DEBUG_LOG
+        #define _DEBUG_LOG(x, ...) NSLog(x, ## __VA_ARGS__);
+    #endif
+#else
+    #ifndef _DEBUG_LOG
+        #define _DEBUG_LOG(x, ...)
+    #endif
+#endif
+
+// safely release
+#ifndef SAFE_RELEASE
+    #if __has_feature(objc_arc)
+        #define SAFE_RELEASE(_x_) {}
+    #else
+        #define SAFE_RELEASE(_x_) if(_x_){[_x_ release];_x_=nil;}
+    #endif
+#endif
+
+// index col row
+#define GetColWithIndexRow(_index, _row) (_index/_row)
+#define GetRowWithIndexRow(_index, _row) (_index%_row)
+
+#define GetColWithIndexCol(_index, _col) (_index%_col)
+#define GetRowWithIndexCol(_index, _col) (_index/_col)
+
+// get page with total and pagesize
+#define GetPageWithTotalPagesize(_total, _pagesize) ((int)ceil(_total/(CGFloat)_pagesize))
+
+#ifndef IsiPad
+    #define IsiPad (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM())
+#endif
+
+#ifndef IsiPhone5
+#define IsiPhone5 CGSizeEqualToSize([[UIScreen mainScreen] bounds].size, CGSizeMake(320, 568))
+#endif
+
+#ifndef IsiPhone6
+#define IsiPhone6 CGSizeEqualToSize([[UIScreen mainScreen] bounds].size, CGSizeMake(375, 667))
+#endif
+
+#ifndef IsiPhone6Plus
+#define IsiPhone6Plus CGSizeEqualToSize([[UIScreen mainScreen] bounds].size, CGSizeMake(414, 736))
+#endif
+
+#ifndef IsPortrait
+    #define IsPortrait UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)
+#endif
+
+#ifndef IsiOS7
+#ifdef __IPHONE_7_0
+#define IsiOS7 [[UIApplication sharedApplication] respondsToSelector:@selector(ignoreSnapshotOnNextApplicationLaunch)]
+#else
+#define IsiOS7 [[UIApplication sharedApplication] respondsToSelector:@selector(ignoreSnapshotOnNextApplicationLaunch)]
+#endif
+#endif
+
+#ifndef IsiOS8
+#ifdef __IPHONE_8_0
+#define IsiOS8 [[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)]
+#else
+#define IsiOS8 [[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)]
+#endif
+#endif
+
+#ifndef DB_NAME
+
+#define DB_NAME [[[NSBundle mainBundle] infoDictionary][@"CFBundleName"] stringByAppendingString:@".sqlite"]
+
+#endif
+
+#ifndef Old_DB_Name
+#define Old_DB_Name @""
+#endif
+
+#define TRANS_DBPATH [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"trans.sqlite"]
+
+#define LocalizedString(_key_) [LocalizationUtil getTextByKey:_key_]
+
+// -------------------------- notification
+extern NSString * const KNotificationDidChanageDesktopStyle;
+
+extern NSString * const KNotificationDidLogin;
+extern NSString * const KNotificationDidLogout;
+extern NSString * const KNotificationDidUpdateUserInfo;
+extern NSString * const KNotificationDidChangedPageStyle;
+extern NSString * const KNotificationDidChangedSearchEngine;
+extern NSString * const KNotificationDidChangedFontSize;
+extern NSString * const KNotificationDidSyncReminder;
+
+// -------------------------- FM local notification userinfo keys
+extern NSString * const FMUserInfoKeyTitle;
+extern NSString * const FMUserInfoKeyFM;
+extern NSString * const FMUserInfoKeyLink;
+extern NSString * const FMUserInfoKeySrcType;
+extern NSString * const FMUserInfoKeyCateId;
+extern NSString * const FMUserInfoKeyModePkid;
+extern NSString * const FMUserInfoKeyModeProgramPkid;
+extern NSString * const FMUserInfoKeyProgramPkidServer;
+
+// -------------------------- function
+CGFloat InterfaceDegrees();
+#define degreesToRadians(x) (M_PI*(x)/180.0)
+
+#define kShouldShowGuide @"kShouldShowGuide"
+BOOL ShouldShowGuide();
+void SetGuideVersion();
+
+/**
+ *  将网页链接打开方式转成字符串
+ *
+ *  @param urlOpenStyle
+ *
+ *  @return NSString
+ */
+NSString *StringFromUrlOpenStyle(UrlOpenStyle urlOpenStyle);
+
+NSString *SNSNameWithShareType(ShareType shareType);
+UIImage *SNSIconWithShareType(ShareType shareType, BOOL iOS7);
+
+/**
+ *  通过指定链接获得网站标签小图标
+ *
+ *  @param link 网址链接
+ *
+ *  @return 对应网站的小图标
+ */
+NSString *FaviconWithLink(NSString *link);
+
+/**
+ *  通过指定链接获得网站 host 域名
+ *
+ *  @param link 网址链接
+ *
+ *  @return host
+ */
+NSString *HostWithLink(NSString *link);
+
+/**
+ *  发送分享内容
+ *
+ *  @param shareType shareType description
+ *  @param image     image description
+ *  @param title     QZone、RenRen、Instapaper、WeChat、QQ
+ *  @param content   Share content string.（Sina Weibo、Tencent Weibo、NetEase Weibo、Sohu Weibo、Douban、RenRen、KaiXin、YouDaoNote、Facebook、Twitter、Mail、Print、SMS、WeChat、QQ、Copy）
+ *  @param url       QZone、RenRen、Instapaper、WeChat、QQ）
+ */
+void SendShareContent(ShareType shareType, UIImage *image, NSString *title, NSString *content, NSString *url);

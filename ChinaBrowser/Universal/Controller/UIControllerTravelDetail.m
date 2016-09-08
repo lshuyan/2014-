@@ -1,0 +1,125 @@
+//
+//  UIControllerTravelDetail.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-17.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerTravelDetail.h"
+
+#import "UIViewNav.h"
+#import "UIScrollViewTravelDetail.h"
+
+#import <MediaPlayer/MediaPlayer.h>
+
+#import "UIControllerPlayer.h"
+
+@interface UIControllerTravelDetail () <UIScrollViewTravelDetailDelegate>
+{
+    UIViewNav *_viewNav;
+    __weak IBOutlet UIScrollViewTravelDetail *_scrollViewTravelDetail;
+    
+    MPMoviePlayerController *_moviePlayer;
+}
+
+@end
+
+@implementation UIControllerTravelDetail
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    if (IsiOS7) {
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+    }
+    
+    [self.view setBgImageWithScaleAspectFillImage:[AppSetting shareAppSetting].skinImage];
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [_scrollViewTravelDetail setImageUrl:_imageUrl imageSize:_imageSize];
+        [_scrollViewTravelDetail reqVideoWithProvinceId:_provinceId];
+    });
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (IsiPad) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _scrollViewTravelDetail.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.bounds.size.height-rc.origin.y;
+    _scrollViewTravelDetail.frame = rc;
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }
+    else {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+}
+
+#pragma mark - UIScrollViewTravelDetailDelegate
+- (void)scrollViewTravelDetail:(UIScrollViewTravelDetail *)scrollViewTravelDetail willPlayWithUrl:(NSString *)url title:(NSString *)title thumb:(NSString *)thumb
+{
+    UIControllerPlayer *controllerPlayer = [[UIControllerPlayer alloc] init];
+    controllerPlayer.url = url;
+    controllerPlayer.title = title;
+    controllerPlayer.thumb = thumb;
+    [self presentViewController:controllerPlayer animated:YES completion:nil];
+}
+
+- (void)scrollViewTravelDetail:(UIScrollViewTravelDetail *)scrollViewTravelDetail reqLink:(NSString *)link
+{
+    [_delegate controllerTravelDetail:self reqLink:link];
+    
+    if (self.navigationController) {
+        [self.navigationController popToRootViewControllerAnimated:YES];
+    }
+    else {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+}
+
+#pragma mark - UIControllerPlayerDelegate
+- (void)controllerPlayer:(UIControllerPlayer *)controllerPlayer willRotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
+{
+    [self willRotateToInterfaceOrientation:interfaceOrientation duration:duration];
+}
+
+@end

@@ -1,0 +1,36 @@
+//
+//  ModelSyncDelete.m
+//  ChinaBrowser
+//
+//  Created by David on 14/12/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelSyncDelete.h"
+
+@implementation ModelSyncDelete
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.lan = [LocalizationUtil currLanguage];
+    }
+    return self;
+}
+
+- (instancetype)initWithResultSetDict:(NSDictionary *)dict
+{
+    self = [super initWithResultSetDict:dict];
+    if (self) {
+        self.pkid = [dict[@"pkid"] integerValue];
+        self.userId = [dict[@"user_id"] integerValue];
+        self.lan = dict[@"lan"];
+        self.pkidServer = [dict[@"pkid_server"] integerValue];
+        self.syncDataType = [dict[@"sync_data_type"] integerValue];
+        self.updateTime = [dict[@"update_time"] integerValue];
+    }
+    return self;
+}
+
+@end

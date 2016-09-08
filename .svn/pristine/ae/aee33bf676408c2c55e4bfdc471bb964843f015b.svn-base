@@ -1,0 +1,140 @@
+//
+//  UIViewEraserSet.m
+//  KTBrowser
+//
+//  Created by David on 14-2-26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewEraserSet.h"
+
+#import <QuartzCore/QuartzCore.h>
+
+@interface UIViewEraserSet ()
+
+- (void)setup;
+
+@end
+
+@implementation UIViewEraserSet
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self) {
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+}
+
+-(void)setup
+{
+    
+}
+
++ (UIViewEraserSet *)viewEraserSetFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:@"UIViewEraserSet" owner:self options:nil][0];
+}
+
+- (void)setEraserWidth:(CGFloat)width
+{
+    _slider.value = MAX(width, _slider.minimumValue);
+    CGRect rc = _viewWrap.bounds;
+    rc.size.width = rc.size.height = _slider.value;
+    _viewWrap.bounds = rc;
+    _viewWrap.layer.cornerRadius = rc.size.width/2;
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    
+    CGPoint touchPoint = [[touches anyObject] locationInView:self];
+    if (!CGRectContainsPoint(self.viewContent.frame, touchPoint)) {
+        [self animationRemoveFormSuperview];
+    }
+}
+
+-(void)animationRemoveFormSuperview
+{
+    //当以及加入到父视图时 执行消失
+    [UIView animateWithDuration:0.3 animations:^{
+        CGRect rect =  self.viewContent.frame;
+        rect.origin.y = self.frame.size.height;
+        self.viewContent.frame = rect;
+        
+        self.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.01];
+    } completion:^(BOOL finished) {
+        [self removeFromSuperview];
+    }];
+    
+}
+
+
+//拖拉滑动条
+-(void)sliderValuechanged:(UISlider *)sender
+{
+    CGRect rc = _viewWrap.bounds;
+    rc.size.width = rc.size.height = sender.value;
+    _viewWrap.bounds = rc;
+    _viewWrap.layer.cornerRadius = rc.size.width / 2;
+    
+    if ([_delegate respondsToSelector:@selector(viewEraserSetWidth:)]) {
+        [_delegate viewEraserSetWidth:_slider.value];
+    }
+}
+
+/**
+ *  根据传入VIew  显示大小
+ *
+ */
+- (void)showInView:(UIView *)view completion:(void (^)())completion
+{
+    //如果是横屏调整布局
+    CGRect rect = view.frame;
+    
+    self.frame = rect;
+    [self bringSubviewToFront:self.viewContent];
+    
+    //背景添加手势
+    self.userInteractionEnabled = YES;
+    
+    _viewWrap.layer.cornerRadius = _viewWrap.bounds.size.width/2;
+    _viewWrap.layer.borderWidth = 0.5;
+    _viewWrap.layer.borderColor = [UIColor lightGrayColor].CGColor;
+    
+    [_slider setThumbImage:[UIImage imageWithBundleFile:@"iPhone/Settings/Draw/button.png"] forState:UIControlStateNormal];
+    [_slider addTarget:self action:@selector(sliderValuechanged:) forControlEvents:UIControlEventValueChanged];
+    
+    rect = self.viewContent.frame;
+    rect.origin.y = view.frame.size.height;
+    rect.size.width = view.frame.size.width;
+    self.viewContent.frame = rect;
+    //添加动画效果
+    
+    [UIView animateWithDuration:0.3 animations:^{
+        CGRect rect =  self.viewContent.frame;
+        rect.origin.y = view.frame.size.height-rect.size.height;
+        self.viewContent.frame = rect;
+        
+        self.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.3];;
+    }];
+
+
+}
+
+@end

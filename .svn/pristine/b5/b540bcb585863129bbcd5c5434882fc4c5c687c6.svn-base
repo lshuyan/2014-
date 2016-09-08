@@ -1,0 +1,55 @@
+//
+//  ModelAppCate.m
+//  ChinaBrowser
+//
+//  Created by David on 14/10/29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelAppCate.h"
+#import "ModelApp.h"
+
+@implementation ModelAppCate
+
+#pragma mark - property
+- (void)setName:(NSString *)name
+{
+    _name = [name isKindOfClass:[NSString class]]?name:nil;
+}
+
+- (void)setIcon:(NSString *)icon
+{
+    _icon = [icon isKindOfClass:[NSString class]]?icon:nil;
+}
+
+
+- (void)setArrApp:(NSMutableArray *)arrApp
+{
+    
+    if (_arrApp != arrApp) {
+        
+        _arrApp = [[NSMutableArray alloc] init];
+        if ([arrApp isKindOfClass:[NSArray class]]) {
+            
+            for (NSDictionary *data in arrApp) {
+                
+                ModelApp *model = [[ModelApp alloc] initWithDict:data];
+                
+                [_arrApp addObject:model];
+            }   
+        }
+    }
+}
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    self = [super initWithDict:dict];
+    if (self) {
+        self.name = dict[@"catname"];
+        self.icon = dict[@"icon"];
+        self.catId = [dict[@"catid"] integerValue];
+        self.arrApp = dict[@"list"];
+    }
+    return self;
+}
+
+@end

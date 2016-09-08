@@ -1,0 +1,179 @@
+//
+//  ADOModeProgram.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/22.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@class ModelModeProgram;
+
+@interface ADOModeProgram : NSObject
+
+/**
+ *  检查本地数据是否存有指定的服务器id数据
+ *
+ *  @param pkidServer 服务器 模式-节目表 pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithPkidServer:(NSInteger)pkidServer;
+
+/**
+ *  检查某个模式下是否有有指定的节目
+ *
+ *  @param modePkid Mode.pkid
+ *  @param time 时间
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithModePkid:(NSInteger)modePkid time:(NSInteger)time;
+
++ (BOOL)isExistWithModePkid:(NSInteger)modePkid time:(NSInteger)time exceptPkid:(NSInteger)exceptPkid;
+
++ (BOOL)isExistWithModePkid:(NSInteger)modePkid programPkidServer:(NSInteger)programPkidServer time:(NSInteger)time repeat:(RemindRepeatMode)repeat;
++ (BOOL)isExistWithModePkid:(NSInteger)modePkid programPkidServer:(NSInteger)programPkidServer time:(NSInteger)time repeat:(RemindRepeatMode)repeat exceptPkid:(NSInteger)exceptPkid;
+
+/**
+ *  添加一条数据
+ *
+ *  @param model ModelProgram
+ *
+ *  @return NSInteger pkid 添加数据的pkid
+ */
++ (NSInteger)addModel:(ModelModeProgram *)model;
+
+/**
+ *  更新指定数据的提醒时间
+ *
+ *  @param time 提醒时间(时间戳)
+ *  @param pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateTime:(NSInteger)time withPkid:(NSInteger)pkid;
+
+/**
+ *  修改指定数据的提醒重复方式
+ *
+ *  @param repeatMode 重复方式
+ *  @param pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateRepeatMode:(RemindRepeatMode)repeatMode withPkid:(NSInteger)pkid;
+
+/**
+ *  修改指定数据的开启状态
+ *
+ *  @param on   是否开启
+ *  @param pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateOn:(BOOL)on withPkid:(NSInteger)pkid;
+
++ (BOOL)updateProgramPkidServer:(NSInteger)programPkidServer withPkid:(NSInteger)pkid;
+
+/**
+ *  修改指定数据的：重复模式，提醒时间，开启状态
+ *
+ *  @param repeatMode
+ *  @param time
+ *  @param pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateRepeatMode:(RemindRepeatMode)repeatMode time:(NSInteger)time withPkid:(NSInteger)pkid;
+
++ (BOOL)updateModel:(ModelModeProgram *)model;
+
+/**
+ *  修改指定数据的：重复模式，开启状态
+ *
+ *  @param repeatMode
+ *  @param on
+ *  @param pkid
+ *
+ *  @return BOOL
+ */
+
+/**
+ *  查找指定的一条数据
+ *
+ *  @param pkid
+ *
+ *  @return ModelProgram
+ */
++ (ModelModeProgram *)queryWithPkid:(NSInteger)pkid;
+
++ (ModelModeProgram *)queryWithPkidServer:(NSInteger)pkidServer;
+
++ (ModelModeProgram *)queryWithModePkid:(NSInteger)modePkid time:(NSInteger)time;
+
++ (ModelModeProgram *)queryWithModePkid:(NSInteger)modePkid time:(NSInteger)time exceptPkid:(NSInteger)pkid;
+
++ (ModelModeProgram *)queryWithModePkid:(NSInteger)modePkid programPkidServer:(NSInteger)programPkidServer time:(NSInteger)time repeat:(RemindRepeatMode)repeat;
++ (ModelModeProgram *)queryWithModePkid:(NSInteger)modePkid programPkidServer:(NSInteger)programPkidServer time:(NSInteger)time repeat:(RemindRepeatMode)repeat exceptPkid:(NSInteger)exceptPkid;
+
+/**
+ *  查询指定Mode的一组数据
+ *
+ *  @return NSArray
+ */
++ (NSArray *)queryWithModePkid:(NSInteger)modePkid;
+
+/**
+ *  根据条件 查询指定Mode的一组数据
+ *
+ *  @param modePkid modePkid
+ *  @param on       是否启用
+ *
+ *  @return NSArray
+ */
++ (NSArray *)queryWithModePkid:(NSInteger)modePkid on:(BOOL)on;
+
++ (NSArray *)queryWithModePkid:(NSInteger)modePkid on:(BOOL)on repeat:(RemindRepeatMode)repeat;
+
+/**
+ *  删除一条数据
+ *
+ *  @param pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid;
+
+/**
+ *  删除一条数据
+ *
+ *  @param pkidServer
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkidServer:(NSInteger)pkidServer;
++ (BOOL)deleteWithArrPkidServer:(NSArray *)arrPkidServer userId:(NSInteger)userId;
+
+/**
+ *  删除一条数据
+ *
+ *  @param modePkid modePkid description
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithModePkid:(NSInteger)modePkid;
+
++ (BOOL)deleteWithModePkid:(NSInteger)modePkid time:(NSInteger)time;
+
++ (BOOL)deleteWithModePkid:(NSInteger)modePkid programPkidServer:(NSInteger)programPkidServer;
+
+/**
+ *  清空数据表
+ *
+ *  @return BOOL
+ */
++ (BOOL)clear;
+
+@end

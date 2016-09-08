@@ -1,0 +1,36 @@
+//
+//  UICellItemList.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/11.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellItemList.h"
+#import "UIViewAppItem.h"
+
+@interface UICellItemList ()
+{
+    // 辅助图标
+    IBOutlet UIImageView *_assistIcon;
+    
+}
+@end
+
+@implementation UICellItemList
+
+- (void)awakeFromNib {
+    _assistIcon.image = [UIImage imageWithBundleFile:@"iPhone/FM/expansion_0.png"];
+    
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+- (void)layoutSubviews
+{
+    _customIcon.image = [UIImage imageWithBundleFile:@"iPhone/App/add_write.png"];
+}
+@end

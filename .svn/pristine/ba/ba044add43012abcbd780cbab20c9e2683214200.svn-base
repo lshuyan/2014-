@@ -1,0 +1,71 @@
+//
+//  UserManager.m
+//  ChinaBrowser
+//
+//  Created by David on 14/10/31.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UserManager.h"
+
+#import "ModelUser.h"
+#import "CHKeychain.h"
+
+static UserManager *userManager;
+
+@implementation UserManager
+
+#pragma mark - property
+- (void)setCurrUser:(ModelUser *)currUser
+{
+    if (currUser) {
+        NSString *szUserId = [@(currUser.uid) stringValue];
+        [CHKeychain save:@"kCurrUserId" data:szUserId];
+        [CHKeychain save:szUserId data:[ModelUser dataWithModel:currUser]];
+        // TODO:保存用户设置信息
+    }
+    else {
+        [CHKeychain delete:@"kCurrUserId"];
+    }
+    
+    _currUser = currUser;
+}
+
+#pragma mark - instance
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        NSString *szUid = [CHKeychain load:@"kCurrUserId"];
+        if (szUid) {
+            _currUser = [ModelUser modelWithData:[CHKeychain load:szUid]];
+        }
+    }
+    return self;
+}
+
++ (instancetype)shareUserManager
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        userManager = [[UserManager alloc] init];
+    });
+    return userManager;
+}
+
+- (void)deleteUserWithUid:(NSInteger)uid
+{
+    [CHKeychain delete:[@(uid) stringValue]];
+}
+
+/**
+ *  更新用户信息
+ *
+ *  @param modelUser ModelUser
+ */
+- (void)updateUser:(ModelUser *)modelUser
+{
+    [CHKeychain save:[@(modelUser.uid) stringValue] data:[ModelUser dataWithModel:modelUser]];
+}
+
+@end

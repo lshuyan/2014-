@@ -1,0 +1,55 @@
+//
+//  ModelApp.m
+//  ChinaBrowser
+//
+//  Created by David on 14/10/29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelApp.h"
+
+@implementation ModelApp
+
+#pragma mark - property
+- (void)setName:(NSString *)name
+{
+    _name = [name isKindOfClass:[NSString class]]?name:nil;
+}
+
+- (void)setIcon:(NSString *)icon
+{
+    _icon = [icon isKindOfClass:[NSString class]]?icon:nil;
+}
+
+- (void)setLink:(NSString *)link
+{
+    _link = [link isKindOfClass:[NSString class]]?link:nil;
+}
+
+- (void)setUrlSchemes:(NSString *)urlSchemes
+{
+    _urlSchemes = [urlSchemes isKindOfClass:[NSString class]]?urlSchemes:nil;
+}
+
+- (void)setDownloadLink:(NSString *)downloadLink
+{
+    _downloadLink = [downloadLink isKindOfClass:[NSString class]]?downloadLink:nil;
+}
+
+#pragma mark - instance
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    self = [super initWithDict:dict];
+    if (self) {
+        self.appCateId = [dict[@"appcatid"] integerValue];
+        self.appType = (AppType)[dict[@"type"] integerValue];
+        self.icon = dict[@"icon"];
+        self.name = dict[@"name"];
+        self.link = dict[@"link"];
+        self.urlSchemes = dict[@"urlschemes"];
+        self.downloadLink = dict[@"app_download"];
+    }
+    return self;
+}
+
+@end

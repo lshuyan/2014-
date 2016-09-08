@@ -1,0 +1,512 @@
+//
+//  UIControllerAddProgram.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerAddProgram.h"
+
+#import "UIViewNav.h"
+#import "UIViewReminderEdit.h"
+
+#import "ModelMode.h"
+#import "ModelModeProgram.h"
+#import "ModelProgram.h"
+
+#import "ADOMode.h"
+#import "ADOModeProgram.h"
+
+#import "UIControllerProgramList.h"
+#import "BlockUI.h"
+
+@interface UIControllerAddProgram () <UITableViewDataSource, UITableViewDelegate>
+{
+    IBOutlet UITableView *_tableView;
+    UIViewNav *_viewNav;
+    UIViewReminderEdit *_viewReminderEdit;
+    
+    CGFloat _fMarginBottom;
+    
+    ModelProgram *_modelProgramSelected;
+    ModelModeProgram *_modelModeProgramEdit;
+}
+
+@end
+
+@implementation UIControllerAddProgram
+
+- (void)setActionType:(ProgramActionType)actionType
+{
+    _actionType = actionType;
+    
+    [self updateWithProgramActionType];
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    _fMarginBottom = 0;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShowNotification:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHideNotification:) name:UIKeyboardWillHideNotification object:nil];
+    
+    // ----------------
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    UIButton *btnSave = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [btnSave setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];
+    [btnSave addTarget:self action:@selector(onTouchSave) forControlEvents:UIControlEventTouchUpInside];
+    [btnSave sizeToFit];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnSave];
+    [self.view addSubview:_viewNav];
+    
+    _viewReminderEdit = [UIViewReminderEdit viewFromXib];
+    _tableView.tableFooterView = _viewReminderEdit;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self updateWithProgramActionType];
+    });
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin = CGPointMake(0, _viewNav.bottom);
+    rc.size = CGSizeMake(self.view.width, self.view.height-rc.origin.y-_fMarginBottom);
+    _tableView.frame = rc;
+    
+//    if (_fMarginBottom>0) {
+//        _tableView.contentOffset = CGPointMake(0, _tableView.contentSize.height-_tableView.height);
+//    }
+}
+
+#pragma mark - keyboard notification
+- (void)keyboardWillShowNotification:(NSNotification *)notifiercation
+{
+    CGRect rcKeyboard = [notifiercation.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    NSTimeInterval duration = [notifiercation.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationCurve curve = [notifiercation.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    
+    [UIView beginAnimations:nil context:nil];
+    [UIView setAnimationCurve:curve];;
+    [UIView setAnimationDuration:duration];
+    
+    _fMarginBottom = MIN(rcKeyboard.size.height, rcKeyboard.size.width);
+    
+    CGRect rc = _tableView.frame;
+    rc.size.height = self.view.height-_tableView.top-_fMarginBottom;
+    _tableView.frame = rc;
+    
+    if (_fMarginBottom>0) {
+        _tableView.contentOffset = CGPointMake(0, _tableView.contentSize.height-_tableView.height);
+    }
+    
+    [UIView commitAnimations];
+}
+
+- (void)keyboardWillHideNotification:(NSNotification *)notifiercation
+{
+    NSTimeInterval duration = [notifiercation.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    UIViewAnimationCurve curve = [notifiercation.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue];
+    
+    [UIView beginAnimations:nil context:nil];
+    [UIView setAnimationCurve:curve];;
+    [UIView setAnimationDuration:duration];
+    
+    _fMarginBottom = 0;
+    
+    CGRect rc = _tableView.frame;
+    rc.size.height = self.view.height-_tableView.top-_fMarginBottom;
+    _tableView.frame = rc;
+    
+    [UIView commitAnimations];
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)onTouchSave
+{
+    [self.view endEditing:YES];
+    
+    switch (_actionType) {
+        case ProgramActionTypeAddMode:
+        {
+            [self doAddMode];
+        }break;
+        case ProgramActionTypeAddModeProgram:
+        {
+            [self doAddModeProgram];
+        }break;
+        case ProgramActionTypeEditModeProgram:
+        {
+            [self doEditModeProgram];
+        }break;
+        default:
+            break;
+    }
+}
+
+- (void)doAddMode
+{
+    if (!_modelProgramSelected) {
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingxuanzeneirong")];
+        return;
+    }
+    if (_viewReminderEdit.modelName.length<=0) {
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingshurumoshiming")];
+        return;
+    }
+    
+    ModelMode *mode = [ModelMode model];
+    mode.userid = [UserManager shareUserManager].currUser.uid;
+    mode.name = _viewReminderEdit.modelName;
+    mode.sysRecommend = NO;
+    
+    NSInteger modePkid = [ADOMode addModel:mode];
+    if (modePkid>0) {
+        mode.pkid = modePkid;
+        
+        ModelModeProgram *modeProgram = [ModelModeProgram model];
+        modeProgram.modePkid = mode.pkid;
+        modeProgram.modelProgram = _modelProgramSelected;
+        modeProgram.repeatMode = _viewReminderEdit.repeatMode;
+        modeProgram.time = _viewReminderEdit.time;
+        modeProgram.on = YES;
+        
+        NSInteger modeProgramPkid = [ADOModeProgram addModel:modeProgram];
+        if (modeProgramPkid>0) {
+            modeProgram.pkid = modeProgramPkid;
+            
+            if (_callbackDidAddMode) {
+                _callbackDidAddMode(mode);
+            }
+            
+            if (_callbackDidAddModeProgram) {
+                _callbackDidAddModeProgram(modeProgram);
+            }
+        }
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)doAddModeProgram
+{
+    if (!_modelProgramSelected) {
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingxuanzeneirong")];
+        return;
+    }
+    
+    RemindRepeatMode repeat = _viewReminderEdit.repeatMode;
+    NSInteger time = _viewReminderEdit.time;
+    
+    ModelModeProgram *modeProgram= [ADOModeProgram queryWithModePkid:_modePkid time:time];
+    
+    if (modeProgram) {
+        // 找到同一时间 的节目
+        if (_modelProgramSelected.parent_pkid_server>0) {
+            // 有父级id的 节目在 选择节目的时候就已经提醒是否 替换了，所以这里直接替换数据(即修改数据)
+            modeProgram.modePkid = _modePkid;
+            modeProgram.modelProgram = _modelProgramSelected;
+            modeProgram.repeatMode = repeat;
+            modeProgram.time = time;
+            // 既然是添加，默认是启用状态
+            modeProgram.on = YES;
+            
+            BOOL flag = [ADOModeProgram updateModel:modeProgram];
+            
+            if (flag && _callbackDidAddModeProgram)
+                _callbackDidAddModeProgram(modeProgram);
+        }
+        else {
+            // 需要提醒用户是否替换 同一时间 的节目
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:LocalizedString(@"gaishijianyijingcunzaiyuyue_shifoutihuan") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"tihuan"), nil];
+            [alert showWithCompletionHandler:^(NSInteger buttonIndex) {
+                if (alert.cancelButtonIndex==buttonIndex) {
+                    return;
+                }
+                
+                modeProgram.modePkid = _modePkid;
+                modeProgram.modelProgram = _modelProgramSelected;
+                modeProgram.repeatMode = repeat;
+                modeProgram.time = time;
+                // 既然是添加，默认是启用状态
+                modeProgram.on = YES;
+                
+                BOOL flag = [ADOModeProgram updateModel:modeProgram];
+                
+                if (flag && _callbackDidAddModeProgram)
+                    _callbackDidAddModeProgram(modeProgram);
+                
+                [self.navigationController popViewControllerAnimated:YES];
+            }];
+            
+            return;
+        }
+        
+    }
+    else {
+        // 未找到同一时间的节目，直接添加到数据库中
+        modeProgram = [ModelModeProgram model];
+        
+        modeProgram.modePkid = _modePkid;
+        modeProgram.modelProgram = _modelProgramSelected;
+        modeProgram.repeatMode = _viewReminderEdit.repeatMode;
+        modeProgram.time = _viewReminderEdit.time;
+        modeProgram.on = YES;
+        
+        NSInteger modeProgramPkid = [ADOModeProgram addModel:modeProgram];
+        if (modeProgramPkid>0) {
+            modeProgram.pkid = modeProgramPkid;
+            if (_callbackDidAddModeProgram) {
+                _callbackDidAddModeProgram(modeProgram);
+            }
+        }
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)doEditModeProgram
+{
+    RemindRepeatMode repeat = _viewReminderEdit.repeatMode;
+    NSInteger time = _viewReminderEdit.time;
+    
+    BOOL isExistAtTime = [ADOModeProgram isExistWithModePkid:_modePkid time:time exceptPkid:_modelModeProgramEdit.pkid];
+    if (isExistAtTime) {
+        /**
+         *  存在同一时间的节目预约
+         */
+        if (_modelProgramSelected && _modelProgramSelected.parent_pkid_server>0) {
+            /**
+             *  有父级id的 节目在 选择节目的时候就已经提醒是否 替换了，所以这里直接替换数据(即删除重复的记录，再添加一条记录)
+             */
+            [ADOModeProgram deleteWithModePkid:_modelModeProgramEdit.modePkid time:time];
+            /**
+             *  更新节目
+             */
+            _modelModeProgramEdit.modelProgram = _modelProgramSelected;
+            _modelModeProgramEdit.repeatMode = repeat;
+            _modelModeProgramEdit.time = time;
+            
+            BOOL flag = [ADOModeProgram updateModel:_modelModeProgramEdit];
+            if (flag && _callbackDidEditModeProgram) {
+                _callbackDidEditModeProgram(_modelModeProgramEdit);
+            }
+        }
+        else {
+            // 需要提醒用户是否替换 同一时间 的节目
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:LocalizedString(@"gaishijianyijingcunzaiyuyue_shifoutihuan") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"tihuan"), nil];
+            [alert showWithCompletionHandler:^(NSInteger buttonIndex) {
+                if (alert.cancelButtonIndex==buttonIndex) {
+                    return;
+                }
+                
+                /**
+                 *  删除重复项
+                 */
+                [ADOModeProgram deleteWithModePkid:_modelModeProgramEdit.modePkid time:time];
+                
+                if (_modelProgramSelected) {
+                    /**
+                     *  更新节目
+                     */
+                    _modelModeProgramEdit.modelProgram = _modelProgramSelected;
+                }
+                _modelModeProgramEdit.repeatMode = repeat;
+                _modelModeProgramEdit.time = time;
+                
+                BOOL flag = [ADOModeProgram updateModel:_modelModeProgramEdit];
+                if (flag && _callbackDidEditModeProgram) {
+                    _callbackDidEditModeProgram(_modelModeProgramEdit);
+                }
+                
+                [self.navigationController popViewControllerAnimated:YES];
+            }];
+            
+            return;
+        }
+    }
+    else {
+        if (_modelProgramSelected) {
+            /**
+             *  更新节目
+             */
+            _modelModeProgramEdit.modelProgram = _modelProgramSelected;
+        }
+        _modelModeProgramEdit.repeatMode = repeat;
+        _modelModeProgramEdit.time = time;
+        
+        BOOL flag = [ADOModeProgram updateModel:_modelModeProgramEdit];
+        if (flag && _callbackDidEditModeProgram) {
+            _callbackDidEditModeProgram(_modelModeProgramEdit);
+        }
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)updateWithProgramActionType
+{
+    if (ProgramActionTypeNone==_actionType || !_viewReminderEdit) {
+        return;
+    }
+    
+    _viewReminderEdit.actionType = _actionType;
+    
+    switch (_actionType) {
+        case ProgramActionTypeAddMode:
+        case ProgramActionTypeAddModeProgram:
+        {
+            NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSHourCalendarUnit|NSMinuteCalendarUnit|NSSecondCalendarUnit fromDate:[NSDate date]];
+            NSInteger time = dateComp.hour*3600+dateComp.minute*60+dateComp.second;
+            [_viewReminderEdit setTime:time];
+            [_viewReminderEdit setRepeatMode:RemindRepeatModeEveryDay];
+        }break;
+        case ProgramActionTypeEditModeProgram:
+        {
+            if (_modelModeProgramEdit) {
+                [_viewReminderEdit setRepeatMode:_modelModeProgramEdit.repeatMode];
+                [_viewReminderEdit setTime:_modelModeProgramEdit.time];
+                [_viewReminderEdit setCanSelectTime:_modelModeProgramEdit.modelProgram.parent_pkid_server==0];
+            }
+        }break;
+        default:
+            break;
+    }
+}
+
+#pragma mark - public methos
+- (void)setEditModelModeProgram:(ModelModeProgram *)modelModeProgram
+{
+    _modePkid = modelModeProgram.modePkid;
+    _modelModeProgramEdit = modelModeProgram;
+    UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+    cell.detailTextLabel.text = _modelModeProgramEdit.modelProgram.title;
+    
+    if (_viewReminderEdit) {
+        [_viewReminderEdit setRepeatMode:_modelModeProgramEdit.repeatMode];
+        [_viewReminderEdit setTime:_modelModeProgramEdit.time];
+        [_viewReminderEdit setCanSelectTime:_modelModeProgramEdit.modelProgram.parent_pkid_server==0];
+    }
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 1;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *Identifier = @"UICellAddProgram";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:Identifier];
+    if (!cell) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:Identifier];
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.textLabel.text = LocalizedString(@"diantai_zixun");
+        cell.detailTextLabel.textColor = [UIColor darkGrayColor];
+    }
+    NSString *detailText = _modelModeProgramEdit.modelProgram.title;
+    if (_modelProgramSelected) {
+        detailText = _modelProgramSelected.title;
+    }
+    else if (_modelModeProgramEdit) {
+        detailText = _modelModeProgramEdit.modelProgram.title;
+    }
+    else {
+        detailText = LocalizedString(@"qingxuanzeneirong");
+    }
+    cell.detailTextLabel.text = detailText;
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self.view endEditing:YES];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    UIControllerProgramList *controllerProgramList = [[UIControllerProgramList alloc] initWithNibName:@"UIControllerProgramList" bundle:nil];
+    
+    /**
+     *  设置 选中的 ModelProgram
+     */
+    NSInteger programPkidServer = _modelModeProgramEdit.modelProgram.pkid_server;
+    if (_modelProgramSelected) {
+        programPkidServer = _modelProgramSelected.pkid_server;
+    }
+    controllerProgramList.selectProgramServerId = programPkidServer;
+    [controllerProgramList setCallbackSelectProgram:^(ModelProgram *modelProgram) {
+        _modelProgramSelected = modelProgram;
+        
+        /**
+         *  选择后更新 节目名称
+         */
+        UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]];
+        cell.detailTextLabel.text = _modelProgramSelected.title;
+        
+        // 是否不能选择时间（如果是电台，并且是总频道，则不能选择时间，需要禁用）
+        BOOL canNotSelectTime = (ProgramSrcTypeFM == _modelProgramSelected.srcType
+                              && 0<_modelProgramSelected.parent_pkid_server);
+        [_viewReminderEdit setCanSelectTime:!canNotSelectTime];
+        if (canNotSelectTime) {
+            [_viewReminderEdit setTime:_modelProgramSelected.time];
+        }
+    }];
+    /**
+     *  新增预约和编辑预约的时候需要检查选中的预约是否已经存在
+     */
+    if (ProgramActionTypeAddModeProgram==_actionType
+        || ProgramActionTypeEditModeProgram==_actionType) {
+        [controllerProgramList setCallbackCheckIsExistTime:^BOOL(NSInteger time) {
+            BOOL flag = [ADOModeProgram isExistWithModePkid:_modePkid time:time];
+            return flag;
+        }];
+    }
+    
+    controllerProgramList.title = LocalizedString(@"diantai_zixun");
+    [self.navigationController pushViewController:controllerProgramList animated:YES];
+}
+
+@end

@@ -1,0 +1,211 @@
+//
+//  UIViewShareAndSave.m
+//  DrawView
+//
+//  Created by HHY on 14-10-23.
+//  Copyright (c) 2014年 koto. All rights reserved.
+//
+
+#import "UIViewShareAndSave.h"
+#import "UIImage+ImageEffects.h"
+#import "UIControllerDrawView.h"
+#import "UIViewShareItem.h"
+
+#define kSPACING 5.0
+@interface UIViewShareAndSave ()<UIAlertViewDelegate>
+{
+    UIButton *_btnSave;
+    
+    UIView *_viewShare;
+    
+    UIImageView *_imageViewBg;
+    
+    UIControllerDrawView *_controllDrawViw;
+    
+}
+
+@end
+@implementation UIViewShareAndSave
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
++ (UIViewShareAndSave *)ViewShareAndSave:(id)vc
+{
+    UIViewShareAndSave *view = [[UIViewShareAndSave alloc]init];
+    if (view) {
+        [view creadUI:vc];
+        
+    }
+    
+    return view;
+}
+
+-(void)creadUI:(id)vc
+{
+    _controllDrawViw = vc;
+    
+    CGRect rect = [UIScreen mainScreen].bounds;
+    
+    //如果是横屏调整布局
+//    if(!(UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)))
+//    {
+//        rect.size.height = [UIScreen mainScreen].bounds.size.width;
+//        rect.size.width = [UIScreen mainScreen].bounds.size.height;
+//    }
+
+    self.frame = rect;
+    self.backgroundColor = [UIColor clearColor];
+    
+    //设置半模糊背景
+    UIImageView *imageView = [[UIImageView alloc]initWithFrame:self.frame];
+    imageView.image = [imageView.image applyDarkEffect];
+    imageView.backgroundColor = [UIColor lightGrayColor];
+    imageView.alpha = 0;
+    
+    imageView.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(animation)];
+    [imageView addGestureRecognizer:tap];
+    _imageViewBg = imageView;
+    [self addSubview:imageView];
+
+    //分享框
+    _viewShare  = [[UIView alloc]initWithFrame:CGRectMake(kSPACING, self.frame.size.height, self.frame.size.width-2*kSPACING, 225)];
+    _viewShare.backgroundColor = [UIColor whiteColor];
+    
+    _viewShare.layer.cornerRadius = 5;
+    _viewShare.layer.masksToBounds = YES;
+    
+    UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(20, 13, 100, 15)];
+    label.text = LocalizedString(@"fenxiangdao");
+    label.font = [UIFont systemFontOfSize:14];
+    
+    [_viewShare addSubview:label];
+    [self addSubview:_viewShare];
+    
+    //保存图片按钮
+    _btnSave = [[UIButton alloc]initWithFrame:CGRectMake(kSPACING, _viewShare.frame.origin.y+_viewShare.frame.size.height+kSPACING, self.frame.size.width-2*kSPACING ,37)];
+    [_btnSave setTitle:LocalizedString(@"baocuntupian") forState:UIControlStateNormal];
+    _btnSave.backgroundColor = [UIColor whiteColor];
+    
+    [_btnSave setTitleColor:[UIColor colorWithRed:50.0/255 green:132.0/255 blue:247.0/255 alpha:1] forState:UIControlStateNormal];
+    
+    [_btnSave setTitleColor:[UIColor colorWithRed:80.0/255 green:170.0/255 blue:280.0/255 alpha:0.5] forState:UIControlStateHighlighted];
+    
+    _btnSave.layer.cornerRadius = 5;
+    _btnSave.layer.masksToBounds = YES;
+    
+    
+    [_btnSave addTarget:self action:@selector(onTouchSaveBtn) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:_btnSave];
+    
+    
+    [self creadShareItem];
+    [self animation];
+    
+}
+
+-(void)creadShareItem
+{
+    NSArray * titleArr = @[LocalizedString(@"xinglangweibo"),LocalizedString(@"tengxunweibo"),LocalizedString(@"dianziyoujian"),LocalizedString(@"weibo"),LocalizedString(@"pengyouquan"),LocalizedString(@"duanxin"),LocalizedString(@"fasongdaoPC"),LocalizedString(@"wangpan")];
+    for (int i = 0; i<8; i++) {
+        UIViewShareItem * shareItem = [UIViewShareItem viewShareItemFromXib];
+        shareItem.tag = i;
+        
+        //图片
+        shareItem.imageViewIcon.image = [UIImage imageNamed:@"1.png"];
+        shareItem.imageViewIcon.frame = CGRectMake(20, 5, 30, 30);
+        
+        //文字
+        shareItem.labelTitle.text = titleArr[i];
+        shareItem.labelTitle.textColor = [UIColor colorWithRed:50.0/255 green:132.0/255 blue:247.0/255 alpha:1] ;
+        
+        //分享按钮位置
+        float spacing = (self.bounds.size.width-240)/5.0;
+        shareItem.frame = CGRectMake(spacing + i % 4 * (spacing + 60), 50 + i / 4 *(20+60), 60, 60 );
+        [_viewShare addSubview: shareItem];
+        
+        //点击事件
+        [shareItem addTarget:self action:@selector(onTouchShare:) forControlEvents:UIControlEventTouchUpInside];
+    }
+}
+
+-(void)animation
+{
+    //当没有加入到父视图的时候执行执行显示
+    if(!self.superview)
+    {
+        
+        [UIView animateWithDuration:0.5 animations:^{
+            
+            CGRect rect =  _viewShare.frame;
+            rect.origin.y = self.bounds.size.height-_viewShare.bounds.size.height-_btnSave.bounds.size.height-2*kSPACING;
+            _viewShare.frame = rect;
+            
+            rect = _btnSave.frame;
+            rect.origin.y = self.bounds.size.height-_btnSave.frame.size.height-kSPACING;
+            _btnSave.frame = rect;
+            
+            _imageViewBg.alpha = 0.8;
+            
+        }];
+    }
+    else
+    {
+        //当以及加入到父视图时 执行消失
+        [UIView animateWithDuration:0.5 animations:^{
+            CGRect rect =  _viewShare.frame;
+            rect.origin.y = self.bounds.size.height;
+            _viewShare.frame = rect;
+            
+            rect = _btnSave.frame;
+            rect.origin.y = self.frame.size.height+kSPACING+_viewShare.frame.size.height;
+            _btnSave.frame = rect;
+            _imageViewBg.alpha = 0;
+            
+        } completion:^(BOOL finished) {
+            [self removeFromSuperview];
+        }];
+    }
+ 
+}
+
+//代理方法
+-(void)onTouchShare:(UIViewShareItem *)shareItem
+{
+    [self.delegate UIViewShareAndSave:self shareItem:shareItem shareItemLabelTitle:shareItem.labelTitle.text];
+}
+
+//点击保存按钮
+-(void)onTouchSaveBtn
+{
+    //保存图片
+    UIImageWriteToSavedPhotosAlbum(self.saveImage, self, @selector(image:didFinishSavingWithError:contextInfo:),nil);
+}
+
+//保存图片触发方法
+- (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo
+{
+    if (error) {
+        NSLog(@"err = %@",[error localizedDescription]);
+    }else {
+//        UIAlertView *av = [[UIAlertView alloc]initWithTitle:LocalizedString(@"tishi") message:LocalizedString(@"chenggong") delegate:self cancelButtonTitle:LocalizedString(@"queding") otherButtonTitles:nil, nil];
+//        [av show];
+        [SVProgressHUD showSuccessWithStatus:LocalizedString(@"baocunchenggong")];
+    }
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    _controllDrawViw.isSave = YES;
+    [self animation];
+    
+}
+
+@end

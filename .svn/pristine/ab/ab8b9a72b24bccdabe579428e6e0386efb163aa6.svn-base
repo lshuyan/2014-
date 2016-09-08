@@ -1,0 +1,419 @@
+//
+//  UIControllerCollectAndHistory.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/7.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBookmarkHistory.h"
+#import "UIControllerCreateBookmark.h"
+
+#import "UserManager.h"
+#import "ModelUser.h"
+
+#import "SIAlertView.h"
+#import "UIImageView+AFNetworking.h"
+
+@interface UIControllerBookmarkHistory ()<UIActionSheetDelegate, UIControllerBookmarkHistoryDelegate>
+{
+    NSArray *_allBookmark;
+}
+@end
+
+@implementation UIControllerBookmarkHistory
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+        _urlType = UrlTypeBookmark;
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    [self initUI];
+    
+    _allBookmark = [[NSArray alloc]init];
+    if (self.model) {
+        _allBookmark = [ADOBookmark queryWithParent_pkid:self.model.userid];
+    }
+    else
+    {
+        _allBookmark = [ADOBookmark queryWithParent_pkid:0];
+    }
+    
+    
+    _tableView.allowsSelectionDuringEditing=YES;
+//    _tableView.allowsSelection=NO;
+}
+
+-(void)initUI
+{
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"fanhui") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchBtnback)];
+    _navBar.topItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"bianji") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchRightBarButtonItem)];
+    if (!(self.urlType == urlTypeFolder)) {
+        CGRect rc = _segment.frame;
+        rc.size.height = 24;
+        _segment.frame = rc;
+        [_segment setTitle:LocalizedString(@"shuqian") forSegmentAtIndex:0];
+        [_segment setTitle:LocalizedString(@"lishi") forSegmentAtIndex:1];
+        [_segment setSelectedSegmentIndex:0];
+        [_segment addTarget:self action:@selector(onTouchSegment:) forControlEvents:UIControlEventValueChanged];
+    }
+    else
+    {
+        [_segment removeFromSuperview];
+        _navBar.topItem.title = self.model.title;
+        _navBar.topItem.leftBarButtonItem.title = LocalizedString(@"shuqian");
+    }
+
+    
+    _labelSynchro.text = LocalizedString(@"尚未同步");
+    if([UserManager shareUserManager].currUser.nickname)
+    {
+        _labelNick.text = [UserManager shareUserManager].currUser.nickname;
+    }
+    if ([UserManager shareUserManager].currUser.avatar>0  ) {
+        _imageIcon.image = [UIImage imageWithContentsOfFile:[GetDocumentDirAppend(kUserInfoDirName) stringByAppendingPathComponent:[UserManager shareUserManager].currUser.avatar]];
+    }
+    
+    [_btnNewBookmark setTitle:LocalizedString(@"xinjianshuqian") forState:UIControlStateNormal];
+    [_btnNewFolder setTitle:LocalizedString(@"xinjianshoucangjia") forState:UIControlStateNormal];
+    [_btnSynchro setTitle:LocalizedString(@"tongbu") forState:UIControlStateNormal];
+    [_btnSynchro.layer setCornerRadius:5];
+    [_btnSynchro.layer setMasksToBounds:YES];
+    _btnSynchro.layer.borderWidth = 2;
+    _btnSynchro.layer.borderColor = [UIColor blueColor].CGColor;
+    
+//    _btnNewFile.layer.borderColor = [UIColor grayColor].CGColor;
+//    _btnNewFile.layer.borderWidth = 1;
+//    _btnNewBookmark.layer.borderColor = [UIColor grayColor].CGColor;
+//    _btnNewBookmark.layer.borderWidth = 1;
+    
+    
+    
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    CGRect rc = _navBar.frame;
+
+    rc.origin.x = 0;
+    rc.size.width = self.view.width;
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    rc.origin.y = 20;
+#ifdef __IPHONE_8_0
+    rc.origin.y = UIInterfaceOrientationIsPortrait(orientation)?20:0;
+#endif
+    
+    _navBar.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.x = 0;
+    rc.origin.y = _navBar.bottom;
+    rc.size.width = self.view.width;
+    rc.size.height = self.view.height-_navBar.bottom-_viewBotton.frame.size.height;
+    _tableView.frame = rc;
+    
+    rc = _viewBotton.frame;
+    rc.size.width = self.view.width;
+    rc.origin.y = self.view.height-rc.size.height;
+    _viewBotton.frame = rc;
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    if(self.navigationController)
+    {
+         [self.navigationController popViewControllerAnimated:YES];
+    }else
+    {
+        [self dismissModalViewControllerAnimated:YES];
+       
+    }
+}
+
+/**
+ *  点击_nav右边按钮事件.  书签下为编辑,历史下为清除
+ */
+-(void)onTouchRightBarButtonItem
+{
+    if (_urlType == UrlTypeBookmark) {
+        if(_tableView.editing)
+        {
+            //点击完成
+            _viewUser.hidden = NO;
+            _btnSynchro.hidden = NO;
+            
+            _btnNewBookmark.hidden = YES;
+            _btnNewFolder.hidden = YES;
+            
+            _navBar.topItem.rightBarButtonItem.title = LocalizedString(@"bianji");
+            
+            [_tableView setEditing:NO animated:YES];
+        }
+        else
+        {
+            //点击编辑
+            _viewUser.hidden = YES;
+            _btnSynchro.hidden = YES;
+            
+            _btnNewBookmark.hidden = NO;
+            _btnNewFolder.hidden = NO;
+            
+            _navBar.topItem.rightBarButtonItem.title = LocalizedString(@"wancheng");
+            
+            [_tableView setEditing:YES animated:YES];
+        }
+    }
+    else
+    {
+        UIActionSheet *as = [[UIActionSheet alloc] initWithTitle:LocalizedString(@"ninquedingyaoqingkongliulanlishima?") delegate:self cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:nil otherButtonTitles:LocalizedString(@"qingkong"), nil];
+        [as showInView:self.view];
+    }
+}
+
+/**
+ *  点击更换书签 和 历史
+ */
+-(void)onTouchSegment:(UISegmentedControl *)segment
+{
+    if(segment.selectedSegmentIndex == 0)
+    {
+        _urlType = UrlTypeBookmark;
+        _navBar.topItem.rightBarButtonItem.title = LocalizedString(@"bianji");
+  
+    }
+    else
+    {
+        _urlType = UrlTypeHistory;
+        _navBar.topItem.rightBarButtonItem.title = LocalizedString(@"qingchu");
+    }
+    
+    _viewUser.hidden = NO;
+    _btnSynchro.hidden = NO;
+    
+    _btnNewBookmark.hidden = YES;
+    _btnNewFolder.hidden = YES;
+    [_tableView setEditing:NO animated:NO];
+    
+}
+
+//点击新建收藏夹
+- (IBAction)onTouchNewFolder:(id)sender {
+    [self puthToUIControllerCreateBookmarkForNewType:typeNewFolder model:nil];
+}
+
+//点击新建书签
+- (IBAction)onTouchNewBookmark:(id)sender {
+    [self puthToUIControllerCreateBookmarkForNewType:typeNewBookmark model:nil];
+}
+
+-(void)puthToUIControllerCreateBookmarkForNewType:(Type)newType model:(ModelBookmark *)model
+{
+    UIControllerCreateBookmark *controller = [[UIControllerCreateBookmark alloc]initWithNibName:@"UIControllerCreateBookmark" bundle:nil];
+    controller.type = newType;
+    controller.delegate = self;
+    controller.model = model;
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+#pragma mark -------CreateBookmartDelegate
+-(void)controller:(UIControllerCreateBookmark *)controller createBookmarkTitle:(NSString *)title link:(NSString *)link type:(Type)type modekBookmark:(ModelBookmark *)model
+{
+    
+    ModelBookmark *modelNew = [[ModelBookmark alloc]init];
+    if (self.model.userid) {
+        model.paren_pkid = self.model.userid;
+    }
+    else
+    {
+        modelNew.paren_pkid = 0;
+    }
+    modelNew.sort = 0;
+    if (type == typeEditBookmark || type == typeNewBookmark)
+    {
+        NSLog(@"bookmarl");
+        modelNew.isFolder = NO;
+        modelNew.icon = [title stringByAppendingPathComponent:@"favicon.ico"];
+        modelNew.link = link;
+    }
+    else
+    {NSLog(@"foleder");
+        modelNew.isFolder = YES;
+        modelNew.icon = nil;
+    }
+    modelNew.canEdit = YES;
+    modelNew.title = title;
+    modelNew.time = (long)[[NSDate date] timeIntervalSince1970];
+    modelNew.userid = [UserManager shareUserManager].currUser.uid;
+    
+    if (type == typeEditBookmark || type == typeEditFolder) {
+        
+    }
+    else{
+        [ADOBookmark addModel:modelNew];
+    }
+    
+
+    NSMutableArray *mutableArray = [[NSMutableArray alloc]initWithArray:_allBookmark];
+    [mutableArray insertObject:modelNew atIndex:0];
+    //调整排序
+    [self updeteOrder:mutableArray];
+    _allBookmark = [ADOBookmark queryWithParent_pkid:modelNew.paren_pkid];
+    
+    [_tableView reloadData];
+}
+
+#pragma mark -------altionSheetDelegate
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 0) {
+        _DEBUG_LOG(@"%s",__FUNCTION__);
+    }
+}
+
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _allBookmark.count;
+    
+}
+
+//-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+//{
+//    if ([self isEqualIndexPath:indexPath section:0 row:0]) {
+//        return 107;
+//    }
+//    return 44;
+//}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *cellIdD = @"Cell";
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdD];
+    if (!cell) {
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdD];
+    }
+    
+    ModelBookmark *model = _allBookmark[indexPath.row];
+    if (model.isFolder) {
+        cell.backgroundColor = [UIColor colorWithHexString:@"#f0f0f0"];
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    }else
+    {
+        cell.backgroundColor = [UIColor whiteColor];
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
+    
+    cell.textLabel.text = model.title;
+
+    [cell.imageView setImageWithURL:[NSURL URLWithString:model.icon]];
+//    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    return cell;
+    
+    
+}
+
+//点击事件
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    ModelBookmark *model = _allBookmark[indexPath.row];
+    
+    if(_tableView.editing){
+        if (model.isFolder) {
+            [self puthToUIControllerCreateBookmarkForNewType:typeEditFolder model:model];
+        }
+        else
+        {
+            [self puthToUIControllerCreateBookmarkForNewType:typeEditBookmark model:model];
+        }
+    }
+    else if(model.isFolder)
+    {
+        UIControllerBookmarkHistory *controller = [[UIControllerBookmarkHistory alloc]initWithNibName:@"UIControllerBookmarkHistory" bundle:nil];
+        controller.urlType = urlTypeFolder;
+        controller.model = model;
+        [self.navigationController pushViewController:controller animated:YES];
+    }
+    else
+    {
+        _DEBUG_LOG(@"%s",__FUNCTION__);
+    }
+}
+
+//编辑
+-(void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    ModelBookmark *model = _allBookmark[indexPath.row];
+    NSMutableArray *mutableArray = [[NSMutableArray alloc]initWithArray:_allBookmark];
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        // Delete the row from the data source
+        [ADOBookmark deleteWithPkid:model.pkid];
+        [mutableArray removeObject:model];
+        [self updeteOrder:mutableArray];
+        _allBookmark = [ADOBookmark queryWithParent_pkid:model.paren_pkid];
+        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }
+    else if (editingStyle == UITableViewCellEditingStyleInsert) {
+        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+
+        [tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    }
+}
+
+//能否移动
+-(BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return YES;
+}
+
+//移动排序方法
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath
+{
+    _DEBUG_LOG(@"%d",_allBookmark.count);
+    ModelBookmark *model = _allBookmark[sourceIndexPath.row];
+    NSMutableArray *mutableArray = [[NSMutableArray alloc]initWithArray:_allBookmark];
+    [mutableArray removeObject:model];
+    [mutableArray insertObject:model atIndex:destinationIndexPath.row];
+    [self updeteOrder:mutableArray];
+    _allBookmark = [ADOBookmark queryWithParent_pkid:model.paren_pkid];
+}
+
+-(void)updeteOrder:(NSMutableArray *)arr
+{
+    int i = 0;
+    for (ModelBookmark *model in arr) {
+        [ADOBookmark updateSort:i withPkid:model.pkid];
+        i++;
+    }
+}
+
+@end

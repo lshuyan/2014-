@@ -1,0 +1,28 @@
+//
+//  UIViewFMPlayer.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/19.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+#import "AppLanguageProtocol.h"
+
+@interface UIViewFMPlayer : UIView <AppLanguageProtocol>
+
+@property (nonatomic, strong) void(^callbackWillAdd)();
+
+@property (nonatomic, assign) NSInteger modePkid;
+
+/**
+ *  即将更新节目列表，当 modePkid = _modePkid 有效，否则无法更新列表
+ *
+ *  @param modePkid
+ */
+- (void)updatePListIfNeedWithModePkid:(NSInteger)modePkid;
+
++ (instancetype)viewFromXib;
+
+@end

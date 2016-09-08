@@ -1,0 +1,257 @@
+//
+//  UIControllerSetSkin.m
+//  ChinaBrowser
+//
+//  Created by David on 14-3-14.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerSetSkin.h"
+#import "UIControllerScreenshot.h"
+
+#import "BlockUI.h"
+
+#import <AGCommon/UIImage+Common.h>
+
+#import "UIScrollViewSetSkin.h"
+#import "UINavigationBarCustom.h"
+
+#import "UIImage+BlurredFrame.h"
+#import "UIImage+ImageEffects.h"
+#import "UIImage+Resize.h"
+#import "KTAnimationKit.h"
+
+@interface UIControllerSetSkin () <UIScrollViewSetSkinDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate,UIControllerScreenshotDelegate>
+{
+    IBOutlet UIImageView *_imageViewBg;
+    
+    IBOutlet UINavigationBarCustom *_navBar;
+    IBOutlet UIScrollViewSetSkin *_scrollView;
+    
+    UIImagePickerController *_pickerController;
+
+    NSInteger _fileIndex;
+    BOOL _isInternal;
+}
+
+- (void)onTouchBack;
+
+@end
+
+@implementation UIControllerSetSkin
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    _navBar.topItem.title = LocalizedString(@"pifushezhi");
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    
+    _imageViewBg.image = [AppSetting shareAppSetting].skinImage;
+
+    _scrollView.delegateSetSkin = self;
+    
+    [self layoutSubViewsWithInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    CGRect rc = _navBar.frame;;
+    rc.size.height = UIInterfaceOrientationIsLandscape(orientation)?32:44;
+    _navBar.frame = rc;
+    
+    rc = _scrollView.frame;
+    rc.origin.y = _navBar.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _scrollView.frame = rc;
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+- (void)onTouchBack
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self dismissModalViewControllerAnimated:YES];
+    }
+}
+
+#pragma mark - UIScrollViewSetSkinDelegate
+- (void)scrollViewSetSkin:(UIScrollViewSetSkin *)scrollViewSetSkin selectSkinFileIndex:(NSInteger)fileIndex isInternal:(BOOL)isInternal
+{
+    _fileIndex = fileIndex;
+    _isInternal = isInternal;
+    
+    _imageViewBg.image = [AppSetting shareAppSetting].skinImage;
+    [KTAnimationKit animationEaseIn:_imageViewBg];
+    
+    [_delegate controllerSetSkinDidChanageSkin:self];
+}
+
+- (void)scrollViewSetSkinWillAddSkin:(UIScrollViewSetSkin *)scrollViewSetSkin
+{
+    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:nil delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:nil otherButtonTitles:LocalizedString(@"paizhao"), LocalizedString(@"congxiangcexuanqu"), nil];
+    [action showInView:self.view withCompletionHandler:^(NSInteger buttonIndex) {
+        if (buttonIndex==action.cancelButtonIndex) {
+            return;
+        }
+        
+        void (^showPicker)(UIImagePickerController *) = ^(UIImagePickerController *picker){
+            [self addChildViewController:picker];
+            CGRect rc = self.view.bounds;
+            picker.view.frame = rc;
+            
+            picker.view.alpha = 0;
+            picker.view.transform = CGAffineTransformMakeScale(0.001, 0.001);
+            [self.view addSubview:picker.view];
+            [UIView animateWithDuration:0.35 animations:^{
+                picker.view.alpha = 1;
+                picker.view.transform = CGAffineTransformIdentity;
+            } completion:^(BOOL finished) {
+            }];
+        };
+        
+        UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+        imagePicker.delegate = self;
+        _pickerController = imagePicker;
+        if (0==buttonIndex) {
+            // take photo
+            if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+                imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
+//                [self presentModalViewController:imagePicker animated:YES];
+                showPicker(imagePicker);
+            }
+            else {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:LocalizedString(@"zhaoxiangjibukeyong") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"congxiangcexuanqu"), nil];
+                [alert showWithCompletionHandler:^(NSInteger buttonIndex) {
+                    if (buttonIndex==1) {
+                        // select from album
+                        imagePicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+//                        [self presentModalViewController:imagePicker animated:YES];
+                        showPicker(imagePicker);
+                    }
+                }];
+            }
+            
+        }
+        else if (1==buttonIndex) {
+            // select from album
+            imagePicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+//            [self presentModalViewController:imagePicker animated:YES];
+            showPicker(imagePicker);
+        }
+    }];
+}
+
+-(void)controller:(UIControllerScreenshot *)controller didCaptureImage:(UIImage *)image
+{
+    [_pickerController.view removeFromSuperview];
+    [_pickerController removeFromParentViewController];
+    // 图片在这里
+    NSString *szTime = [[@((NSInteger)[[NSDate date] timeIntervalSince1970]) stringValue] stringByAppendingPathExtension:@"jpg"];
+    // UIImage* imageOriginal = [info objectForKey:UIImagePickerControllerOriginalImage];
+    NSString *dicPath = GetDocumentDirAppend(kSkinDirName);
+    NSString *filepath = [dicPath stringByAppendingPathComponent:szTime];
+    
+    CGSize size = [UIScreen mainScreen].bounds.size;
+    CGFloat scale = [[UIScreen mainScreen] scale];
+    size = CGSizeApplyAffineTransform(size, CGAffineTransformMakeScale(scale, scale));
+    if (image.size.width>size.width && image.size.height>size.height) {
+        image = [image scaleImageWithSize:size];
+    }
+    
+    NSLog(@"%@",filepath);
+    [UIImageJPEGRepresentation(image, 1) writeToFile:filepath atomically:YES];
+    
+    [_scrollView addSkinImageWithPath:filepath animated:YES];
+    
+    [_scrollView selectLastSkinImage];
+}
+
+#pragma mark - UINavigationControllerDelegate, UIImagePickerControllerDelegate
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
+{
+    UIImage* imageOriginal = [info objectForKey:UIImagePickerControllerOriginalImage];
+    UIControllerScreenshot *controller = [UIControllerScreenshot controllerFromXib];
+    controller.delegate = self;
+    controller.screenshotType = ScreenshotSkin;
+    controller.imageOriginal = imageOriginal;
+    [self.navigationController pushViewController:controller animated:YES];
+
+    return;
+    // 图片在这里
+//    NSString *szTime = [[@((NSInteger)[[NSDate date] timeIntervalSince1970]) stringValue] stringByAppendingPathExtension:@"jpg"];
+//   // UIImage* imageOriginal = [info objectForKey:UIImagePickerControllerOriginalImage];
+//    NSString *dicPath = GetDocumentDirAppend(kSkinDirName);
+//    NSString *filepath = [dicPath stringByAppendingPathComponent:szTime];
+//    
+//    CGSize size = [UIScreen mainScreen].bounds.size;
+//    CGFloat scale = [[UIScreen mainScreen] scale];
+//    size = CGSizeApplyAffineTransform(size, CGAffineTransformMakeScale(scale, scale));
+//    UIImage *image = imageOriginal;
+//    if (image.size.width>size.width && image.size.height>size.height) {
+//        image = [imageOriginal scaleImageWithSize:size];
+//    }
+//    
+//    [UIImageJPEGRepresentation(image, 1) writeToFile:filepath atomically:YES];
+//    
+//    [_scrollView addSkinImageWithPath:filepath animated:YES];
+//    
+//    [_scrollView selectLastSkinImage];
+//    
+//    [UIView animateWithDuration:0.35 animations:^{
+//        picker.view.transform = CGAffineTransformMakeScale(0.001, 0.001);
+//        picker.view.alpha = 0;
+//    } completion:^(BOOL finished) {
+//        [picker.view removeFromSuperview];
+//        [picker removeFromParentViewController];
+//    }];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
+{
+    [UIView animateWithDuration:0.35 animations:^{
+        picker.view.transform = CGAffineTransformMakeScale(0.001, 0.001);
+        picker.view.alpha = 0;
+    } completion:^(BOOL finished) {
+        [picker.view removeFromSuperview];
+        [picker removeFromParentViewController];
+    }];
+}
+
+@end

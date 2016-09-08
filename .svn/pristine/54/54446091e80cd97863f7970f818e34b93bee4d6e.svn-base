@@ -1,0 +1,122 @@
+//
+//  UIViewCellRightView.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/7.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewCellRightView.h"
+
+@implementation UIViewCellRightView
+{
+    UILabel *_labelTitle;
+    UIImageView *_imageViewArrow;
+}
+
+#pragma mark - property
+- (void)setText:(NSString *)text
+{
+    _text = text;
+    
+    [self setNeedsLayout];
+}
+
+- (void)setShouldShowArrow:(BOOL)shouldShowArrow
+{
+    _shouldShowArrow = shouldShowArrow;
+    
+    [self setNeedsLayout];
+}
+
+- (void)setTextColor:(UIColor *)textColor
+{
+    _textColor = textColor;
+    if (_labelTitle) {
+        _labelTitle.textColor = textColor;
+    }
+}
+
+- (void)setFont:(UIFont *)font
+{
+    _font = font;
+    if (_labelTitle) {
+        _labelTitle.font = font;
+    }
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _font = [UIFont systemFontOfSize:12];
+        _textColor = [UIColor grayColor];
+        [self setShouldShowArrow:YES];
+    }
+    return self;
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    
+    if (_text.length>0) {
+        if (!_labelTitle) {
+            _labelTitle = [[UILabel alloc] init];
+            _labelTitle.backgroundColor = [UIColor clearColor];
+        }
+        
+        _labelTitle.textColor = _textColor?:[UIColor grayColor];
+        _labelTitle.font = _font?:[UIFont systemFontOfSize:12];
+        _labelTitle.text = _text;
+        [_labelTitle sizeToFit];
+        
+        [self addSubview:_labelTitle];
+    }
+    else {
+        if (_labelTitle) {
+            [_labelTitle removeFromSuperview];
+            _labelTitle = nil;
+        }
+    }
+    
+    if (_shouldShowArrow) {
+        if (!_imageViewArrow) {
+            _imageViewArrow = [[UIImageView alloc] initWithImage:[UIImage imageWithBundleFile:@"iPhone/bg_nav1.png"]];
+            [self addSubview:_imageViewArrow];
+        }
+    }
+    else {
+        [_imageViewArrow removeFromSuperview];
+        _imageViewArrow = nil;
+    }
+    
+    CGRect rc = _labelTitle.frame;
+    rc.origin = CGPointMake(0, (MAX(_labelTitle.height, _imageViewArrow.height)-_labelTitle.height)*0.5);
+    _labelTitle.frame =  rc;
+    
+    rc = _imageViewArrow.frame;
+    rc.origin = CGPointMake(_labelTitle.right+5, (MAX(_labelTitle.height, _imageViewArrow.height)-_imageViewArrow.height)*0.5);
+    _imageViewArrow.frame = rc;
+    
+    CGFloat right = self.right;
+    rc = CGRectMake(0, 0, _imageViewArrow.right, MAX(_labelTitle.height, _imageViewArrow.height));
+    rc.origin.x = right-rc.size.width;
+    rc.origin.y = (self.superview.height-rc.size.height)*0.5;
+    self.frame = rc;
+}
+
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect {
+    // Drawing code
+}
+*/
+
++ (instancetype)rightView
+{
+    return [[UIViewCellRightView alloc] init];
+}
+
+@end

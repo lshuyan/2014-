@@ -1,0 +1,65 @@
+//
+//  UIViewBookmarkPopAction.h
+//  ChinaBrowser
+//
+//  Created by David on 14-9-25.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+/**
+ *  书签弹出操作
+ */
+typedef NS_ENUM(NSInteger, BookmarkPopAction) {
+    /**
+     *  未知
+     */
+    BookmarkPopActionUnknow,
+    /**
+     *  添加书签
+     */
+    BookmarkPopActionAddBookmark,
+    /**
+     *  移除书签
+     */
+    BookmarkPopActionRemoveBookmark,
+    /**
+     *  添加到首页
+     */
+    BookmarkPopActionAddHome,
+    /**
+     *  从首页移除
+     */
+    BookmarkPopActionRemoveHome
+};
+
+@protocol UIViewBookmarkPopActionDelegate;
+
+@interface UIViewBookmarkPopAction : UIView
+
+@property (nonatomic, weak) id<UIViewBookmarkPopActionDelegate> delegate;
+
+@property (nonatomic, weak) IBOutlet UIButton *btnBookmark;
+@property (nonatomic, weak) IBOutlet UIButton *btnHomeIcon;
+
++ (instancetype)viewFromXib;
+
+/**
+ *  根据链接地址更新菜单状态
+ *
+ *  @param link 当前标签页的网址链接地址, link = nil 表示当前标签非网页
+ */
+- (void)updateStateWithLink:(NSString *)link;
+
+- (void)showInView:(UIView *)view centerOfDock:(CGPoint)centerOfDock;
+- (void)dismiss;
+- (void)dismissWithCompletion:(void(^)(void))completion;
+
+@end
+
+@protocol UIViewBookmarkPopActionDelegate <NSObject>
+
+- (void)viewBookmarkPopAction:(UIViewBookmarkPopAction *)viewBookmarkPopAction bookmarkPopAction:(BookmarkPopAction)bookmarkPopAction;
+
+@end

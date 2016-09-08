@@ -1,0 +1,448 @@
+//
+//  UIScrollViewRecommend.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIScrollViewRecommend.h"
+
+#import "UIViewBanner.h"
+#import "UIControlItem.h"
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+#import "KTAnimationKit.h"
+
+#import "ModelBanner.h"
+#import "ModelRecommend.h"
+
+#import "MJRefreshHeaderView.h"
+
+// 竖屏横幅广告栏的高度，宽度=屏幕宽
+#define kVBanenrH   (134.0f)
+// 横屏横幅广告栏的高度，宽度=高度
+#define kHBannerH   (120.0f)
+
+#define kMinCateItemW (90.0f)
+#define kMinPaddingLR (0.0f)
+
+@interface UIScrollViewRecommend () <UIViewBannerDelegate>
+
+@end
+
+@implementation UIScrollViewRecommend
+{
+    UIViewBanner *_viewBanner;
+    
+    NSMutableArray *_arrDicBanner;
+    NSMutableArray *_arrCate;
+    NSMutableArray *_arrViewCateItem;
+    /**
+     *  每次旋转都需要重新排序，因为横竖屏布局不一样
+     */
+    
+    AFJSONRequestOperation *_afReqAd;
+    AFJSONRequestOperation *_afReqCate;
+    
+    /**
+     *  分类项的宽高
+     */
+    CGFloat _itemWH;
+    NSInteger _colCount;
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setup];
+}
+
+- (void)dealloc
+{
+    [_afReqAd cancel];
+    [_afReqCate cancel];
+    
+    _afReqAd = nil;
+    _afReqCate = nil;
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - super methods
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    
+    [self resizeItem];
+    
+    _DEBUG_LOG(@"%s", __FUNCTION__);
+}
+
+#pragma mark - AppLanguageProtocol
+- (void)updateByLanguage
+{
+    [self reqAd];
+    [self reqCate];
+}
+
+#pragma mark - private methods
+- (void)setup
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resizeItem) name:KNotificationDidChanageDesktopStyle object:nil];
+    
+    _arrDicBanner = [NSMutableArray array];
+    _arrCate = [NSMutableArray array];
+    _arrViewCateItem = [NSMutableArray array];
+    
+    CGRect rc = self.bounds;
+    rc.size.height = 150;
+    _viewBanner = [[UIViewBanner alloc] initWithFrame:rc];
+    _viewBanner.delegate = self;
+    _viewBanner.shouldShowCloseBtn = NO;
+    _viewBanner.shouldShowPageControl = YES;
+    _viewBanner.viewContentMode = UIViewContentModeScaleToFill;
+    [_viewBanner startAutoScroll:7];
+    [self addSubview:_viewBanner];
+    
+    [self updateByLanguage];
+}
+
+- (void)reqAd
+{
+    [_afReqAd cancel];
+    _afReqAd = nil;
+    
+    NSString *device = IsiPad?@"ipad":@"iphone";
+    NSDictionary *dicParam = @{@"device":device};
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client requestWithMethod:@"GET" path:GetApiWithName(API_RecommendAd) parameters:dicParam];
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    
+    BOOL (^showAd)(NSDictionary *) = ^(NSDictionary *dicResult){
+        [_arrDicBanner removeAllObjects];
+        
+        BOOL ret = NO;
+        do {
+            if (![dicResult isKindOfClass:[NSDictionary class]]) break;
+            
+            NSArray *arrDicBanner = dicResult[@"data"];
+            if (![arrDicBanner isKindOfClass:[NSArray class]]) break;
+            
+            [_arrDicBanner addObjectsFromArray:arrDicBanner];
+            
+            ret = _arrDicBanner.count>0;
+        } while (NO);
+        
+        [self updateBanner];
+        return ret;
+    };
+    
+    _afReqAd = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if (showAd(JSON)) {
+            [_afReqAd.responseData writeToFile:filepath atomically:YES];
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            showAd([NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil]);
+        }
+        else {
+            showAd(nil);
+        }
+    }];
+    [_afReqAd start];
+}
+
+- (void)reqCate
+{
+    [_afReqCate cancel];
+    _afReqCate = nil;
+    
+    NSString *device = IsiPad?@"ipad":@"iphone";
+    NSDictionary *dicParam = @{@"device":device};
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client requestWithMethod:@"GET" path:GetApiWithName(API_RecommendCate) parameters:dicParam];
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    
+    BOOL (^showCate)(NSDictionary *) = ^(NSDictionary *dicResult){
+        [_arrViewCateItem makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        [_arrViewCateItem removeAllObjects];
+        [_arrCate removeAllObjects];
+        
+        BOOL retVal = NO;
+        do {
+            if (![dicResult isKindOfClass:[NSDictionary class]]) break;
+            
+            NSArray *arrDicCate = dicResult[@"data"];
+            if (![arrDicCate isKindOfClass:[NSArray class]]) break;
+            
+            // 解析成模型对象
+            for (NSDictionary *dicCate in arrDicCate) {
+                ModelRecommend *model = [ModelRecommend modelWithDict:dicCate];
+                [_arrCate addObject:model];
+                
+                UIControlItem *viewCateItem = [UIControlItem viewFromXibWithType:ControlItemTypeRecommendCate];
+                viewCateItem.imageViewIcon.contentMode = UIViewContentModeCenter;
+                __unsafe_unretained UIImageView *wImageViewIcon = viewCateItem.imageViewIcon;
+                [viewCateItem.imageViewIcon setImageWithURL:[NSURL URLWithString:model.icon] placeholderImage:nil usingActivityIndicatorStyle:UIActivityIndicatorViewStyleGray completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                    wImageViewIcon.image = [UIImage imageWithData:UIImagePNGRepresentation(image) scale:[UIScreen mainScreen].scale];
+                    [KTAnimationKit animationEaseIn:wImageViewIcon];
+                }];
+                
+                viewCateItem.labelTitle.text = model.name;
+                [viewCateItem addTarget:self action:@selector(onTouchItem:) forControlEvents:UIControlEventTouchUpInside];
+                [_arrViewCateItem addObject:viewCateItem];
+                [self addSubview:viewCateItem];
+                
+                UIColor *bgColor = [UIColor colorWithHexString:model.color];
+                [viewCateItem setBgColorNormal:bgColor highlighted:[bgColor colorByMultiplyingBy:0.8]];
+                [viewCateItem setTextColorNormal:[UIColor whiteColor]
+                                     highlighted:[UIColor colorWithWhite:0.94 alpha:1]
+                                        selected:nil];
+                
+                viewCateItem.layer.allowsEdgeAntialiasing = NO;
+                viewCateItem.layer.shouldRasterize = NO;
+                viewCateItem.layer.borderWidth = 0.5;
+                viewCateItem.layer.borderColor = [UIColor colorWithWhite:0.85 alpha:0.3].CGColor;
+            }
+            
+            [self resizeItem];
+            
+            retVal = _arrCate.count>0;
+        } while (NO);
+        
+        return retVal;
+    };
+    
+    _afReqCate = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if (showCate(JSON)) {
+            [_afReqCate.responseData writeToFile:filepath atomically:YES];
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            showCate([NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil]);
+        }
+        else {
+            showCate(nil);
+        }
+    }];
+    [_afReqCate start];
+}
+
+- (void)updateBanner
+{
+    NSMutableArray *arrModelBanner = [NSMutableArray arrayWithCapacity:_arrDicBanner.count];
+    for (NSDictionary *dicBanner in _arrDicBanner) {
+        ModelBanner *model = [ModelBanner model];
+        if (IsPortrait) {
+            model.image = dicBanner[@"img_v"];
+        }
+        else {
+            model.image = dicBanner[@"img_h"];
+        }
+        model.link = dicBanner[@"link"];
+        [arrModelBanner addObject:model];
+    }
+    
+    [_viewBanner setArrBanner:arrModelBanner];
+}
+
+- (NSInteger)getColCount
+{
+    // 默认按横屏允许的最小宽高计算列数
+    CGFloat baseMinItemWidth = kMinCateItemW;
+    if (IsPortrait) {
+        // 竖屏时，需要根据App设置的桌面样式计算列数
+        NSInteger colTotal = (NSInteger)[AppSetting shareAppSetting].desktopStyle;
+        baseMinItemWidth = floorf(self.width/colTotal);
+    }
+    CGFloat w = kMinPaddingLR+baseMinItemWidth;
+    NSInteger colCount = 0;
+    while (w+kMinPaddingLR<=self.bounds.size.width) {
+        colCount++;
+        w+=baseMinItemWidth;
+    }
+    return colCount;
+}
+
+- (void)resizeItem
+{
+    _colCount = [self getColCount];
+    _itemWH = self.width/_colCount;
+    
+    // 布局_viewBanner ------------------------
+    [self updateBanner];
+    
+    if (IsPortrait) {
+        CGRect rc = self.bounds;
+        rc.origin = CGPointZero;
+        rc.size.height = kVBanenrH;
+        _viewBanner.frame = rc;
+    }
+    else {
+        CGRect rc = _viewBanner.bounds;
+        rc.origin.x = kHBannerH;
+        rc.origin.y = 0;
+        rc.size.height = kHBannerH;
+        rc.size.width = self.width-kHBannerH*2;
+        _viewBanner.frame = rc;
+    }
+    
+    if (_arrCate.count==0) {
+        self.contentSize = CGSizeMake(self.width, _viewBanner.bottom);
+        return;
+    }
+    
+    // 布局 cate Item ------------------------
+    // 拆分成上下两组数据，一组是 非新闻分类，另一个组是 新闻分类
+    NSMutableArray *arrNotNewCateIndex = [NSMutableArray array];
+    NSMutableArray *arrResortCateIndex = [NSMutableArray array];
+    for (NSInteger i=0; i<_arrCate.count; i++) {
+        ModelRecommend *model = _arrCate[i];
+        if (RecommendTypeNewsCate!=model.type && arrNotNewCateIndex.count<2) {
+            [arrNotNewCateIndex addObject:@(i)];
+        }
+        else {
+            [arrResortCateIndex addObject:@(i)];
+        }
+    }
+    
+    // 根据桌面样式，将 前两个 非新闻分类 分配到对应的布局索引
+    NSArray *arrToIndex = nil;
+    if (IsPortrait) {
+        switch ([AppSetting shareAppSetting].desktopStyle) {
+            case DesktopStyleCol2:
+            {
+                // 非新闻分类的前两项索引位置：0,1
+                arrToIndex = @[@(0), @(1)];
+            }break;
+            case DesktopStyleCol3:
+            {
+                // 非新闻分类的前两项索引位置：1,4
+                arrToIndex = @[@(1), @(4)];
+            }break;
+            case DesktopStyleCol4:
+            {
+                // 非新闻分类的前两项索引位置：1,4
+                arrToIndex = @[@(1), @(4)];
+            }break;
+            default:
+                break;
+        }
+    }
+    else {
+        arrToIndex = @[@(0), @(1)];
+    }
+    
+    NSInteger countNotNewsCateIndex = MIN(2, arrNotNewCateIndex.count);
+    for (NSInteger i=0; i<countNotNewsCateIndex; i++) {
+        [arrResortCateIndex insertObject:arrNotNewCateIndex[i] atIndex:[arrToIndex[i] integerValue]];
+    }
+    
+    NSInteger beginIndex = 0;
+    CGFloat beingOriginY = _viewBanner.bottom;
+    
+    if (!IsPortrait) {
+        // 横屏
+        beginIndex = arrToIndex.count;
+        
+        CGRect rc = CGRectMake(0, 0, kHBannerH, kHBannerH);
+        UIView *view0 = _arrViewCateItem[[arrResortCateIndex[0] integerValue]];
+        view0.frame = rc;
+        
+        rc.origin.x = _viewBanner.right;
+        UIView *view1 = _arrViewCateItem[[arrResortCateIndex[1] integerValue]];
+        view1.frame = rc;
+    }
+    else if (DesktopStyleCol4 == [AppSetting shareAppSetting].desktopStyle) {
+        beginIndex = 6;
+        beingOriginY = _viewBanner.bottom+_itemWH*2;
+        for (NSInteger i=0; i<beginIndex; i++) {
+            NSInteger col = GetColWithIndexCol(i, 3);
+            NSInteger row = GetRowWithIndexCol(i, 3);
+            
+            CGRect rc = CGRectMake((_itemWH*col),
+                                   _viewBanner.bottom+(_itemWH)*row,
+                                   _itemWH,
+                                   _itemWH);
+            if (1==col||4==col) {
+                rc.size.width *= 2;
+            }
+            else if (2==col||5==col) {
+                rc.origin.x += rc.size.width;
+            }
+            
+            NSInteger viewCateItemIndex = [arrResortCateIndex[i] integerValue];
+            UIView *viewCate = _arrViewCateItem[viewCateItemIndex];
+            viewCate.frame = rc;
+        }
+    }
+    
+    NSInteger itemCount = arrResortCateIndex.count;
+    for (NSInteger i=beginIndex; i<itemCount; i++) {
+        NSInteger newIndex = i-beginIndex;
+        NSInteger col = GetColWithIndexCol(newIndex, _colCount);
+        NSInteger row = GetRowWithIndexCol(newIndex, _colCount);
+        CGRect rc = CGRectMake((_itemWH*col),
+                               beingOriginY+(_itemWH)*row,
+                               _itemWH,
+                               _itemWH);
+        
+        NSInteger viewCateItemIndex = [arrResortCateIndex[i] integerValue];
+        UIView *viewCate = _arrViewCateItem[viewCateItemIndex];
+        viewCate.frame = rc;
+    }
+    
+    UIView *viewLast = _arrViewCateItem[[[arrResortCateIndex lastObject] integerValue]];
+    self.contentSize = CGSizeMake(self.width, viewLast.bottom);
+}
+
+- (void)onTouchItem:(UIControlItem *)item
+{
+    NSInteger index = [_arrViewCateItem indexOfObject:item];
+    ModelRecommend *model = _arrCate[index];
+    _DEBUG_LOG(@"%s:%@:%d", __FUNCTION__, model.name, model.type);
+    switch (model.type) {
+        case RecommendTypeNewsCate:
+        {
+            [_delegateRecommend scrollViewRecommend:self reqNewsWithCateId:model.catId cateName:model.name];
+        }break;
+        case RecommendTypeLink:
+        {
+            [_delegateRecommend scrollViewRecommend:self reqLink:model.link];
+        }break;
+        case RecommendTypeSubCate:
+        {
+            [_delegateRecommend scrollViewRecommend:self reqSubCateWithCateId:model.catId];
+        }break;
+        case RecommendTypeLiveStream:
+        {
+            
+        }break;
+            
+        default:
+            break;
+    }
+}
+
+#pragma mark - UIViewBannerDelegate
+- (void)viewBannerDidClick:(NSInteger)index
+{
+    NSDictionary *dicBanner = _arrDicBanner[index];
+    NSString *link = dicBanner[@"link"];
+    if ([_delegateRecommend respondsToSelector:@selector(scrollViewRecommend:reqLink:)])
+        [_delegateRecommend scrollViewRecommend:self reqLink:link];
+}
+
+@end

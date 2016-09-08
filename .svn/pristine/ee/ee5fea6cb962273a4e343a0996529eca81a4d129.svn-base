@@ -1,0 +1,34 @@
+//
+//  UICellHead.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/10/31.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellHead.h"
+
+@implementation UICellHead
+
+- (void)awakeFromNib
+{
+    self.ImageVIewIcon.layer.borderWidth = 0.5;
+    self.ImageVIewIcon.layer.borderColor = [UIColor grayColor].CGColor;
+    
+    [self.btnSynchro.layer setCornerRadius:5];
+    [self.btnSynchro.layer setMasksToBounds:YES];
+    [self.btnSynchro setTitle:LocalizedString(@"tongbu") forState:UIControlStateNormal];
+    [self.btnSynchro setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/User/log_in_1.png"] stretchableImageWithLeftCapWidth:3 topCapHeight:3] forState:UIControlStateNormal];
+    [self.btnSynchro setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/User/log_in_0.png"] stretchableImageWithLeftCapWidth:3 topCapHeight:3] forState:UIControlStateHighlighted];
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+
+
+@end

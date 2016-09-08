@@ -1,0 +1,182 @@
+//
+//  UIControllerQRCode.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerQRCode.h"
+
+#import "UIViewNav.h"
+#import "ZBarReaderView.h"
+#import "ZBarCaptureReader.h"
+
+#import <AVFoundation/AVCaptureDevice.h>
+#import <AVFoundation/AVMediaFormat.h>
+
+@interface UIControllerQRCode () <ZBarReaderViewDelegate>
+
+@end
+
+@implementation UIControllerQRCode
+{
+    UIViewNav *_viewNav;
+    
+    IBOutlet UIView *_viewContent;
+    ZBarReaderView *_zbarReaderView;
+    IBOutlet UIImageView *_imageViewMask;
+    IBOutlet UIImageView *_imageViewLine;
+    
+    CABasicAnimation *_animLine;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+        
+    }
+    return self;
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = NO;
+    [super viewWillAppear:animated];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = YES;
+    [super viewDidDisappear:animated];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    _viewNav.backgroundColor = [_viewNav.backgroundColor colorWithAlphaComponent:0.5];
+    
+    UIButton *btnLeft = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnLeft setTitle:LocalizedString(@"quxiao") forState:UIControlStateNormal];
+    [btnLeft setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [btnLeft setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];
+    [btnLeft addTarget:self action:@selector(onTouchCancel) forControlEvents:UIControlEventTouchUpInside];
+    [btnLeft sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnLeft];
+    
+    if ([[AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo] isTorchAvailable]) {
+        UIButton *btnRight = [UIButton buttonWithType:UIButtonTypeCustom];
+        [btnRight setImage:[UIImage imageWithBundleFile:@"iPhone/Home/flash_0.png"] forState:UIControlStateNormal];
+        [btnRight setImage:[UIImage imageWithBundleFile:@"iPhone/Home/flash_1.png"] forState:UIControlStateSelected];
+        [btnRight addTarget:self action:@selector(onTouchTorchMode:) forControlEvents:UIControlEventTouchUpInside];
+        [btnRight sizeToFit];
+        
+        _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnRight];
+    }
+    [self.view addSubview:_viewNav];
+    
+    _imageViewMask.backgroundColor = [UIColor colorWithWhite:0 alpha:0];
+    
+    _zbarReaderView = [[ZBarReaderView alloc] init];
+    _zbarReaderView.readerDelegate = self;
+    // 缩放比例
+    _zbarReaderView.allowsPinchZoom = NO;
+    _zbarReaderView.maxZoom = 3;
+    _zbarReaderView.zoom = 1;
+    
+    // 灯光
+    _zbarReaderView.torchMode = NO;
+    
+    // 将扫面区域调整成 storyboard 中看到的图片的位置大小
+    _zbarReaderView.frame = self.view.bounds;
+    [self.view insertSubview:_zbarReaderView belowSubview:_viewContent];
+    _zbarReaderView.autoresizingMask = UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth;
+    [_zbarReaderView start];
+    [_zbarReaderView willRotateToInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation duration:0.35];
+    
+    _imageViewMask.image = [UIImage imageWithBundleFile:@"iPhone/QRCode/qr_frame.png"];
+    [_imageViewMask sizeToFit];
+    CGRect rc = _imageViewMask.frame;
+    rc.origin.x = (_viewContent.width-_imageViewMask.width)*0.5;
+    rc.origin.y = (_viewContent.height-_imageViewMask.height)*0.5;
+    _imageViewMask.frame = rc;
+    
+    rc.origin.y = 0;
+    rc.size.height = 2;
+    rc.size.width -= 4;
+    _imageViewLine.frame = rc;
+    [_imageViewMask addSubview:_imageViewLine];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        _animLine = [CABasicAnimation animationWithKeyPath:@"position"];
+        _animLine.fromValue = [NSValue valueWithCGPoint:CGPointMake(_imageViewMask.width*_imageViewLine.layer.anchorPoint.x, _imageViewLine.height*_imageViewLine.layer.anchorPoint.y+_imageViewLine.height)];
+        _animLine.toValue = [NSValue valueWithCGPoint:CGPointMake(_imageViewMask.width*_imageViewLine.layer.anchorPoint.x, _imageViewMask.height-_imageViewLine.height*_imageViewLine.layer.anchorPoint.y-_imageViewLine.height)];
+        _animLine.autoreverses = YES;
+        _animLine.repeatCount = MAXFLOAT;
+        _animLine.duration = 2;
+        _animLine.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+        [_imageViewLine.layer addAnimation:_animLine forKey:@"position"];
+    });
+}
+
+- (void)onTouchCancel
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self dismissModalViewControllerAnimated:YES];
+    }
+}
+
+- (void)onTouchTorchMode:(UIButton *)btn
+{
+    btn.selected = !((BOOL)_zbarReaderView.torchMode);
+    _zbarReaderView.torchMode = btn.selected;
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
+{
+    [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
+    [_zbarReaderView willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _viewContent.frame;
+    rc.origin.x = 0;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.width = self.view.width;
+    rc.size.height = self.view.height-rc.origin.y;
+    _viewContent.frame = rc;
+}
+
+#pragma mark - ZBarReaderViewDelegate
+- (void) readerView:(ZBarReaderView *)readerView didReadSymbols:(ZBarSymbolSet *)symbols fromImage:(UIImage *)image
+{
+    const zbar_symbol_t *symbol = zbar_symbol_set_first_symbol(symbols.zbarSymbolSet);
+    NSString *strSymbol = [NSString stringWithUTF8String:zbar_symbol_get_data(symbol)];
+    
+    _DEBUG_LOG(@"--------QRCode:%@", strSymbol);
+    
+//    if (zbar_symbol_get_type(symbol) == ZBAR_QRCODE)
+    { // QR二维码
+        [_delegateQRCode controller:self didReadContent:strSymbol];
+    }
+    
+}
+
+@end

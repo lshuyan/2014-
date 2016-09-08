@@ -1,0 +1,36 @@
+//
+//  UIControllerAddProgram.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+
+@class ModelMode;
+@class ModelModeProgram;
+
+@interface UIControllerAddProgram : UIControllerBase
+
+@property (nonatomic, strong) void (^callbackDidAddMode)(ModelMode *);
+@property (nonatomic, strong) void (^callbackDidAddModeProgram)(ModelModeProgram *);
+@property (nonatomic, strong) void (^callbackDidEditModeProgram)(ModelModeProgram *);
+
+@property (nonatomic, assign) ProgramActionType actionType;
+@property (nonatomic, assign) NSInteger modeProgramModePkid;
+
+/**
+ *  设置编辑的 模式，先设置 actionType，再设置此属性
+ *
+ *  @param modelMode    ModelMode
+ */
+- (void)setEditModelMode:(ModelMode *)modelMode;
+/**
+ *  设置编辑的 模式-节目，先设置 actionType，再设置此属性
+ *
+ *  @param modelModeProgram ModelModeProgram
+ */
+- (void)setEditModelModeProgram:(ModelModeProgram *)modelModeProgram;
+
+@end

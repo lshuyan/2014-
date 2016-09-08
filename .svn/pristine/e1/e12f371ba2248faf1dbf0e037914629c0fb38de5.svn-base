@@ -1,0 +1,456 @@
+/*
+ Localizable.strings
+ ChinaBrowser
+ 
+ Created by David on 14-9-25.
+ Copyright (c) 2014年 KOTO Inc. All rights reserved.
+ */
+
+// ------------- 语言
+zh-Hans = "Basitleştirilmiş Çince";
+zh-Hanz = "Geleneksel Çince";
+en = "İngilizce";
+tr = "Türkçe";
+
+// ------------- SNS 分享项
+ShareType_1 = "Sina miniblog";
+ShareType_2 = "Tencent miniblog";
+ShareType_5 = "Douban";
+ShareType_6 = "Qzone ";
+ShareType_7 = "Renren";
+ShareType_9 = "Pengyou";
+ShareType_10 = "Facebook";
+ShareType_11 = "Twitter";
+ShareType_14 = "Google+";
+ShareType_15 = "Instagram";
+ShareType_16 = "LinkedIn";
+ShareType_18 = "E-mail";
+ShareType_19 = "SMS";
+ShareType_21 = "Kopya";
+ShareType_22 = "Wechat mesaj";
+ShareType_23 = "Wechat grup";
+ShareType_24 = "QQ";
+ShareType_43 = "WhatsApp";
+
+// -------------- App 启动介绍文字
+jieshao0 = "Bilgi denizinde yön gösterici";
+jieshao1 = "Bana dünyayı gezdirir";
+jieshao2 = "China Browser’ı deneyin";
+
+// ------------- 菜单
+jiarushuqian = "Yer imi ekle";
+yichushuqian = "Yer imi kaldır";
+tianjiadaoshouping = "Ana sayfaya ekle";
+congshoupingyichu = "Ana sayfadan sil";
+shuqian_lishi = "Yer imleri/Geçmiş";
+yuyanshezhi = "Dil ayarları";
+shuaxin = "Yenile";
+tingzhi = "Durdur";
+jietutuya = "Resme dönüştür";
+yeneichazhao = "Sayfa içi arama";
+fenxiang = "Paylaş";
+gerenzhongxin = "Kişisel sayfa";
+
+wutumoshi = "Metin modu";
+quanpingmoshi = "Tam ekran";
+liangdutiaojie = "Parlaklık";
+wuhenliulan = "Gizli gezinme";
+saoerweima = "QR kodu tara";
+pifuguanli = "Arayüz";
+zhuomianyangshi = "Masa üstü ayarla";
+xitongshezhi = "Sistem ayarları";
+
+xiazaiguanli = "İndirme yönetimi";
+yijianfankui = "Geri bildirim";
+shengliuchaxun = "Data tasarrufu";
+jianchagengxin = "Yeni sürüm ara";
+tuichu = "Çık";
+
+// ----------------- 情景翻译
+qingjingfanyi = "Kullanışlı cümleler";
+
+jichang = "Havalimanı";
+banlidengji = "Check-in";
+xinglituoyun = "Bagaj check-in";
+zhuanji = "Aktarma";
+quxingli = "Bagaj alım";
+duihuanwaibi = "Döviz";
+
+jiaotong = "Ulaşım";
+gongjiaoche = "Otobüs";
+chuzuche = "Taksi";
+ditie = "Metro";
+huoche = "Tren";
+lunchuan = "Gemi";
+zijiache = "Otomobil";
+
+binguan = "Otel";
+dengjiruzhu = "Check-in";
+kefangfuwu = "Oda servisi";
+tousu = "Şikayet";
+tuifang = "Check-out";
+
+canting = "Lokanta";
+souluomeishi = "Lokanta arama";
+diancai = "Sipariş";
+fuwu = "Servis";
+maidan = "Hesap";
+
+jingdian = "Turizm yerleri";
+
+yule = "Eğlence";
+meishuguan = "Galeri";
+bowuguan = "Müze";
+
+shangchang = "Mağaza";
+tiaoxuan = "Seçme";
+jiage = "Fiyat";
+tuihuan = "Değiştirme ve iade";
+fukuan = "Ödeme";
+
+yinhang = "Banka";
+
+youju = "Postane";
+
+zuche = "Oto kiralama";
+
+shenghuo = "Yaşam";
+jiaoji = "Sosyal ilişki";
+chaoshi = "Süpermarket";
+dadianhua = "Telefon ";
+xunzhaoxishoujian = "WC";
+
+yiyuan = "Hastane";
+guahao = "Numara almak";
+kanzhen = "Doktora görünmek";
+jiaofei = "Ödeme";
+
+jinji = "Acil yardım";
+
+duanju = "Kısa cümller";
+
+yuanyuyan = "Kaynak dil";
+mubiaoyuyan = "Hedef dil";
+
+// ----------- 旅游省份
+anhui = "Anhui";
+aomen = "Macao";
+beijing = "Beijing";
+fujian = "Fujian";
+gansu = "Guansu";
+guangdong = "Guangdong";
+guangxi = "Guangxi";
+guizhou = "Guizhou";
+hainan = "Hainan";
+haiwai = "Yurtdışı";
+hebei = "Hebei";
+henan = "Henan";
+heilongjiang = "Heilongjiang";
+hubei = "Hubei";
+hunan = "Hunan";
+jilin = "Jilin";
+jiangsu = "Jiangsu";
+jiangxi = "Jiangxi";
+liaoning = "Liaoning ";
+neimenggu = "İç Moğolistan";
+ningxia = "Ningxia";
+shandong = "Shandong";
+shanxi = "Shanxi";
+shaanxi = "Sha’anxi";
+shanghai = "Shanghai";
+sichuan = "Sichuan";
+taiwan = "Taiwan";
+tianjin = "Tianjin";
+xizang = "Tibet";
+xianggang = "Hong Kong";
+xinjiang = "Xinjiang";
+yunnan = "Yunnan";
+zhejiang = "Zhejiang";
+chongqing = "Chongqing";
+
+// ------------------- 首页 David
+sousuohuoshuruwangzhi = "Ara veya site adresini gir";
+shuruchazhaoneirong = "İçerik ara";
+erlanmoshi = "Bir satırda iki";
+sanlanmoshi = "Bir satırda üç";
+silanmoshi = "Bir satırda dört";
+tianjiayingyong = "Uygulama ekle";
+fenxiangdao = "Paylaş";
+fenxiangchenggong = "Paylaşım başarılı";
+shoudongshuru = "Gir";
+feiwangyeappbunengxiugaibiaotihelianjie = "Başlık ve link değiştirilemez";
+shouyeyingyongshuliangyidadaoshangxian = "Ana ekran doldu";
+yitianjiadaoshuqian = "Eklendi";
+yicongshuqianyichu = "Silindi";
+yitianjiadaoshouyeyingyongping = "Eklendi";
+yicongshouyeyingyongpingshanchu = "Silindi";
+
+// ------------------ 个性化定制 David
+zanwujiemu = "Program yok";
+shouting = "Dinle";
+yuedu = "Oku";
+xiayijiemuyugao = "Sonraki program tanıtımı";
+chongfufangshi = "Tekrarlama";
+xinjianmoshi = "Yeni program listesi oluştur";
+xinzengyuyue = "Program alarmı kur";
+bianjiyuyue = "Alarmı değiştir";
+diantai_zixun = "Radyo/Haber";
+qingxuanzeneirong = "İçerik seç";
+qingshurumoshiming = "İsim gir";
+bianjimoshiming = "İsmi değiştir";
+qingxuanzeneirong = "İçerik seç";
+shi = "Saat";
+fen = "Dakika";
+zhou0 = "Pazar";
+zhou1 = "Pazartesi";
+zhou2 = "Salı";
+zhou3 = "Çarşamba";
+zhou4 = "Perşembe";
+zhou5 = "Cuma";
+zhou6 = "Cumartesi";
+buchongfu = "Tekrarlama";
+gongzuori = "Hafta içi";
+zhoumo = "Hafta sonu";
+meitian = "Her gün";
+diantai = "Radyo";
+zixun = "Haber";
+huifu = "Geri al";
+gaishijianyijingcunzaiyuyue_shifoutihuan = "Bu saatte alarm mevcut, değiştirmek ister misiniz?";
+tihuan = "Değiştir";
+butihuan = "Değiştirme";
+nindingyuede_jijiangkaishi_shifoushouting = "Programı başlıyor, dinlemek ister misiniz?";
+nindingyuede_shijianyidao_shifouyuedu = "Programı saati geldi, okumak ister misiniz?";
+
+// ------------------- Sistem ayarları
+zitidaxiaoshezhi_tishi= "Büyük yazı boyutu sayfa görünümünü bozabilir";
+zitidaxiaoshezhi_shiliwenzi = "Yazı boyutunu değiştirmek için aşağı yukarı çekin";
+moren = "Varsayılan";
+fanyeanniu_tishi = "Gezinme sırasında sayfa değiştir tuşları görünür";
+fanyeanniu = "Sayfa değiştir tuşları";
+chupingfanye_tishi = "Ekranın alt veya üstüne tıklayarak sayfa değiştir";
+chupingfanye = "Ekrana dokunarak sayfa değiştir";
+weidenglu = "Giriş yapmadınız";
+kaiqishidakaishangciyemian = "Başlangıçta son sayfayı geri yükle";
+lianjiedakaifangshi = "Bağlantı açma yöntemi";
+dangqianchuangkou = "Şimdiki sayfa";
+wangyemoren = "Varsayılan sayfa ayarları";
+xinchuangkou = "Yeni sayfa";
+houtai = "Arka plan";
+zitidaxiao = "Yazı boyutu";
+morensousuoyinqing = "Varsayılan arama motoru";
+xiaoxituisong = "Haber tavsiyesi";
+fanyefangshi = "Sayfa değiştirme yöntemi";
+xiaochujilu = "Kayıt sil";
+liulanqibiaozhi = "Sistem";
+guanyuzhonghualiulanqi = "China Browser hakkında";
+huifumorenshezhi = "Varsayılanlara geri dön";
+qin_geige5xinghaopingba = "Lütfen bize beş yıldız verin";
+shezhizitidaxiao = "Yazı boyutu ayarla";
+xuanzemorensousuoyinqing = "Varsayılan arama motorunu seç";
+quedingyaohuifumorenshezhi = "Varsayılanlara dön?";
+guanyuzhonghualiulanqi = "China Browser hakkında";
+zhonghualiulanqi = "China Browser";
+bangzhuzhongxin = "Yardım merkezi";
+chanpinjieshao = "Ürün hakkında";
+qingchujilu = "Kayıtları sil";
+qinggouxuanqingchuxiang = "Hangileri silinsin?";
+lishijilu = "Geçmiş";
+cookie = "Cookie Çerezler";
+yemianhuancun = "Sayfa önbelleği";
+zhanghaomima = "Hesap Şifresi";
+
+// ------------------- 检查更新 David
+jianchayouxinbanben = "Yeni sürüm var";
+buzaitishi = "Yeniden gösterme";
+lijishengji = "Şimdi yükselt";
+bushengji = "Yükseltme";
+wuxushengji = "En son sürümü kullanıyorsunuz";
+weizhaodaoapp = "AppStore’de uygulama bulunamadı";
+
+// -------------------  语言设置 David
+gensuixitong = "Takip sistemi";
+gensuixitongyuyan = "Takip sistem dili";
+qiehuanyuyan_quedingqiehuan = "Dil ayarları değiştirmek hesaptan çıkışa ve sunucu adresinin değişimine yol açabilir, emin misiniz?";
+
+// ------------------- 登陆 Huyan
+zhanghudenglu = "Hesap gir";
+denglu = "Giriş yap";
+mianfeizhuce = "Ücretsiz kaydol";
+wangjimima = "Şifremi unuttum";
+shuqian = "Yer imi";
+shiyonghezuozhanghaodenglu = "Başka hesapla kaydol";
+dengluzhonghualiulanqizhanghao_keyitongbuyixiashuju = "China Brwoser hesabınızla verileri eşleştirebilirsiniz";
+biaoqianye_chuangkou_ = "Yer imi penceresi";
+gengduofuwu ="Daha çok hizmet";
+youxiang_shoujihao = "E-mail/Cep no";
+mima = "Şifre";
+nicheng = "Rumuz";
+tongyi = "Kabul et";
+zhonghualiulanqiyonghufuwuxieyi = "Kullanıcı sözleşmesi";
+6_16weishuzihuozimu = "6-16 rakam yada harf";
+qingshuru6_16weishuzihuozimudemima = "6-16 rakam yada harf oluşan şifre gir";
+qingshuruzhengquedeyouxiangdizhi_shoujihao = "Lütfen doğru e-mail/cep no girin";
+qingshurumima = "Şifre girin";
+qingshuruyouxiang_shouji = "Lütfen e-mail/cep no girin";
+shuqian = "Yer imi";
+zhuce = "Kaydol";
+denglushibai = "Giriş başarısız";
+dengluchenggong = "Giriş başarılı";
+zhengzaidenglu = "Giriş yapılıyor";
+zhengzaizhuce = "Kayıt yapılıyor";
+quedingtuichu = "确定退出";
+
+// ------------------- 个人中心 Huyan
+zueijinfangwen = "Son ziyaretler";
+zhinengtianbiao = "Otomatik form doldur";
+shebeitongbu = "Donanım eşleştirme";
+zhuxiaodangqianzhanghao = "Oturum kapat";
+touxiang = "Profil resmi";
+xingbie = "Cinsiyet";
+nan = "Erkek";
+nv = "Kadın";
+shangcitongbu = "Son eşleştirme";
+gerenzhongxin = "Kişi merkez";
+tongbufangshi = "Eşleştirme yöntemi";
+jinzaiWifixiazidong = "Yalnızca Wifi üzerinden otombatik eşleştir";
+zongshizidong = "Otomatik eşleştir";
+zongshishoudong = "Manuel eşleştir";
+baomi = "Gizlilik";
+tongbu = "Eşleştir";
+zhengzaitongbu = "Eşleştiriliyor";
+tongbushibai = "Eşleştirme başarısız";
+tongbuchenggong = "Eşleştirildi";
+gerenxinxi = "Kişisel bilgiler";
+paizhao = "Fotoğraf çek";
+congxiangcexuanqu = "Ablümden seç";
+xuanzexingbie = "Cinsiyet seç";
+baocunshibai = "Kayıt başarısız";
+baocunchenggong = "Kaydedildi";
+lianjieshibai = "Bağlanamadı";
+gexinghuadingzhi = "Kişiselleştir";
+zhouqian = "Hafta önce";
+tianqian = "Gün önce";
+xiaoshiqian = "Saat önce";
+fenzhongqian = "Dakika önce";
+miaoqian = "Saniye önce";
+zhengzaitongbu_ = "Eşleştiriliyor";
+shangcitongbu_ = "Son eşleştirme";
+ninhaiweitongbu = "Henüz eşleştirmediniz";
+
+// ------------------- 历史书签 Huyan
+lishi = "Geçmiş";
+baocun = "Kaydet";
+xinjianwenjianjia = "Yeni klasör aç";
+xinjianshuqian = "Yeni yer imi yarat";
+xuanzewenjianjia = "Klasör seç";
+bianjishuqian = "Yer imi değiştir";
+bianjiwenjianjia = "Klasör değiştir";
+shuqianneirong = "Yer imi içeriği";
+shuqianlianjie = "Yer imi linki";
+wenjianjia = "Klasör";
+jintian = "Bugün";
+zuotian = "Dün";
+gengzao = "Daha önceki";
+ninquedingyaoqingkongliulanlishima = "Geçmişi silmek istediğinizden emin misiniz?";
+zanwulishi = "Geçmiş kaydı yok";
+zanwushuqian = "Yer imi yok";
+tianjiachenggong = "Eklendi";
+yicunzaixiangtongshuqian = "Benzer yer imi mevcut";
+shuqianyicunzai = "Zaten mevcut";
+yicunzaitongmingwenjianjia = "Aynı adlı klasör mevcut";
+qingshuruzhengquedeshuqianlianjie = "Doğru yer imi linkini gir";
+yicunzaixiangtonglianjieshuqian = "Benzer yer imi linki mevcut";
+genmulu = "根目录";
+
+// ------------------- 画图涂鸦 Huyan
+huabi = "Kalem";
+xiangpi = "Silgi";
+qingchu = "Sil";
+baocun_fenxiang = "Kaydet/Paylaş";
+ninquedingyaoqingkongsuoyoutuyama = "Bütün resimleri silmek istediğinizden emin misiniz";
+qingchusuoyoutuya = "Bütün resimleri sil";
+fenxiangdao = "Paylaş";
+baocuntupian = "Resmi kaydet";
+fangqituya = "Resmi bırak";
+quanping = "Tam ekran";
+jiequ = "Ekran resmi";
+yulan = "Ön izleme";
+juzhong = "Ortala";
+chongman = "Doldur";
+baocunchenggong = "Kaydeildi";
+tupianbaocunchenggong = "Kaydedildi";
+zhengzaibaocuntupian = "Kaydediliyor";
+shiyongzhonghualiulanqijietutuyagongnengbingfenxiang = "Bu işlevi paylaş";
+
+// ------------------- 皮肤 Huyan
+tupianzhengzaishiyong_bunengshanchu = "图片正在使用，不能删除！";
+xitongpifu = "Sistem arayüzü";
+pifu = "Arayüz";
+tianjiapifu = "Arayüz ekle";
+meiyouxiangcehuochengxubunengfangwennindexiangce = "Albüm yok yada albüme erişilemiyor";
+ninkeyizaishezhiyinsizhongyunxufangwen = "Kişi ayarlarından erişime izin verebilirsiniz ";
+xiangce = "Albüm";
+zhangtupian = "tane resim";
+zhaoxiangjibukeyong = "Kamera kullanılamıyor";
+xiangce = "Albüm";
+meiyoutupian = "Resim yok";
+
+// ------------------- 通用语句 David
+queding = "Onayla";
+quxiao = "İptal et";
+guanbi = "Kapat";
+fanhui = "Geri dön";
+bianji = "Değiştir";
+wancheng = "Tamamlandı";
+tianjia = "Ekle";
+shanchu = "Sil";
+yichu = "Taşı";
+sousuo = "Ara";
+chazhao = "Bul";
+qingchu = "Sil";
+qingkong = "Boşalt";
+dakai = "Aç";
+chongmingming = "İsmi değiştir";
+tishi = "Not";
+jinggao = "Uyarı";
+chakan = "Kontrol et";
+
+// ------------------- 应用模块
+zidingyi = "Kullanıcı tanımlı";
+shoudongtianjia = "Manuel ekle";
+biaoti = "Başlık";
+wangzhi = "Adres";
+gaiwangzhiyicunzai = "Bu adres mevcut";
+qingshurubiaoti = "Başlık gir";
+qingshuruwangzhi = "Adres gir";
+qingshuruzhengquedewangzhi = "Doğru adres gir";
+
+// ------------------- UIWebPage 网页相关
+jixuyoulahoutui = "Sağa çekerek geri dön";
+jixuyoulahuidaoshouye = "Sağa çekerek ana sayfaya git";
+jixuzuolaqianjin = "Sola çekerek ilerle";
+bunengqianjinle = "Sona gelindi";
+songkaihuidaoshouye = "Bırakıp ana sayfaya dön";
+songkaihoutui = "Bırakıp geri dön";
+songkaiqianjin = "Bırakıp ilerle";
+lianjiehetupianyifuzhi = "Link ve resim kopyalandı";
+xinjianchuangkou = "Yeni pencere aç";
+qishiye = "Başlangıç sayfası";
+shouye = "Ana sayfa";
+zhengzaijiazai_ = "Yükleniyor";
+
+safari_dakai = "Safari ile aç";
+dangqianchuangkoudakai = "Aynı pencerede aç";
+xinchuangkoudakai = "Yeni pencerede aç";
+houtaidakai = "Arka planda aç";
+fuzhilianjie = "Linki kopyala";
+fuzhitupianlianjie = "Resim linkini kopyala";
+xiazaitupian = "Resmi indir";
+
+// -------------------- 下拉刷新
+shanglakeyijiazaigengduoshuju = "Yukarıya çekip daha fazla veri yükle";
+songkailijijiazaigengduoshuju = "Bırakıp daha fazla veri yükle";
+zhengzaijiazaishuju = "Veri yükleniyor";
+xialakeyishuaxin = "Aşağıya çekip yenile";
+songkailijishuaxin = "Bırakıp yenile";
+zhengzaishuaxin = "Yenileniyor";

@@ -1,0 +1,79 @@
+//
+//  CBAudioPlayer.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/17.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "CBAudioPlayer.h"
+
+static CBAudioPlayer *_player;
+
+@implementation CBAudioPlayer
+
++ (instancetype)player
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _player = [[CBAudioPlayer alloc] init];
+        _player.allowsAirPlay = YES;
+        _player.movieSourceType = MPMovieSourceTypeStreaming;
+    });
+    return _player;
+}
+
++ (void)playWithURl:(NSString *)url
+{
+    CBAudioPlayer *player = [CBAudioPlayer player];
+    [player stop];
+    [player setContentURL:[NSURL URLWithString:url]];
+    [player prepareToPlay];
+}
+
++ (void)play
+{
+    CBAudioPlayer *player = [CBAudioPlayer player];
+    [player play];
+}
+
++ (void)pause
+{
+    CBAudioPlayer *player = [CBAudioPlayer player];
+    [player pause];
+}
+
++ (void)stop
+{
+    CBAudioPlayer *player = [CBAudioPlayer player];
+    [player stop];
+}
+
++ (BOOL)isPlaying;
+{
+    return [CBAudioPlayer player].playbackState == MPMoviePlaybackStatePlaying;
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(playerPlaybackStateDidChangeNotification:)
+                                                     name:MPMoviePlayerPlaybackStateDidChangeNotification
+                                                   object:nil];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)playerPlaybackStateDidChangeNotification:(NSNotification *)notification
+{
+    _DEBUG_LOG(@"%s===state:%d", __FUNCTION__, _player.playbackState);
+}
+
+@end

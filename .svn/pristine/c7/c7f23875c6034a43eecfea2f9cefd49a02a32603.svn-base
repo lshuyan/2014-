@@ -1,0 +1,423 @@
+/* 
+  Localizable.strings
+  ChinaBrowser
+
+  Created by David on 14-9-25.
+  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+*/
+
+queding = "Confirm";
+quxiao = "Cancel";
+shanchu = "Delete";
+bianji = "Edit";
+xiugai = "Modify";
+wancheng = "Done";
+sousuo = "Search";
+guanbi = "Close";
+
+changyong = "Most Used";
+shezhi = "Setting";
+gongju = "Tool";
+
+shuaxin = "Refresh";
+tingzhi = "Stop";
+zitidaxiao = "Font size";
+pianda = "Larger";
+pianxiao = "Smaller";
+moren = "Default";
+zitidaxiaowenzi = "Slide the slider to change the web page font size \n (the font is too large or too small may affect the page appearance)";
+yeneichazhao = "Search in Page";
+jietutuya = "Screenshot&Graffiti";
+fenxiang = "Share";
+zhengzaifenxiang = "Sharing...";
+fenxiangchenggong = "Success to Share";
+fenxiangshibai = "Fail to Share";
+jiazai = "Load";
+zhengzaijiazai = "Loading...";
+jiazaichenggong = "Success to Load";
+jiazaishibai = "Fail to Load";
+tianjiashuqian = "Add Bookmark";
+shanchushuqian = "Delete Bookmark";
+shuqian = "Bookmark";
+lishijilu = "History";
+shuqian_lishijilu = "Bookmark/History";
+xinjianbiaoqian = "Create new Tab";
+liangdutiaojie = "Brightness";
+wutumoshi = "Text-only";
+wutuyikaiqi = "Text-only is on";
+wutuyiguanbi = "Text-only is off, refresh webpage to load the pictures";
+wuhenmoshi = "No record Mode";
+yinshenmoshi = "Invisible Mode";
+jiechuyinshen = "Remove Invisible";
+jinruyinshenmoshi = "Invisible mode is on, the history is unable to be recorded.";
+yijiechuyinshenmoshi = "Removed Invisible Mode";
+suodingxuanzhuan = "Lock to Rotate";
+jiesuoxuanzhuan = "Unlock to Rotate";
+quanping = "Full Screen";
+tuichuquanping = "Exit Full Screen";
+pifushezhi = "Setting Skin";
+yuyan = "Language";
+pifu = "Skin";
+shizhongshoucang = "Favorite Collections";
+dangqianshijianwushoucang = "No Favorite collection currently";
+tianjiashizhongshoucang = "Add Favorite Collections";
+yicunzaishizhongshoucang = "Favorite Collection existed, please choose to operate";
+shanchushizhongshoucang = "Delete Favorite Collections";
+yuedu = "Read";
+
+jianchagengxin = "Check for updates";
+tixing = "Remind";
+tishi = "Hint";
+jianchayouxinbanben = "Check for new version";
+lijigengxin = "Update Now";
+lijishengji = "Upgrade Now";
+bugengxin = "No Update";
+bushengji = "No Upgrate";
+buzaitixing = "No more remind";
+buzaitishi = "No more hint";
+wuxugengxin = "The Latest Version already, no need to update";
+wuxushengji = "The Latest Version already, no need to update";
+weizhaodaoapp = "Haven’t found the APP in AppStore,perhaps not submit or failure to pass the examination. ";
+guanbi = "Close";
+hao = "OK";
+
+biaoqianyiman = "The tab is full.";
+tianjiashouyedaohang = "Add Quick Link";
+yijianfankui = "Feedback";
+erweima = "QR code";
+saomiaoerweima = "Scan QR code";
+rijianmoshi = "Day mode";
+yejianmoshi = "Night Mode";
+fankui = "Feedback";
+
+//--------------------------------------------------------------------------------------------------
+tianjiapifu = "Add Skin";
+paizhao = "Photo";
+congxiangcexuanqu = "Choose from album";
+shezhipifu = "Setting Skin";
+zhaoxiangjibukeyong = "The camera is not available";
+
+//--------------------------------------------------------------------------------------------------
+erweimasaomiao = "QR code scanning";
+erweimaquyu = "Put QR code image into the scanning zone";
+shuruwangzhihuosaomiaoerweima = "Input website or scan QR code";
+
+baocuntupian = "Save picture";
+zhengzaibaocuntupian = "Picture saving...";
+tupianbaocunchenggong = "Success to save picture";
+tupianbaocunshibai = "Fail to save picture";
+zhaopianwuquanxian = "No authorization, please authorize to visit album";
+
+quedingshanchuma = "Confirm to delete?";
+
+//--------------------------------------------------------------------------------------------------
+jintian = "Today";
+zuotian = "Yesterday";
+gengzaode = "Earlier";
+ganggang = "Right Now";
+
+quedingqingchulishi = "Confirm to clear history";
+quedingqingchushuqian = "Confirm to clear bookmark";
+xuanzeyaoqingkongdelishijilu = "Select the history to clear";
+qingchujintiande = "Clear today’s";
+qingchuzuotiande = "Clear yesterday’s";
+qingchugengzaode = "Clear earlier’s";
+
+yiqingkongjintiandelishijilu = "Already clear today’s history";
+yiqingkongzuotiandelishijilu = "Already clear yesterday’s history";
+yiqingkonggengzaodelishijilu = "Already clear earlier’s history";
+yiqingkongsuoyoulishijilu = "Already clear all history";
+
+gensuixitongyuyan = "Sync with system language ";
+zuijingliulanlishi = "Newly History";
+
+//--------------------------------------------------------------------------------------------------
+biaoti = "Title";
+fanhui = "Back";
+huabi = "Brush";
+xiangpi = "Eraser";
+chongzuo = "Reform";
+dongzuo = "Act";
+wangcheng = "Complete";
+qingchu = "Clear";
+caidan = "Menu";
+kuan = "Wide";
+gao = "Hight";
+huabishezhi = "Setting Painting Brush";
+shouye = "Home";
+
+baocun = "Save";
+fenxiang = "Share";
+quxiao = "Cancel";
+
+zhengzaifenxiang = "Sharing...";
+fenxiangchenggong = "Success to share";
+fenxiangshibai = "Fail to share";
+
+wangye = "Web";
+xinwen = "News";
+xiaoshuo = "Novel";
+gouwu = "Shopping";
+yinyue = "Music";
+shipin = "Video";
+
+baidu = "Baidu";
+biying = "Bing";
+yahu = "Yahoo";
+sougou = "Sogou";
+guge = "Google";
+youdao = "Youdao";
+yandex = "Yandex";
+
+xinlang = "Sina";
+fenghuang = "Ifeng";
+renminwang = "People";
+
+qidian = "Qidian";
+hongxiu = "Hongxiu";
+tengxun = "Tencent";
+fenghuang = "Ifeng";
+
+taobao = "Taobao";
+yamaxun = "Amzon";
+jingdong = "JD";
+dangdang = "Dangdang";
+yihaodian = "Yihaodian";
+yixun = "Yixun";
+lefeng = "Lefeng";
+
+qqyinyue = "QQ Music";
+kuwo = "KooWo";
+baiduyinyue = "Baidu Music";
+xiami = "Xiami";
+
+souku = "SOUKU";
+aiqiyi = "iQiYi";
+souhu = "SoHu";
+
+//--------------------------------------------------------------------------------------------------
+tianjiashouyedaohang = "Add Homepage Navigation";
+conglishizhongxuanqu = "Select from history";
+congshuqianzhongxuanqu = "Select from bookmark";
+shouyedaohangyicunzai = "Homepage Navigation is existed";
+qingshurulianjiedizhi = "Please input the link address";
+qingshrubiaoti = "Please input title";
+
+//--------------------------------------------------------------------------------------------------
+yonghuming = "User name";
+nicheng = "Nick name";
+mima = "Password";
+youxiang = "Email";
+yuanmima = "Original password";
+querenmima = "Confirm password";
+xinmima = "New password";
+jizhumima = "Remember password";
+denglu = "Login";
+zhuce = "Regist";
+shiyongdisanfangdenglu = "Login by the third party";
+xinlangweibo = "Sina Micro-blog";
+tengxunweibo = "Tecent Micro-blog";
+qq = "QQ";
+denglushibai = "Fail to login";
+dengluchenggong = "Success to login";
+jianjie = "Profile";
+
+qingshuruyonghuming = "Please input user name";
+qingshurumima = "Please input password";
+qingshurunicheng = "Please input nickname";
+qingshuruyouxiang = "Please input email address";
+qingshuruquerenmima = "Please input the confirmed password";
+qingshuruyuanmima = "Please input the original password";
+qingshuruxinmima = "Please input the new password";
+qingshuruquerenmima = "请Please input the confirmed password";
+
+yonghumingchangdubugou = "The length of user name is not enough";
+nichengchangdubugou = "The length of nickname is not enough";
+yuanmimachangdubugou = "The length of original password is not enough";
+mimachangdubugou = "The length of password is not enough(more than six numbers)";
+qingshuruxinmima = "Please input the new password";
+xinmimachangdubugou = "The length of new password is not enough";
+meizuorenhexiugai = "No any modification";
+youxiangwuxiao = "Invalid email address";
+liangcimimabuyizhi = "Inconformity with the inputed password";
+meizuorenhexiugai = "No Any Modification";
+
+tigong = "Provide";
+tongbufuwu = "Sync Service";
+shangcitongbushijian = "Latest Sync Time";
+shangcitongbuneirong = "Latest Sync Content";
+congweitongbu = "Never Sync";
+
+tongbuxinxi = "Sync Information";
+tongbuxuanxiang = "Sync Options";
+qingdenglu = "Please Login";
+
+shouyedaohang = "Homepage Navigation";
+
+tongbu = "Sync";
+yijiantongbu = "One Key Sync";
+tuichu = "Exit";
+
+xiugaiyonghumingmima = "Modify User Name/Nickname";
+buxuyaoxiugaiqingliukong = "No modification item, please leave it blank.";
+
+xiugaimima = "Modify Password";
+tijiao = "Submit";
+
+zhonghualiulanqi = "ChinaBrowser";
+mashangtiyan = "Experience Now";
+zuichangfangwen = "Most Visited";
+shujuyouwu = "Data Erro";
+wuneirong = "No Content";
+
+dakai = "Open";
+fuzhiwangzhi = "Copy URL";
+xinchuangkoudaikai = "Open in New Window";
+houtaidakai = "Open in backstage";
+yongsafaridakai = "Open by Safari";
+chakantupian = "Check Picture";
+xiazaitupian = "Download Picture";
+kongbaiye = "Blank";
+
+dangqianyemiandakai = "Open link in Current Tab";
+xinbiaoqianzhongdakai = "Open Link in New Tab";
+tianjiadaoshuqian = "Add to bookmark ";
+
+shanglajiazaigengduo = "Pull up to load more datas";
+songkaijiazaigengduo = "Release to load more datas instantly";
+xialashuaxin = "Pull down to refresh";
+songkailijishuaxin = "Release to refresh instantly";
+
+quedingqiehuanyuyan = "Switching languages ​​will exit and clear the user has to remember passwords, determine the switch?";
+
+// ----------------- Scene translation
+qingjingfanyi = "Scene translation";
+
+jichang = "Airport";
+banlidengji = "Registering for Boarding";
+xinglituoyun = "Checking the Luggage";
+zhuanji = "Transfer";
+quxingli = "Retrieving the Luggage";
+duihuanwaibi = "Exchanging Foreign Currencies";
+
+jiaotong = "Traffic";
+gongjiaoche = "Taking a Bus";
+chuzuche = "Taking a Taxi";
+ditie = "Taking the Subway";
+huoche = "Taking a Train";
+lunchuan = "Taking a ship";
+zijiache = "Driving a Car";
+
+binguan = "Hotel";
+dengjiruzhu = "Checking in";
+kefangfuwu = "Room Service";
+tousu = "Complaints";
+tuifang = "Checking Out";
+
+canting = "Restraunt";
+souluomeishi = "Talking about Cuisines";
+diancai = "Ordering Food";
+fuwu = "Service";
+maidan = "Paying the Bill";
+
+jingdian = "Scenic Spot";
+
+yule = "Fun";
+meishuguan = "At a Gallery";
+bowuguan = "At a Museum";
+
+shangchang = "Shopping";
+tiaoxuan = "Choosing";
+jiage = "Price";
+tuihuan = "Exchange and Refund";
+fukuan = "Paying the Bill";
+
+yinhang = "Bank";
+
+youju = "Post Office";
+
+zuche = "Rent a car";
+
+shenghuo = "Life";
+jiaoji = "Communication";
+chaoshi = "At the Supermarket";
+dadianhua = "Making a Telephone Call";
+xunzhaoxishoujian = "Finding a Restroom";
+
+yiyuan = "Hospital";
+guahao = "Register";
+kanzhen = "Seeing the Doctor";
+jiaofei = "Paying the Bill";
+
+jinji = "Emergency";
+
+duanju = "Sentence";
+
+// ------------- 语言
+zh-Hans = "Chinese";
+zh-Hanz = "Chinese";
+en = "English";
+tr = "Turkish";
+
+yuanyuyan = "Source language ";
+mubiaoyuyan = "Target language";
+
+// ------------- 分享
+ShareType_1 = "Sina Weibo";
+ShareType_2 = "Tencent Weibo";
+ShareType_24 = "QQ";
+ShareType_6 = "QQ Space";
+ShareType_22 = "微信好友";
+ShareType_23 = "微信朋友圈";
+ShareType_19 = "Message";
+ShareType_18 = "Email";
+
+// -------------- App 启动介绍文字
+jieshao0 = "为信息海洋导航！";
+jieshao1 = "带着她环游世界吧！";
+jieshao2 = "请您体验中华浏览器！";
+
+// ----------- 省份城市列表
+anhui = "Anhui";
+aomen = "Macao";
+beijing = "Beijing";
+fujian = "Fujian";
+gansu = "Gansu";
+guangdong = "Guangdong";
+guangxi = "Guangxi";
+guizhou = "Guizhou";
+hainan = "Hainan";
+haiwai = "overseas";
+hebei = "Hebei";
+henan = "Henan";
+heilongjiang = "Heilongjiang";
+hubei = "Hubei";
+hunan = "Hunan";
+jilin = "Jilin";
+jiangsu = "Jiangsu";
+jiangxi = "Jiangxi";
+liaoning = "Liaoning";
+neimenggu = "Inner Mongolia";
+ningxia = "Ningxia";
+shandong = "Shandong";
+shanxi = "Shanxi";
+shaanxi = "Shaanxi";
+shanghai = "Shanghai";
+sichuan = "Sichuan";
+taiwan = "Taiwan";
+tianjin = "Tianjin";
+xizang = "Tibet";
+xianggang = "Hong Kong";
+xinjiang = "Xinjiang";
+yunnan = "Yunnan";
+zhejiang = "Zhejiang";
+chongqing = "Chongqing";
+
+// -------------- 后来新增的
+qingchulishi = "Clear History";
+xinbiaoqian = "New Tab";
+qingxuanze = "Please select";
+quedingchongzuo = "Sure to redo";
+zhucechenggong = "Registration successful";
+zhuceshibai = "Registration failed";
+suoyou = "Clear all";

@@ -1,0 +1,14 @@
+//
+//  ViewShareItem.h
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UIViewShareItem : UIControl
+
+@property (nonatomic, strong) IBOutlet UIImageView *imageViewIcon;
+@property (nonatomic, strong) IBOutlet UILabel *labelTitle;
+
++ (UIViewShareItem  *)viewShareItemFromXib;
+
+@end

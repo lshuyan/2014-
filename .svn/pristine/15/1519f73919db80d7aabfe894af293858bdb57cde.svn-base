@@ -1,0 +1,390 @@
+//
+//  UIControllerRegister.m
+//  login
+//
+//  Created by HHY on 14-10-24.
+//  Copyright (c) 2014年 koto. All rights reserved.
+//
+
+#import "UIControllerRegister.h"
+
+#import "UIControllerLogin.h"
+#import "UIControllerUserInfo.h"
+#import "UIControllerWebview.h"
+
+@interface UIControllerRegister ()<UITextFieldDelegate,UIAlertViewDelegate>
+{
+    AFJSONRequestOperation *_reqRegister;
+    UIButton *_btnResign;
+}
+@end
+
+@implementation UIControllerRegister
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    [self updateByLanguage];
+    
+    _textFieldInfo.delegate = self;
+    _textFieldPassword.delegate = self;
+    _textFieldNick.delegate = self;
+    _textFieldInfo.autocapitalizationType =
+    _textFieldPassword.autocapitalizationType =
+    _textFieldNick.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    
+    _btnResign = [UIButton buttonWithType:UIButtonTypeCustom];
+    [_btnResign addTarget:self action:@selector(myResignFirstResponder) forControlEvents:UIControlEventTouchDown];
+    [_scrollView addSubview:_btnResign];
+    [_scrollView sendSubviewToBack:_btnResign];
+    _scrollView.delegate = self;
+    self.title = LocalizedString(@"zhuce");
+    
+    //按label.text 字符串宽度 设置 label 的size
+    CGRect rect = _labelAgree.frame;
+    CGSize size = [_labelAgree.text sizeWithFont:_labelAgree.font constrainedToSize:CGSizeMake(_labelAgree.frame.size.width+100, _labelAgree.frame.size.height) lineBreakMode:NSLineBreakByWordWrapping];
+    rect.size=size;
+    _labelAgree.frame=rect;
+    
+    rect = _btnDelegate.frame;
+    rect.origin.x = _labelAgree.frame.origin.x + size.width + 5;
+    _btnDelegate.frame=rect;
+    
+    [self registerForKeyboardNotifications];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _scrollView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _scrollView.frame = rc;
+    
+    rc = _btnDelegate.frame;
+    rc.size.width = self.view.width - rc.origin.x - 20;
+    
+    _scrollView.contentSize = CGSizeMake(0, _btnRegister.bottom + 10);
+    _btnResign.frame = CGRectMake(0, _scrollView.contentOffset.y, _scrollView.width, _scrollView.contentSize.height);
+}
+
+#pragma mark - private methods
+/**
+ *  注册键盘通知
+ */
+- (void)registerForKeyboardNotifications
+{
+    //使用NSNotificationCenter 鍵盤出現時
+    [[NSNotificationCenter defaultCenter] addObserver:self
+     
+                                             selector:@selector(keyboardWasShown:)
+     
+                                                 name:UIKeyboardDidShowNotification object:nil];
+    
+    //使用NSNotificationCenter 鍵盤隐藏時
+    [[NSNotificationCenter defaultCenter] addObserver:self
+     
+                                             selector:@selector(keyboardWillBeHidden:)
+     
+                                                 name:UIKeyboardWillHideNotification object:nil];
+}
+
+//实现当键盘出现的时候计算键盘的高度大小。用于设置scrollView的contentSize;
+- (void)keyboardWasShown:(NSNotification*)aNotification
+{
+    NSDictionary* info = [aNotification userInfo];
+    float kbheight;
+    //kbSize即為鍵盤尺寸 (有width, height)
+//    if (UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation])) {
+//        
+//    }
+//    else
+//    {
+//        kbheight = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size.width;
+//    }
+    kbheight = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height;
+    //得到鍵盤的高度
+    if (kbheight>300) {
+        kbheight = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size.width;
+    }
+    CGRect rect = _scrollView.frame;
+    
+    rect.size.height = self.view.bounds.size.height-rect.origin.y-kbheight;
+    _scrollView.frame = rect;
+    
+    rect.size.height = _btnRegister.frame.origin.y+_btnRegister.frame.size.height+10;
+    _scrollView.contentSize = rect.size;
+    
+}
+
+//当键盘隐藏的时候
+- (void)keyboardWillBeHidden:(NSNotification*)aNotification
+{
+    CGRect rect = _scrollView.frame;
+    rect.size.height = self.view.bounds.size.height-rect.origin.y;
+    _scrollView.frame = rect;
+    rect.size.height = _btnRegister.frame.origin.y+_btnRegister.frame.size.height+10;
+    _scrollView.contentSize = CGSizeMake(0, _btnRegister.bottom + 10);
+}
+
+//当点击View时  放弃输入框
+-(void)myResignFirstResponder
+{
+    [_textFieldNick resignFirstResponder];
+    [_textFieldInfo resignFirstResponder];
+    [_textFieldPassword resignFirstResponder];
+}
+
+//申请注册
+-(void)reqRegisterFoInfo:(NSString *)info passwd:(NSString *)passwd nick:(NSString *)nick controller:(UIControllerBase *)controller
+{
+    [_reqRegister cancel];
+    _reqRegister = nil;
+    
+    NSDictionary *dicParam = @{@"passwd":passwd,
+                               @"username":info,
+                               @"nickname":nick,
+                               @"device":IsiPad?@"ipad":@"iphone"};
+    
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client requestWithMethod:@"POST" path:GetApiWithName(API_UserRegister) parameters:dicParam];
+    
+    
+    _reqRegister = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        NSDictionary *dic = (NSDictionary *)JSON;
+        _DEBUG_LOG(@"%@",dic);
+        if ([dic isKindOfClass:[NSDictionary class]])
+        {
+            NSDictionary *dicData = dic[@"data"];
+            //如果放回结果里账户名跟输入账户名一致则登陆成功  否则弹出错误信息
+            if ([dicData isKindOfClass:[NSDictionary class]] && [_textFieldInfo.text isEqualToString:dicData[@"username"]])
+            {
+                [SVProgressHUD showWithStatus:@"zhucechenggong!zhengzaijinrugerenzhongxin"];
+                
+                [UserManager shareUserManager].currUser = [ModelUser modelWithDict:dicData];
+                
+                UINavigationController *navController = self.navigationController;
+                UIControllerUserInfo *vc=[[UIControllerUserInfo alloc]initWithNibName:@"UIControllerUserInfo" bundle:nil];
+                vc.fromController = _fromController;
+                [navController pushViewController:vc animated:YES];
+                
+                [[NSNotificationCenter defaultCenter] postNotificationName:KNotificationDidLogin object:nil];
+            }
+            else
+            {
+                NSString *temp =[NSString stringWithFormat:@"denglushibai!%@",dic[@"msg"]];
+                [SVProgressHUD showErrorWithStatus:LocalizedString(temp)];
+            }
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSLog(@"failure__%@",(NSDictionary*)JSON);
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"lianjieshibai")];
+        
+    }];
+    [_reqRegister start];
+    
+}
+
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+/**
+ *  密文转换
+ *
+ *  @param sender
+ */
+- (IBAction)onTouchToPasswordsecurTextEntryBut:(UIButton *)sender {
+    //    NSString *temp = _textFieldPassword.text;
+    //    if (sender.selected) {
+    //        _textFieldPassword.secureTextEntry = YES;
+    //
+    //        sender.selected = NO;
+    //
+    //    }
+    //    else
+    //    {
+    //        _textFieldPassword.secureTextEntry = NO;
+    //        sender.selected = YES;
+    //    }
+    //
+    //    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    //        _textFieldPassword.text = temp;
+    //    });
+    if (_textFieldPassword.secureTextEntry) {
+        _textFieldPassword.secureTextEntry = NO;
+    }
+    else
+    {
+        _textFieldPassword.secureTextEntry = YES;
+    }
+}
+
+//注册方法
+- (IBAction)onTouchBtnResiter:(id)sender
+{
+    
+    //账号密码不能为空
+    if ([_textFieldInfo.text length]==0) {
+        //[alert show];
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingshuruyouxiang_shouji")];
+    }
+    else if([_textFieldPassword.text length]==0)
+    {
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingshurumima")];
+    }
+    else if(!(IsValidEmail(_textFieldInfo.text, YES) || IsValidMobilePhoneNum(_textFieldInfo.text)))
+    {
+        //用户名格式错误
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingshuruzhengquedeyouxiangdizhi_shoujihao")];
+        //        alert.message = LocalizedString(@"yonghuminggeshicuowu");
+        //        [alert show];
+    }
+    else if(!(IsValidPassword(_textFieldPassword.text)))
+    {
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"qingshuru6_16weishuzihuozimudemima")];
+    }
+    else
+    {
+        [self reqRegisterFoInfo:_textFieldInfo.text passwd:_textFieldPassword.text nick:_textFieldNick.text controller:self];
+        
+    }
+}
+
+- (IBAction)onTouchBtnAgree
+{
+    _btnAgree.selected = !_btnAgree.selected;
+    if (_btnAgree.selected) {
+        _btnRegister.userInteractionEnabled = NO;
+        _btnRegister.alpha = 0.8;
+        [_btnRegister setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [_btnRegister setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/User/choose_1.png"] stretchableImageWithLeftCapWidth:1 topCapHeight:1] forState:UIControlStateNormal];
+        
+    }
+    else
+    {
+        _btnRegister.userInteractionEnabled = YES;
+        _btnRegister.alpha = 1;
+        [_btnRegister setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [_btnRegister setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/User/log_in_0.png"] stretchableImageWithLeftCapWidth:3 topCapHeight:3] forState:UIControlStateNormal];
+    }
+}
+
+/**
+ *  中华浏览器用户服务协议
+ */
+- (IBAction)onTouchProtocol
+{
+    UIControllerWebview *controllerWebview = [[UIControllerWebview alloc] init];
+    controllerWebview.link = GetApiWithName(API_UserProtocol);
+    controllerWebview.title = LocalizedString(@"zhonghualiulanqiyonghufuwuxieyi");
+    [self.navigationController pushViewController:controllerWebview animated:YES];
+}
+
+#pragma mark - UITextFieldDelegate
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    if (textField == _textFieldInfo)
+    {
+        //        [self getOffsetPoint:[_textFieldPassword superview]];
+        
+        [_textFieldNick becomeFirstResponder];
+    }
+    else if(textField == _textFieldNick)
+    {
+        [_textFieldPassword becomeFirstResponder];
+    }
+    else
+    {
+        //调用注册
+        [self onTouchBtnResiter:nil ];
+    }
+    return NO;
+}
+
+#pragma mark - UIScrollViewDelegate
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView;
+{
+    CGRect rc = _btnResign.frame;
+    rc.origin.y = scrollView.contentOffset.y;
+    _btnResign.frame = rc;
+}
+
+#pragma mark - AppLanguageProtocol
+-(void)updateByLanguage
+{
+    self.title = LocalizedString(@"zhuce");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    
+    _textFieldInfo.leftView = [[UIImageView alloc]initWithImage:[UIImage imageWithBundleFile:@"iPhone/User/account.png"]];
+    _textFieldInfo.leftViewMode = UITextFieldViewModeAlways;
+    [_textFieldInfo.layer setBorderWidth:1];
+    [_textFieldInfo.layer setBorderColor:[UIColor lightGrayColor].CGColor];
+    
+    _textFieldPassword.leftView = [[UIImageView alloc]initWithImage:[UIImage imageWithBundleFile:@"iPhone/User/password.png"]];
+    _textFieldPassword.leftViewMode = UITextFieldViewModeAlways;
+    [_textFieldPassword.layer setBorderWidth:1];
+    [_textFieldPassword.layer setBorderColor:[UIColor lightGrayColor].CGColor];
+    
+    _textFieldNick.leftView = [[UIImageView alloc]initWithImage:[UIImage imageWithBundleFile:@"iPhone/User/name.png"]];
+    _textFieldNick.leftViewMode = UITextFieldViewModeAlways;
+    [_textFieldNick.layer setBorderWidth:1];
+    [_textFieldNick.layer setBorderColor:[UIColor lightGrayColor].CGColor];
+    
+    _btnTextPassword.userInteractionEnabled = YES;
+    [_btnTextPassword setImage:[UIImage imageWithBundleFile:@"iPhone/User/eyes_0.png"] forState:UIControlStateNormal];
+    [_btnTextPassword setImage:[UIImage imageWithBundleFile:@"iPhone/User/eyes_1.png"] forState:UIControlStateHighlighted];
+    [_btnTextPassword.layer setBorderWidth:1];
+    [_btnTextPassword.layer setBorderColor:[UIColor lightGrayColor].CGColor];
+    
+    [_btnDelegate setTitle:LocalizedString(@"zhonghualiulanqiyonghufuwuxieyi") forState:UIControlStateNormal];
+    _labelAgree.text = LocalizedString(@"tongyi");
+    [_btnRegister setTitle:LocalizedString(@"zhuce") forState:UIControlStateNormal];
+    [_btnRegister setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/User/log_in_0.png"] stretchableImageWithLeftCapWidth:3 topCapHeight:3] forState:UIControlStateNormal];
+    [_btnRegister setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/User/log_in_1.png"] stretchableImageWithLeftCapWidth:3 topCapHeight:3] forState:UIControlStateHighlighted];
+    
+    [_btnAgree setBackgroundImage:[UIImage imageWithBundleFile:@"iPhone/User/choose_0.png"] forState:UIControlStateNormal];
+    [_btnAgree setBackgroundImage:[UIImage imageWithBundleFile:@"iPhone/User/choose_1.png"] forState:UIControlStateSelected];
+    //左边导航栏
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnback) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+    
+    _textFieldInfo.placeholder = LocalizedString(@"youxiang_shoujihao");
+    _textFieldNick.placeholder = LocalizedString(@"nicheng");
+    _textFieldPassword.placeholder = LocalizedString(@"6_16weishuzihuozimu");
+}
+
+@end

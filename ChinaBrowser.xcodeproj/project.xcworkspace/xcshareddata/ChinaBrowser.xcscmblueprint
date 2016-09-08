@@ -1,0 +1,25 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "52e9a43a-d116-1b41-a392-8db912eea806++2994",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "52e9a43a-d116-1b41-a392-8db912eea806++2994" : {
+
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "52e9a43a-d116-1b41-a392-8db912eea806++2994" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "93564A00-1182-44CA-B7FA-E6CA42E8AB0A",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "52e9a43a-d116-1b41-a392-8db912eea806++2994" : "ChinaBrowser3"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "ChinaBrowser",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "ChinaBrowser.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "svn:\/\/182.92.152.7\/zhie\/ios",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "52e9a43a-d116-1b41-a392-8db912eea806++2994"
+    }
+  ]
+}

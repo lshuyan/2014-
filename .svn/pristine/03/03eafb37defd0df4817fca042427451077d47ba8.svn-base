@@ -1,0 +1,166 @@
+//
+//  AppSetting.h
+//  ChinaBrowser
+//
+//  Created by David on 14-9-26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+// 默认网页字体大小
+#define kDefaultFontsize (19.0f)
+
+@class ModelSearchEngine;
+
+@interface AppSetting : NSObject
+
+// ----------------- 需要持久化的设置内容
+/**
+ *  开启时打开上次页面
+ */
+@property (nonatomic, assign) BOOL openLastWebsite;
+/**
+ *  链接打开方式
+ */
+@property (nonatomic, assign) UrlOpenStyle urlOpenStyle;
+/**
+ *  字体大小
+ */
+@property (nonatomic, assign) CGFloat fontsize;
+/**
+ *  默认搜索引擎(索引)，需要支持多语言设置的，{tr:0, zh-hans:0, ......}
+ */
+@property (nonatomic, assign) NSInteger searchIndex;
+/**
+ *  消息推送
+ */
+@property (nonatomic, assign) BOOL remotePush;
+/**
+ *  强力广告拦截
+ */
+@property (nonatomic, assign) BOOL adBlockers;
+/**
+ *  转屏
+ */
+@property (nonatomic, assign) BOOL rotateScreen;
+/**
+ *  翻页方式
+ */
+@property (nonatomic, assign) PageStyle pageStyle;
+/**
+ *  表单保存
+ */
+@property (nonatomic, assign) SaveForm saveForm;
+/**
+ *  浏览器标识(UA)(UserAgent)
+ */
+@property (nonatomic, assign) NSInteger userAgentIndex;
+/**
+ *  亮度 [0, 1]
+ */
+@property (nonatomic, assign) CGFloat brightness;
+/**
+ *  无图模式
+ */
+@property (nonatomic, assign) BOOL noImageMode;
+/**
+ *  无痕浏览
+ */
+@property (nonatomic, assign) BOOL noSaveHistory;
+/**
+ *  桌面样式
+ */
+@property (nonatomic, assign) DesktopStyle desktopStyle;
+/**
+ *  皮肤信息
+ */
+@property (nonatomic, assign) SkinInfo skinInfo;
+
+
+// ---------------- 不需要持久化的设置内容
+/**
+ *  全屏模式
+ */
+@property (nonatomic, assign) BOOL fullscreenMode;
+
+/**
+ *  当前皮肤图片
+ */
+@property (nonatomic, strong, readonly) UIImage *skinImage;
+
+/**
+ *  浏览器标识(UA)(UserAgent)
+ */
+@property (nonatomic, strong, readonly) NSString *userAgent;
+
+/**
+ *  当前所有引擎
+ */
+@property (nonatomic, weak, readonly) ModelSearchEngine *searchEngine;
+
+/**
+ *  搜索引擎列表
+ */
+@property (nonatomic, strong) NSArray *arrSearchEngine;
+
+/**
+ *  分享选项集合
+ */
+@property (nonatomic, strong) NSArray *arrShareItem;
+
+/**
+ *  用户代理 UserAgent
+ */
+@property (nonatomic, strong) NSArray *arrUserAgent;
+
+/**
+ *  第三方登录项
+ */
+@property (nonatomic, strong, readonly) NSArray *arrSNSLogin;
+
+
++ (instancetype)shareAppSetting;
++ (void)init;
+
+/**
+ *  重置设置
+ */
+- (void)reset;
+/**
+ *  保存设置
+ */
+- (void)saveAppSettings;
+
+/**
+ *  将网页链接打开方式转成字符串
+ *
+ *  @param urlOpenStyle
+ *
+ *  @return NSString
+ */
++ (NSString *)stringFromUrlOpenStyle:(UrlOpenStyle)urlOpenStyle;
+
+/**
+ *  第三方登录项
+ *
+ *  @return NSArray
+ */
++ (NSArray *)snsLoginItem;
+
+// ------------------ 搜索引擎/分享选项
+/**
+ *  从网络获取搜索引擎列表
+ *
+ *  @param completion 获取完成
+ */
++ (void)fetchSeachEngineWithCompletion:(void(^)())completion;
+
+/**
+ *  从网络获取分享选项列表
+ *
+ *  @param completion 获取王城
+ */
++ (void)fetchShareItemWithCompletion:(void(^)())completion;
+
+@end

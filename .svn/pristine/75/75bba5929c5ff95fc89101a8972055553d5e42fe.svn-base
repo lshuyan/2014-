@@ -1,0 +1,106 @@
+//
+//  UIScrollViewNews.m
+//  ChinaBrowser
+//
+//  Created by David on 14/12/17.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIScrollViewNews.h"
+
+@implementation UIScrollViewNews
+{
+    NSInteger _indexOfNews;
+    NSTimer *_timerScroll;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.showsHorizontalScrollIndicator =
+        self.showsVerticalScrollIndicator = NO;
+        self.scrollEnabled = NO;
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    self.showsHorizontalScrollIndicator =
+    self.showsVerticalScrollIndicator = NO;
+    self.scrollEnabled = NO;
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    NSInteger index = self.contentOffset.x/self.width;
+    [super setFrame:frame];
+    
+    for (NSInteger i=0; i<self.subviews.count; i++) {
+        UIButton *btnNews = self.subviews[i];
+        btnNews.frame = CGRectMake(self.width*i, 0, self.width, self.height);
+    }
+    
+    self.contentOffset = CGPointMake(self.width*index, 0);
+}
+
+/**
+ *  设置滚动新闻数组
+ *
+ *  @param arrDictNews 数据格式：[{title, refurl}]
+ */
+- (void)setArrDictNews:(NSArray *)arrDictNews
+{
+    [self.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    self.contentSize = CGSizeMake(self.width, self.height);
+    self.contentOffset = CGPointZero;
+    
+    _indexOfNews = 0;
+    _arrDictNews = arrDictNews;
+    
+    for (NSInteger i=0; i<_arrDictNews.count; i++) {
+        NSDictionary *dictNews = _arrDictNews[i];
+        
+        UIButton *btnNews = [[UIButton alloc] initWithFrame:CGRectMake(self.width*i, 0, self.width, self.height)];
+        btnNews.tag = i;
+        [btnNews setTitleColor:[UIColor colorWithWhite:0.05 alpha:1] forState:UIControlStateNormal];
+        [btnNews setTitleColor:[UIColor colorWithWhite:0.3 alpha:1] forState:UIControlStateHighlighted];
+        btnNews.titleLabel.font = [UIFont systemFontOfSize:14];
+        [btnNews addTarget:self action:@selector(onTouchNews:) forControlEvents:UIControlEventTouchUpInside];
+        [btnNews setTitle:dictNews[@"title"] forState:UIControlStateNormal];
+        btnNews.backgroundColor = [UIColor whiteColor];
+        
+        [self addSubview:btnNews];
+    }
+    
+    [_timerScroll invalidate];
+    _timerScroll = nil;
+    
+    if (_arrDictNews.count>0) {
+        _timerScroll = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(doScrollNews) userInfo:nil repeats:YES];
+        [[NSRunLoop currentRunLoop] addTimer:_timerScroll forMode:NSRunLoopCommonModes];
+    }
+}
+
+- (void)doScrollNews
+{
+    _indexOfNews++;
+    if (_indexOfNews>=_arrDictNews.count) {
+        _indexOfNews=0;
+    }
+    
+    [self setContentOffset:CGPointMake(self.width*_indexOfNews, 0) animated:YES];
+}
+
+- (void)onTouchNews:(UIButton *)btn
+{
+    NSDictionary *dictNews = _arrDictNews[btn.tag];
+    if (_callbackReqLink) {
+        _callbackReqLink(dictNews[@"refurl"]);
+    }
+}
+
+@end

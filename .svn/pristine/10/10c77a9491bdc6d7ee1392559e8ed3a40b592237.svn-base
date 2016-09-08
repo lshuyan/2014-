@@ -1,0 +1,29 @@
+//
+//  UIViewShareAndSave.h
+//  DrawView
+//
+//  Created by HHY on 14-10-23.
+//  Copyright (c) 2014年 koto. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+#import "UIViewShareItem.h"
+
+@protocol UIViewShareDelegate;
+
+@interface UIViewShareAndSave : UIView
+
++ (UIViewShareAndSave *)ViewShareAndSave:(id)vc;
+
+@property(nonatomic, strong) UIImage *saveImage;
+
+@property(nonatomic, weak) id<UIViewShareDelegate> delegate;
+
+@end
+
+@protocol UIViewShareDelegate <NSObject>
+
+- (void)UIViewShareAndSave:(UIViewShareAndSave *)viewShare shareItem:(UIViewShareItem *)shareItem shareItemLabelTitle:(NSString *)title;
+
+@end

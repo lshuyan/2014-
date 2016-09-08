@@ -1,0 +1,60 @@
+//
+//  UIControllerCreateBookmark.h
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/10.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+#import "UINavigationBarCustom.h"
+#import "UIControllerBookmarkHistory.h"
+#import "UIControllerSelectionForder.h"
+
+#import "ModelBookmark.h"
+/**
+ *  新建书签or收藏夹
+ */
+typedef NS_ENUM(NSInteger, Type) {
+    /**
+     *  新建书签
+     */
+    typeNewBookmark,
+    /**
+     *  新建文件
+     */
+    typeNewFolder,
+    /**
+     *  编辑书签
+     */
+    typeEditBookmark,
+    /**
+     *  编辑文件
+     */
+    typeEditFolder,
+    /**
+     *  选择文件夹模式
+     */
+    typeSelec
+};
+@protocol UIControllerCreateBookmarkDelegate;
+
+@interface UIControllerCreateBookmark : UIControllerBase<UITableViewDelegate, UITableViewDataSource>
+{
+    
+    IBOutlet UINavigationBarCustom *_navBar;
+    IBOutlet UITableView *_tableView;
+    
+    IBOutlet UIButton *_btnSave;
+}
+
+@property(nonatomic, weak)id<UIControllerCreateBookmarkDelegate> delegate;
+@property(nonatomic, assign)Type type;
+@property(nonatomic, strong)ModelBookmark *model;
+@end
+
+@protocol UIControllerCreateBookmarkDelegate <NSObject>
+
+- (void)controller:(UIControllerCreateBookmark *)controller createBookmarkTitle:(NSString *)title link:(NSString *)link  type:(Type)type modekBookmark:(ModelBookmark *)model selectionParen_pkid:(NSInteger)paren_pkid;
+
+@end

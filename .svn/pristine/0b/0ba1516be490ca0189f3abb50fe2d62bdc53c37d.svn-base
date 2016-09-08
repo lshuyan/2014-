@@ -1,0 +1,61 @@
+//
+//  ModelAppItem.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/11.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelAppItem.h"
+
+@implementation ModelAppItem
+
+- (void)setItemId:(NSString *)itemId
+{
+    _itemId = [itemId isKindOfClass:[NSString class]]?itemId:nil;
+}
+- (void)setType:(NSString *)type
+{
+    _type = [type isKindOfClass:[NSString class]]?type:nil;
+}
+- (void)setTitle:(NSString *)title
+{
+    _title = [title isKindOfClass:[NSString class]]?title:nil;
+}
+- (void)setIcon:(NSString *)icon
+{
+    _icon = [icon isKindOfClass:[NSString class]]?icon:nil;
+}
+- (void)setLink:(NSString *)link
+{
+    _link = [link isKindOfClass:[NSString class]]?link:nil;
+}
+- (void)setUrlschemes:(NSString *)urlschemes
+{
+    _urlschemes = [urlschemes isKindOfClass:[NSString class]]?urlschemes:nil;
+}
+- (void)setPackage:(NSString *)package
+{
+    _package = [package isKindOfClass:[NSString class]]?package:nil;
+}
+- (void)setApp_download:(NSString *)app_download
+{
+    _app_download = [app_download isKindOfClass:[NSString class]]?app_download:nil;
+}
+
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    self = [super initWithDict:dict];
+    if (self) {
+        self.itemId = dict[@"appcatid"];
+        self.type = dict[@"type"];
+        self.title = dict[@"title"];
+        self.icon = dict[@"icon"];
+        self.link = dict[@"link"];
+        self.urlschemes = dict[@"urlschemes"];
+        self.package = dict[@"package"];
+        self.app_download = dict[@"app_download"];
+    }
+    return self;
+}
+@end

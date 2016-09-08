@@ -1,0 +1,28 @@
+//
+//  ModelUser.h
+//  ChinaBrowser
+//
+//  Created by David on 13-10-18.
+//  Copyright (c) 2013年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelBase.h"
+
+/**
+ *  用户实体
+ */
+@interface ModelUser : ModelBase
+
+@property (nonatomic, assign) NSInteger uid;
+@property (nonatomic, strong) NSString *username;
+@property (nonatomic, strong) NSString *nickname;
+@property (nonatomic, strong) NSString *email;
+@property (nonatomic, strong) NSString *avatar;
+//@property (nonatomic, strong) NSString *img;
+@property (nonatomic, strong) NSString *collect;
+
+@property (nonatomic, strong) NSString *pwd;
+
+@property (nonatomic, assign, getter = isAutoCreate) NSInteger autoCreate;
+
+@end

@@ -1,0 +1,135 @@
+//
+//  UIControllerLabelsList.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/11.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerLabelsList.h"
+#import "UIScrollViewLablesList.h"
+#import "UICellItemList.h"
+
+#import "ModelAppCate.h"
+#import "ModelApp.h"
+
+#define itemCellIdentifier @"itemIdentifier"
+
+@interface UIControllerLabelsList () <UITableViewDataSource, UITableViewDelegate>
+{
+    // 分类列表
+    IBOutlet UIScrollViewLablesList *_classificationList;
+    
+    // 标签列表
+    IBOutlet UITableView *_itemList;
+    
+    AFJSONRequestOperation *_afReqItemList;
+}
+
+@property (nonatomic, strong)NSMutableArray *itemsArr;
+@end
+
+@implementation UIControllerLabelsList
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self _initData];
+    [self _loadSubViews];
+    [self reqItemList];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    
+}
+
+#pragma mark - Request Data
+- (void)reqItemList
+{
+    __weak typeof(self) weakself = self;
+    [_afReqItemList cancel];
+    _afReqItemList = nil;
+    
+    BOOL (^resolveNews)(NSDictionary *)=^(NSDictionary *dicResult){
+        [weakself.itemsArr removeAllObjects];
+        
+        BOOL ret = NO;
+        do {
+            if (![dicResult isKindOfClass:[NSDictionary class]]) break;
+            NSArray *arrDicNews = dicResult[@"data"];
+            if (![arrDicNews isKindOfClass:[NSArray class]]) break;
+            for (NSDictionary *dicAppCate in arrDicNews) {
+                ModelAppCate *model = [ModelAppCate modelWithDict:dicAppCate];
+                NSArray *arrDicApp = dicAppCate[@"list"];
+                NSMutableArray *arrApp = [NSMutableArray arrayWithCapacity:arrDicApp.count];
+                for (NSDictionary *dicApp in arrDicApp) {
+                    [arrApp addObject:[ModelApp modelWithDict:dicApp]];
+                }
+                model.arrApp = arrApp;
+                
+                [weakself.itemsArr addObject:model];
+            }
+            ret = weakself.itemsArr.count>0;
+            
+        } while (NO);
+        
+        ModelAppCate *model = weakself.itemsArr[0];
+        NSLog(@" list : %@", model.arrApp);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            _classificationList.lableList = weakself.itemsArr;
+        });
+        
+        return ret;
+    };
+    
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSDictionary *dicParam = @{@"device":IsiPad?@"ipad":@"iphone"};
+    NSMutableURLRequest *req = [client requestWithMethod:@"GET" path:GetApiWithName(API_AppCate) parameters:dicParam];
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    _afReqItemList = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        
+        if (resolveNews(JSON)) {
+            [_afReqItemList.responseData writeToFile:filepath atomically:NO];
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            resolveNews([NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil]);
+        }
+    }];
+    
+    [_afReqItemList start];
+}
+#pragma mark - Private Method
+- (void)_initData
+{
+    self.title = @"网页应用";
+    _itemsArr = [[NSMutableArray alloc] init];
+}
+- (void)_loadSubViews
+{
+    [_itemList registerClass:[UICellItemList class] forCellReuseIdentifier:itemCellIdentifier];
+    
+    _classificationList.lableListDelegate = ^(int index){
+        
+    };
+}
+#pragma mark - UITableView DataSource
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 10;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICellItemList *cell = [tableView dequeueReusableCellWithIdentifier:itemCellIdentifier];
+    return cell;
+}
+#pragma mark - UITableView Delegate
+@end

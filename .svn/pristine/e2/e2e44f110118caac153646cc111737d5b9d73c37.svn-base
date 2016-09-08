@@ -1,0 +1,290 @@
+//
+//  UIControllerCreateBookmark.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/10.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerCreateBookmark.h"
+
+#import "ADOBookmark.h"
+
+@interface UIControllerCreateBookmark ()<UITextFieldDelegate,UIControllerSelectionForderDelegate>
+{
+    UITextField *_textFieldForder;
+    UITextField *_textFieldTitle;
+    UITextField *_textFieldLink;
+    //能否保存.  在输入框未填入的情况下为NO
+    BOOL _canSave;
+    //选择保存的文件夹编号
+    NSInteger _folderParen_pkid;
+}
+@end
+
+@implementation UIControllerCreateBookmark
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewDidAppear:YES];
+    [self initUI];
+    
+    [self textField:nil shouldChangeCharactersInRange:NSMakeRange(0, 0) replacementString:nil];
+}
+
+//初始化界面
+-(void)initUI
+{
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"fanhui") style:UIBarButtonItemStyleBordered target:self action:@selector(onTouchBtnback)];
+    
+    [_btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [_btnSave addTarget:self action:@selector(onTouchRightBarButtonItem) forControlEvents:UIControlEventTouchUpInside];
+    if (_canSave) {
+        _btnSave.tintColor = [UIColor grayColor];
+        _btnSave.userInteractionEnabled = NO;
+        
+    }
+    else
+    {
+        _btnSave.tintColor = [UIColor blueColor];
+        _btnSave.userInteractionEnabled = YES;
+    }
+    if(self.type == typeNewBookmark)
+    {
+        _navBar.topItem.title = LocalizedString(@"xinjianshuqian");
+    }
+    else
+    {
+        _navBar.topItem.title = LocalizedString(@"xinjianshoucangjia");
+    }
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    CGRect rc = _navBar.frame;
+    
+    rc.origin.x = 0;
+    rc.size.width = self.view.width;
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    rc.origin.y = 20;
+#ifdef __IPHONE_8_0
+    rc.origin.y = UIInterfaceOrientationIsPortrait(orientation)?20:0;
+#endif
+    
+    _navBar.frame = rc;
+    
+    float y = rc.origin.y + (rc.size.height - _btnSave.frame.size.height)*0.5;
+    
+    rc = _btnSave.frame;
+    rc.origin.y = y;
+    rc.origin.x = _navBar.frame.size.width - rc.size.width - 9;
+    _btnSave.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.x = 0;
+    rc.origin.y = _navBar.bottom;
+    rc.size.width = self.view.width;
+    
+    _tableView.frame = rc;
+    
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+/**
+ *  点击_nav右边按钮事件.  保存
+ */
+-(void)onTouchRightBarButtonItem
+{
+    if (self.type == typeNewBookmark || self.type  == typeEditBookmark)
+    {
+        [self.delegate controller:self createBookmarkTitle:_textFieldTitle.text link:_textFieldLink.text type:self.type modekBookmark:self.model selectionParen_pkid:_folderParen_pkid];
+    }
+    else
+    {
+        [self.delegate controller:self createBookmarkTitle:_textFieldForder.text link:nil type:self.type modekBookmark:self.model selectionParen_pkid:_folderParen_pkid];
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+//按下return建的代理方法
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    if (textField == _textFieldTitle)
+    {
+        [_textFieldLink becomeFirstResponder];
+    }
+    else
+    {
+        if (_canSave) {
+            [self onTouchRightBarButtonItem];
+        }
+        
+    }
+    return NO;
+}
+
+//监控输入框有没有输入
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+//    if(_textFieldForder.text.length==0 || _textFieldLink.text.length==0 || _textFieldTitle.text.length==0)
+//    {
+//        _canSave = NO;
+//        _btnSave.tintColor = [UIColor grayColor];
+//        _btnSave.userInteractionEnabled = NO;
+//        
+//    }
+//    else
+//    {
+//        _canSave =YES;
+//        _btnSave.tintColor = [UIColor blueColor];
+//        _btnSave.userInteractionEnabled = YES;
+//    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self.type == typeEditBookmark || self.type == typeNewBookmark) {
+            if (_textFieldLink.text.length == 0|| _textFieldTitle.text.length == 0) {
+                _canSave = NO;
+                _btnSave.tintColor = [UIColor grayColor];
+                _btnSave.userInteractionEnabled = NO;
+            }
+            if (_textFieldLink.text.length > 0 && _textFieldTitle.text.length>0)
+            {
+                _canSave =YES;
+                _btnSave.tintColor = [UIColor blueColor];
+                _btnSave.userInteractionEnabled = YES;
+            }
+        }
+        else
+        {
+            if (_textFieldForder.text.length==0) {
+                _canSave = NO;
+                _btnSave.tintColor = [UIColor grayColor];
+                _btnSave.userInteractionEnabled = NO;
+            }
+            else
+            {
+                _canSave =YES;
+                _btnSave.tintColor = [UIColor blueColor];
+                _btnSave.userInteractionEnabled = YES;
+            }
+        }
+    });
+//    _DEBUG_LOG(@"\n==空 %d \n ==0 %d \n %@ \n_____________",[_textFieldLink.text isEqualToString:@""],_textFieldLink.text.length ,string)
+
+    
+    return YES;
+}
+
+#pragma mark - uicontrollerselectionfolderDelegate
+-(void)controller:(UIControllerSelectionForder *)controller SelectionForder:(NSInteger)paren_pkid
+{
+    _folderParen_pkid = paren_pkid;
+}
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    if (self.type == typeNewBookmark || self.type == typeEditBookmark) {
+        return 2;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if (self.type == typeNewBookmark || self.type ==typeEditBookmark) {
+        if (section == 0) {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    else
+    {
+        return 1;
+    }
+    
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
+    cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+    
+    UITextField *field=[[UITextField alloc] initWithFrame:CGRectMake(20, 0, ([UIScreen mainScreen].bounds.size.width>[UIScreen mainScreen].bounds.size.height?[UIScreen mainScreen].bounds.size.height:[UIScreen mainScreen].bounds.size.width)-40, 44)];
+    field.delegate = self;
+    field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    field.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin;
+    if (self.type == typeNewFolder || self.type == typeEditFolder) {
+        if (self.model) {
+            field.text = self.model.title;
+        }
+        field.placeholder = LocalizedString(@"xinjianshoucangjia");
+        [cell addSubview:field];
+        _textFieldForder = field;
+        _textFieldForder.returnKeyType = UIReturnKeyDone;
+        return cell;
+    }
+    
+    //这里都是新建书签
+    if (indexPath.row == 0  && indexPath.section == 0) {
+        if (self.model) {
+            field.text = self.model.title;
+        }
+        field.placeholder = LocalizedString(@"shuqianneirong");
+        [cell addSubview:field];
+        _textFieldTitle = field;
+        _textFieldTitle.returnKeyType = UIReturnKeyNext;
+    }else if(indexPath.row == 1)
+    {
+        if (self.model) {
+            field.text = self.model.link;
+        }
+        field.placeholder = LocalizedString(@"shuqianlianjie");
+        [cell addSubview:field];
+        _textFieldLink = field;
+        _textFieldLink.returnKeyType = UIReturnKeyDone;
+    }
+    
+    if (indexPath.section == 1) {
+        cell.textLabel.text = LocalizedString(@"xuanzeshoucangjia");
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.userInteractionEnabled =YES;
+    }
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    _DEBUG_LOG(@"sdffff");
+    if(indexPath.section == 1)
+    {
+        
+        UIControllerSelectionForder *controller = [[UIControllerSelectionForder alloc]initWithNibName:@"UIControllerSelectionForder" bundle:nil];
+        [self.navigationController pushViewController:controller animated:YES];
+    }
+}
+
+
+
+@end

@@ -1,0 +1,26 @@
+//
+//  UICellEditHead.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellEditIcon.h"
+
+@implementation UICellEditIcon
+
+- (void)awakeFromNib
+{
+    self.imageIcon.layer.borderWidth = 0.5;
+    self.imageIcon.layer.borderColor = [UIColor grayColor].CGColor;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

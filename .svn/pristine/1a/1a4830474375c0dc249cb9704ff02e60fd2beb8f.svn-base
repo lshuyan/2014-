@@ -1,0 +1,532 @@
+//
+//  UIViewTopBar.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-1.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewTopBar.h"
+
+@interface UIViewTopBar () <UITextFieldDelegate>
+
+@end
+
+@implementation UIViewTopBar
+{
+    
+    UIImageView *_leftViewSearchIcon;
+    UIView *_leftViewSearchOption;
+    UIView *_leftViewBookmark;
+    UIButton *_btnQRCode;
+    
+    UIButton *_btnBookmark;
+    UIButton *_btnSearchOption;
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setSubViewBgColor];
+    
+    CGRect rc = _btnGoBack.bounds;
+    _leftViewSearchIcon = [[UIImageView alloc] initWithFrame:rc];
+    
+    rc.size.width+=10;
+    _leftViewBookmark = [[UIView alloc] initWithFrame:rc];
+    {
+        _btnBookmark = [[UIButton alloc] initWithFrame:_leftViewSearchIcon.bounds];
+        [_btnBookmark addTarget:self action:@selector(onTouchBarItem:) forControlEvents:UIControlEventTouchUpInside];
+        [_leftViewBookmark addSubview:_btnBookmark];
+    }
+    
+    _leftViewSearchOption = [[UIView alloc] initWithFrame:rc];
+    {
+        _btnSearchOption = [[UIButton alloc] initWithFrame:_leftViewSearchIcon.bounds];
+        [_btnSearchOption addTarget:self action:@selector(onTouchBarItem:) forControlEvents:UIControlEventTouchUpInside];
+        [_leftViewSearchOption addSubview:_btnSearchOption];
+    }
+    
+    rc = _leftViewSearchIcon.frame;
+    {
+        _btnQRCode = [[UIButton alloc] initWithFrame:rc];
+        [_btnQRCode addTarget:self action:@selector(onTouchBarItem:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    _leftViewSearchIcon.backgroundColor = [UIColor redColor];
+    _leftViewBookmark.backgroundColor = [UIColor greenColor];
+    _leftViewSearchOption.backgroundColor = [UIColor blueColor];
+    _btnQRCode.backgroundColor = [UIColor purpleColor];
+    _btnBookmark.backgroundColor = [UIColor yellowColor];
+    _btnSearchOption.backgroundColor = [UIColor magentaColor];
+    
+    _textField.textColor = [UIColor whiteColor];
+    [_textField setValue:[UIColor whiteColor] forKeyPath:@"_placeholderLabel.textColor"];
+    
+    self.viewTopBarStatus = ViewTopBarStatusHome;
+    
+    [self updateByLanguage];
+}
+
+- (void)setViewTopBarStatus:(ViewTopBarStatus)viewTopBarStatus
+{
+    if (viewTopBarStatus==_viewTopBarStatus) return;
+    
+    if (viewTopBarStatus==ViewTopBarStatusInput) {
+        if (_viewTopBarStatus!=ViewTopBarStatusFocus) {
+            _viewTopBarStatusBeforeInput = _viewTopBarStatus;
+        }
+    }
+    
+    _viewTopBarStatus = viewTopBarStatus;
+    
+    [UIView animateWithDuration:0.3 animations:^{
+        [self resize];
+    } completion:^(BOOL finished) {
+    }];
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    _DEBUG_LOG(@"%s", __FUNCTION__);
+    [super setFrame:frame];
+    [self resize];
+}
+
+- (void)resize
+{
+    CGRect rc = CGRectZero;
+    CGFloat spacex = 10;
+    
+    if (IsPortrait) {
+        switch (_viewTopBarStatus) {
+            case ViewTopBarStatusHome:
+            {
+                // TODO:设置背景
+                self.backgroundColor = [UIColor colorWithWhite:0.15 alpha:1];
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha =
+                _btnStop.alpha =
+                _btnRefresh.alpha =
+                _btnCancel.alpha = 0;
+                
+                // 设置frame
+                rc = _viewInput.frame;
+                rc.origin.x = spacex;
+                rc.size.width = self.width-rc.origin.x*2;
+                _viewInput.frame = rc;
+                
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width;
+                _btnCancel.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewSearchIcon;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = _btnQRCode;
+                _textField.rightViewMode = UITextFieldViewModeAlways;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                
+            }break;
+            case ViewTopBarStatusWeb:
+            {
+                // TODO:设置背景
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha =
+                _btnCancel.alpha = 0;
+                
+                _btnStop.alpha =
+                _btnRefresh.alpha = 1;
+                
+                // 设置frame
+                rc = _btnRefresh.frame;
+                rc.origin.x = self.width-rc.size.width-spacex*2;
+                _btnRefresh.frame =
+                _btnStop.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = spacex;
+                rc.size.width = _btnRefresh.left-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width;
+                _btnCancel.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewBookmark;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = nil;
+                _textField.rightViewMode = UITextFieldViewModeNever;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                
+            }break;
+            case ViewTopBarStatusFocus:
+            {
+                // TODO:设置背景
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha =
+                _btnStop.alpha =
+                _btnRefresh.alpha =
+                _btnCancel.alpha = 0;
+                
+                // 设置frame
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width;
+                _btnCancel.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = spacex;
+                rc.size.width = self.width-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewSearchOption;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = nil;
+                _textField.rightViewMode = UITextFieldViewModeNever;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+            }break;
+            case ViewTopBarStatusInput:
+            {
+                // TODO:设置背景
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha =
+                _btnStop.alpha =
+                _btnRefresh.alpha = 0;
+                
+                _btnCancel.alpha = 1;
+                
+                // 设置frame
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width-rc.size.width-spacex;
+                _btnCancel.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = spacex;
+                rc.size.width = _btnCancel.left-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewSearchOption;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = nil;
+                _textField.rightViewMode = UITextFieldViewModeNever;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                
+            }break;
+            default:
+                break;
+        }
+    }
+    else {
+        switch (_viewTopBarStatus) {
+            case ViewTopBarStatusHome:
+            {
+                // TODO:设置背景
+                self.backgroundColor = [UIColor colorWithWhite:0.15 alpha:1];
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha = 1;
+                
+                _btnStop.alpha =
+                _btnRefresh.alpha =
+                _btnCancel.alpha = 0;
+                
+                // 设置frame
+                rc = _btnGoBack.frame;
+                rc.origin.x = spacex;
+                _btnGoBack.frame = rc;
+                
+                rc = _btnGoForward.frame;
+                rc.origin.x = _btnGoBack.right+spacex;
+                _btnGoForward.frame = rc;
+                
+                rc = _btnWinds.frame;
+                rc.origin.x = self.width-rc.size.width-spacex;
+                _btnWinds.frame = rc;
+                
+                rc = _btnGoHome.frame;
+                rc.origin.x = _btnWinds.left-rc.size.width-spacex;
+                _btnGoHome.frame = rc;
+                
+                rc = _btnMenu.frame;
+                rc.origin.x = _btnGoHome.left-rc.size.width-spacex;
+                _btnMenu.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = _btnGoForward.right+spacex;
+                rc.size.width = _btnMenu.left-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width;
+                _btnCancel.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewSearchIcon;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = _btnQRCode;
+                _textField.rightViewMode = UITextFieldViewModeAlways;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                
+            }break;
+            case ViewTopBarStatusWeb:
+            {
+                // TODO:设置背景
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha = 1;
+                
+                _btnStop.alpha =
+                _btnRefresh.alpha = 1;
+                _btnCancel.alpha = 0;
+                
+                // 设置frame
+                rc = _btnGoBack.frame;
+                rc.origin.x = spacex;
+                _btnGoBack.frame = rc;
+                
+                rc = _btnGoForward.frame;
+                rc.origin.x = _btnGoBack.right+spacex;
+                _btnGoForward.frame = rc;
+                
+                rc = _btnWinds.frame;
+                rc.origin.x = self.width-rc.size.width-spacex;
+                _btnWinds.frame = rc;
+                
+                rc = _btnGoHome.frame;
+                rc.origin.x = _btnWinds.left-rc.size.width-spacex;
+                _btnGoHome.frame = rc;
+                
+                rc = _btnMenu.frame;
+                rc.origin.x = _btnGoHome.left-rc.size.width-spacex;
+                _btnMenu.frame = rc;
+                
+                rc = _btnRefresh.frame;
+                rc.origin.x = _btnMenu.left-rc.size.width-spacex;
+                _btnRefresh.frame =
+                _btnStop.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = _btnGoForward.right+spacex;
+                rc.size.width = _btnRefresh.left-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width;
+                _btnCancel.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewBookmark;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = _btnQRCode;
+                _textField.rightViewMode = UITextFieldViewModeAlways;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                
+            }break;
+            case ViewTopBarStatusFocus:
+            {
+                // TODO:设置背景
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha =
+                _btnStop.alpha =
+                _btnRefresh.alpha =
+                _btnCancel.alpha = 1;
+                
+                // 设置frame
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width;
+                _btnCancel.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = spacex;
+                rc.size.width = self.width-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewSearchOption;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = nil;
+                _textField.rightViewMode = UITextFieldViewModeNever;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+            }break;
+            case ViewTopBarStatusInput:
+            {
+                // TODO:设置背景
+                
+                
+                // 设置按钮的显示/隐藏
+                _btnGoBack.alpha =
+                _btnGoForward.alpha =
+                _btnMenu.alpha =
+                _btnGoHome.alpha =
+                _btnWinds.alpha =
+                _btnStop.alpha =
+                _btnRefresh.alpha = 0;
+                
+                _btnCancel.alpha = 1;
+                
+                // 设置frame
+                rc = _btnCancel.frame;
+                rc.origin.x = self.width-rc.size.width-spacex;
+                _btnCancel.frame = rc;
+                
+                rc = _viewInput.frame;
+                rc.origin.x = spacex;
+                rc.size.width = _btnCancel.left-rc.origin.x-spacex;
+                _viewInput.frame = rc;
+                
+                // 设置leftView, rightView
+                _textField.leftView = _leftViewSearchOption;
+                _textField.leftViewMode = UITextFieldViewModeAlways;
+                
+                _textField.rightView = nil;
+                _textField.rightViewMode = UITextFieldViewModeNever;
+                _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+                
+            }break;
+                
+            default:
+                break;
+        }
+    }
+}
+
+- (BOOL)resignFirstResponder
+{
+    return [_textField resignFirstResponder];
+}
+
+#pragma mark - IBAction
+- (IBAction)onTouchCancel
+{
+    [_delegate view:self barEvent:BarEventCancelInputUrl barItem:_btnCancel];
+}
+
+- (IBAction)onTouchBarItem:(UIView *)barItem
+{
+    if (barItem==_btnGoBack) {
+        [_delegate view:self barEvent:BarEventGoBack barItem:barItem];
+    }
+    else if (barItem==_btnGoForward) {
+        [_delegate view:self barEvent:BarEventGoForward barItem:barItem];
+    }
+    else if (barItem==_btnGoHome) {
+        [_delegate view:self barEvent:BarEventHome barItem:barItem];
+    }
+    else if (barItem==_btnMenu) {
+        [_delegate view:self barEvent:BarEventMenu barItem:barItem];
+    }
+    else if (barItem==_btnWinds) {
+        [_delegate view:self barEvent:BarEventWindows barItem:barItem];
+    }
+    else if (barItem==_btnRefresh) {
+        [_delegate view:self barEvent:BarEventRefresh barItem:barItem];
+    }
+    else if (barItem==_btnStop) {
+        [_delegate view:self barEvent:BarEventStop barItem:barItem];
+    }
+    else if (barItem==_btnQRCode) {
+        [_delegate view:self barEvent:BarEventQRCode barItem:barItem];
+    }
+    else if (barItem==_btnBookmark) {
+        [_delegate view:self barEvent:BarEventBookmark barItem:barItem];
+    }
+    else if (barItem==_btnSearchOption) {
+        [_delegate view:self barEvent:BarEventSearchOption barItem:barItem];
+    }
+}
+
+#pragma mark - UITextFieldDelegate
+- (void)textFieldDidBeginEditing:(UITextField *)textField
+{
+    [_delegate view:self barEvent:BarEventDidBeginInputUrl barItem:textField];
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField
+{
+    
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    [_delegate view:self barEvent:BarEventDidEndInputUrl barItem:textField];
+    [textField resignFirstResponder];
+    
+    return YES;
+}
+
+#pragma mark - public methods
+- (void)setSearchOption:(NSDictionary *)dicSearchOption
+{
+//    NSPropertyListSerialization
+    _btnSearchOption.backgroundColor = [UIColor randomColor];
+}
+
+#pragma mark - AppLanguageProtocl
+- (void)updateByLanguage
+{
+    _textField.placeholder = LocalizedString(@"shuruwangzhihuosaomiaoerweima");
+    [_btnCancel setTitle:LocalizedString(@"quxiao") forState:UIControlStateNormal];
+    [_btnCancel setTitle:LocalizedString(@"quxiao") forState:UIControlStateSelected];
+    [_btnCancel setTitle:LocalizedString(@"quxiao") forState:UIControlStateDisabled];
+}
+
+@end

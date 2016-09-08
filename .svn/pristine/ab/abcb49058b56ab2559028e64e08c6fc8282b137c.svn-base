@@ -1,0 +1,68 @@
+//
+//  ModelUser.m
+//  ChinaBrowser
+//
+//  Created by David on 13-10-18.
+//  Copyright (c) 2013年 VeryApps. All rights reserved.
+//
+
+#import "ModelUser.h"
+
+@implementation ModelUser
+
+#pragma mark - property
+- (void)setUsername:(NSString *)username
+{
+    _username = [username isKindOfClass:[NSString class]]?username:nil;
+}
+
+- (void)setNickname:(NSString *)nickname
+{
+    _nickname = [nickname isKindOfClass:[NSString class]]?nickname:nil;
+}
+
+- (void)setEmail:(NSString *)email
+{
+    _email = [email isKindOfClass:[NSString class]]?email:nil;
+}
+
+- (void)setAvatar:(NSString *)avatar
+{
+    _avatar = [avatar isKindOfClass:[NSString class]]?avatar:nil;
+}
+
+- (void)setPwd:(NSString *)pwd
+{
+    _pwd = [pwd isKindOfClass:[NSString class]]?pwd:nil;
+}
+
+#pragma mark - instance
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    self = [super initWithDict:dict];
+    if (self) {
+        self.uid = [dict[@"id"] integerValue];
+        self.username = dict[@"username"];
+        self.nickname = dict[@"nickname"];
+        self.email = dict[@"email"];
+        self.avatar = dict[@"avatar"];
+        self.gender = [dict[@"gender"] integerValue];
+        self.autoCreate = [dict[@"auto_create"] boolValue];
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self) {
+        NSRange rangeGender = NSMakeRange(1, 3);
+        if (!NSLocationInRange(_gender, rangeGender)) {
+            // 如果不在已知的性别范围类，默认指定为 3：保密
+            _gender = 3;
+        }
+    }
+    return self;
+}
+
+@end

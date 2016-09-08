@@ -1,0 +1,36 @@
+//
+//  ADOMode.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/22.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@class ModelMode;
+
+@interface ADOMode : NSObject
+
++ (BOOL)isExistWithName:(NSString *)name sysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId;
++ (BOOL)isExistWithPkidServer:(NSInteger)pkidServer;
+
++ (NSInteger)addModel:(ModelMode *)model;
+
++ (BOOL)updateName:(NSString *)name withPkid:(NSInteger)pkid;
++ (BOOL)updateName:(NSString *)name withPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId;
+
++ (ModelMode *)queryWithPkid:(NSInteger)pkid;
++ (ModelMode *)queryWithPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId;
++ (ModelMode *)queryWithPkidServer:(NSInteger)pkidServer;
++ (NSArray *)queryWithUserId:(NSInteger)userId;
++ (NSArray *)queryWithSysRecommend:(BOOL)sysRecommend;
+
++ (BOOL)deleteWithPkid:(NSInteger)pkid;
++ (BOOL)deleteWithPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId;
++ (BOOL)deleteWithUserId:(NSInteger)userId;
++ (BOOL)deleteWithSysRecommend:(BOOL)sysRecommend userId:(NSInteger)userId;
++ (BOOL)clear;
++ (BOOL)clearWithUserId:(NSInteger)userId;
+
+@end

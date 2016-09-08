@@ -1,0 +1,616 @@
+//
+//  UIControllerTrans.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-10.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerTrans.h"
+
+#import "UIViewTransHeader.h"
+#import "UICellTrans.h"
+
+#import "UIViewNav.h"
+
+#import <AVFoundation/AVFoundation.h>
+
+#define kTransLanSrc @"kTransLanSrc"
+#define kTransLanDes @"kTransLanDes"
+
+@interface UIControllerTrans () <UITableViewDataSource, UITableViewDelegate, UIPickerViewDataSource, UIPickerViewDelegate>
+{
+    UIViewNav *_viewNav;
+    
+    __weak IBOutlet UIView *_viewSwipe;
+    __weak IBOutlet UIImageView *_imageViewIcon;
+    __weak IBOutlet UILabel *_labelCate;
+    __weak IBOutlet UIButton *_btnSource;
+    __weak IBOutlet UIButton *_btnSwipe;
+    __weak IBOutlet UIButton *_btnDest;
+    
+    IBOutlet UITableView *_tableView;
+    
+    IBOutlet UIControl *_viewPickerBg;
+    IBOutlet UIPickerView *_pickerView;
+    IBOutlet UIView *_viewPickerTop;
+    IBOutlet UILabel *_labelPickerTitle;
+    IBOutlet UIButton *_btnClosePicker;
+   
+    NSArray *_arrSubCate;
+    NSArray *_arrViewHeader;
+    
+    NSString *_lanSrc;
+    NSString *_lanDes;
+    /**
+     *  源语言
+     */
+    NSMutableArray *_arrArrSentenceSrc;
+    /**
+     *  目标语言
+     */
+    NSMutableArray *_arrArrSentenceDes;
+    
+    NSArray *_arrLan;
+    
+    AVPlayer *_player;
+}
+
+@end
+
+@implementation UIControllerTrans
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    _lanSrc = [ud objectForKey:kTransLanSrc];
+    _lanDes = [ud objectForKey:kTransLanDes];
+    if (!_lanSrc || !_lanDes) {
+        _lanSrc = @"zh-Hans";
+        _lanDes = @"tr";
+        
+        [ud setObject:_lanSrc forKey:kTransLanSrc];
+        [ud setObject:_lanDes forKey:kTransLanDes];
+        
+        [ud synchronize];
+    }
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    
+    _imageViewIcon.image = [UIImage imageWithBundleFile:[NSString stringWithFormat:@"trans/iPhone/%@.png", _modelCate.name]];
+    _labelCate.text = LocalizedString(_modelCate.name);
+    _viewSwipe.backgroundColor = [UIColor whiteColor];
+    _tableView.backgroundColor = [UIColor whiteColor];
+    
+    [_btnSource setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_l_0.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateNormal];
+    [_btnSource setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_l_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateHighlighted];
+    [_btnSource setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_l_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateSelected];
+    [_btnDest setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_r_0.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateNormal];
+    [_btnDest setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_r_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateHighlighted];
+    [_btnDest setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_r_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateSelected];
+    [_btnSwipe setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_m_0.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateNormal];
+    [_btnSwipe setBackgroundImage:[[UIImage imageWithBundleFile:@"trans/seg_m_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateHighlighted];
+    [_btnSwipe setImage:[UIImage imageWithBundleFile:@"trans/swipe.png"] forState:UIControlStateNormal];
+    
+    _arrSubCate = [ADOSentenceCate queryWithPcid:_modelCate.cid];
+    
+    _arrArrSentenceSrc = [NSMutableArray arrayWithCapacity:_arrSubCate.count];
+    _arrArrSentenceDes = [NSMutableArray arrayWithCapacity:_arrSubCate.count];
+    
+    // 得到当前支持的翻译语种列表
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"self.enable = true"];
+    _arrLan = [[NSArray arrayWithContentsOfFile:[[NSBundle mainBundle]
+                                                 pathForResource:@"lan_trans"
+                                                 ofType:@"plist"]]
+               filteredArrayUsingPredicate:predicate];
+    
+    NSMutableArray *arrViewHeader = [NSMutableArray arrayWithCapacity:_arrSubCate.count];
+    for (NSInteger i=0; i<_arrSubCate.count; i++) {
+        [_arrArrSentenceSrc addObject:[NSMutableArray array]];
+        [_arrArrSentenceDes addObject:[NSMutableArray array]];
+        
+        ModelSentenceCate *modelCate = _arrSubCate[i];
+        UIViewTransHeader *viewHeader = [UIViewTransHeader viewFromXib];
+        viewHeader.tag = i;
+        [viewHeader addTarget:self action:@selector(onTouchCateHeader:) forControlEvents:UIControlEventTouchUpInside];
+        viewHeader.labelTitle.text = LocalizedString(modelCate.name);
+        viewHeader.colorNormal = [UIColor colorWithHexString:@"f9f9f9"];
+        viewHeader.colorTouch = [UIColor colorWithWhite:0.86 alpha:1];
+        [arrViewHeader addObject:viewHeader];
+    }
+    _arrViewHeader = arrViewHeader;
+    [_btnClosePicker setImage:[UIImage imageWithBundleFile:@"trans/close.png"] forState:UIControlStateNormal];
+    
+    [self changeTransLan];
+    
+    if (_arrSubCate.count==1) {
+        UIViewTransHeader *viewHeader = _arrViewHeader[0];
+        [viewHeader sendActionsForControlEvents:UIControlEventTouchUpInside];
+        viewHeader.enabled = NO;
+    }
+    else {
+        UIViewTransHeader *viewHeader = _arrViewHeader[0];
+        [viewHeader sendActionsForControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    [_viewPickerBg removeFromSuperview];
+    
+    [self layoutSubViewsWithInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [_tableView reloadData];
+    });
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    [_tableView reloadData];
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_arrArrSentenceSrc enumerateObjectsUsingBlock:^(NSMutableArray *arrSentence, NSUInteger idx, BOOL *stop) {
+        [arrSentence enumerateObjectsUsingBlock:^(ModelSentence *model, NSUInteger idx, BOOL *stop) {
+            model.dicUserInfo = nil;
+        }];
+    }];
+    [_arrArrSentenceDes enumerateObjectsUsingBlock:^(NSMutableArray *arrSentence, NSUInteger idx, BOOL *stop) {
+        [arrSentence enumerateObjectsUsingBlock:^(ModelSentence *model, NSUInteger idx, BOOL *stop) {
+            model.dicUserInfo = nil;
+        }];
+    }];
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _viewSwipe.frame;
+    rc.origin.y = _viewNav.bottom;
+    _viewSwipe.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.y = _viewSwipe.bottom;
+    rc.size.height = self.view.bounds.size.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+- (void)onTouchBack
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }
+    else {
+        [self dismissModalViewControllerAnimated:YES];
+    }
+}
+
+- (IBAction)onTouchSource:(UIButton *)sender
+{
+    if (_btnDest.selected) {
+        _btnDest.selected = NO;
+    }
+    _btnSource.selected = !_btnSource.selected;
+    [self showPickerView:_btnSource.selected];
+}
+
+- (IBAction)onTouchDest:(UIButton *)sender
+{
+    if (_btnSource.selected) {
+        _btnSource.selected = NO;
+    }
+    _btnDest.selected = !_btnDest.selected;
+    [self showPickerView:_btnDest.selected];
+}
+
+- (IBAction)onTouchSwipe:(UIButton *)sender
+{
+    [_player pause];
+    
+    NSString *lanSrc = _lanSrc;
+    _lanSrc = _lanDes;
+    _lanDes = lanSrc;
+    
+    [self changeTransLan];
+}
+
+- (IBAction)onTouchHide:(UIControl *)sender
+{
+    [self showPickerView:NO];
+}
+
+- (IBAction)onTouchClosePicker:(UIButton *)sender
+{
+    [self showPickerView:NO];
+}
+
+- (void)showPickerView:(BOOL)show
+{
+    _viewSwipe.userInteractionEnabled = !show;
+    if (show) {
+        _viewPickerBg.frame = CGRectMake(0, _viewSwipe.bottom, self.view.width, self.view.height-_viewSwipe.bottom);
+        [self.view addSubview:_viewPickerBg];
+        _pickerView.transform = CGAffineTransformMakeTranslation(0, -_pickerView.bounds.size.height);
+        _viewPickerBg.alpha = 0;
+        [UIView animateWithDuration:0.3
+                         animations:^{
+//                             _tableView.alpha = 0;
+                             _viewPickerBg.alpha = 1;
+                             _pickerView.transform = CGAffineTransformIdentity;
+                             // 判断应该选中的 语言
+                             NSString *lan = _lanSrc;
+                             _labelPickerTitle.text = LocalizedString(@"yuanyuyan");
+                             if (_btnDest.selected) {
+                                 lan = _lanDes;
+                                 _labelPickerTitle.text = LocalizedString(@"mubiaoyuyan");
+                             }
+                             NSInteger row = 0;
+                             // 计算 选中 语言的行号
+                             for (NSInteger i=0; i<_arrLan.count; i++) {
+                                 if ([lan isEqualToString:_arrLan[i][@"lan"]]) {
+                                     row = i;
+                                     break;
+                                 }
+                             }
+                             [_pickerView selectRow:row inComponent:0 animated:YES];
+                             
+                         } completion:^(BOOL finished) {
+//                             [_tableView removeFromSuperview];
+                         }];
+    }
+    else {
+        
+        _tableView.frame = CGRectMake(0, _viewSwipe.bottom, self.view.width, self.view.height-_viewSwipe.bottom);
+//        [self.view addSubview:_tableView];
+        [UIView animateWithDuration:0.3
+                         animations:^{
+//                             _tableView.alpha = 1;
+                             _viewPickerBg.alpha = 0;
+                             _pickerView.transform = CGAffineTransformMakeTranslation(0, -_pickerView.bounds.size.height);
+                         } completion:^(BOOL finished) {
+                             _btnDest.selected = NO;
+                             _btnSource.selected = NO;
+                             
+                             _pickerView.transform = CGAffineTransformIdentity;
+                             [_viewPickerBg removeFromSuperview];
+                         }];
+    }
+}
+
+- (void)changeTransLan
+{
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    [ud setObject:_lanSrc forKey:kTransLanSrc];
+    [ud setObject:_lanDes forKey:kTransLanDes];
+    [ud synchronize];
+    
+    __block NSString
+    *srcLan,
+    *desLan;
+    [_arrLan enumerateObjectsUsingBlock:^(NSDictionary *dicLan, NSUInteger idx, BOOL *stop) {
+        if ([_lanDes isEqualToString:dicLan[@"lan"]]) {
+            desLan = [dicLan[@"name"] componentsSeparatedByString:@" "][0];
+        }
+        if ([_lanSrc isEqualToString:dicLan[@"lan"]]) {
+            srcLan = [dicLan[@"name"] componentsSeparatedByString:@" "][0];
+        }
+    }];
+    
+    [_btnSource setTitle:srcLan forState:UIControlStateNormal];
+    [_btnSource setTitle:srcLan forState:UIControlStateSelected];
+    [_btnDest setTitle:desLan forState:UIControlStateNormal];
+    [_btnDest setTitle:desLan forState:UIControlStateSelected];
+    
+    for (NSInteger i=0; i<_arrSubCate.count; i++) {
+        ModelSentenceCate *modelCate = _arrSubCate[i];
+        NSMutableArray *arrSentenceSrc = _arrArrSentenceSrc[i];
+        NSMutableArray *arrSentenceDes = _arrArrSentenceDes[i];
+        [arrSentenceSrc removeAllObjects];
+        [arrSentenceDes removeAllObjects];
+        [arrSentenceSrc addObjectsFromArray:[ADOSentence queryWithCid:modelCate.cid lan:_lanSrc]];
+        [arrSentenceDes addObjectsFromArray:[ADOSentence queryWithCid:modelCate.cid lan:_lanDes]];
+    }
+    
+    [_tableView reloadData];
+}
+
+#pragma mark - AppLanguageProtocol
+- (void)updateByLanguage
+{
+    
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    if (tableView==_tableView) {
+        return _arrSubCate.count;
+    }
+    else {
+        return 1;
+    }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if (tableView==_tableView) {
+        NSMutableArray *arrSentence = _arrArrSentenceSrc[section];
+        UIViewTransHeader *viewTransHeader = _arrViewHeader[section];
+        return viewTransHeader.selected?arrSentence.count:0;
+    }
+    else {
+        return 0;
+    }
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (tableView==_tableView) {
+        UICellTrans *cell = (UICellTrans *)[tableView dequeueReusableCellWithIdentifier:@"UICellTrans"];
+        if (!cell) {
+            cell = [UICellTrans viewFromXib];
+        }
+        ModelSentence *modelSentenceSrc = _arrArrSentenceSrc[indexPath.section][indexPath.row];
+        ModelSentence *modelSentenceDes = _arrArrSentenceDes[indexPath.section][indexPath.row];
+        cell.labelSour.text = modelSentenceSrc.sentence;
+        cell.labelDest.text = modelSentenceDes.sentence;
+        cell.btnPlaySound.tag = indexPath.section*10000+indexPath.row;
+        
+        if ([cell.btnPlaySound actionsForTarget:self forControlEvent:UIControlEventTouchUpInside].count==0) {
+            [cell.btnPlaySound addTarget:self action:@selector(onTouchPlaySound:) forControlEvents:UIControlEventTouchUpInside];
+        }
+        
+        NSString *lanDes = _lanDes;
+        if ([lanDes hasPrefix:@"zh-"]) {
+            lanDes = @"zh";
+        }
+        NSString *soundFolder = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:[NSString stringWithFormat:@"sound/%@", lanDes]];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:soundFolder]) {
+            cell.btnPlaySound.hidden = NO;
+        }
+        else {
+            cell.btnPlaySound.hidden = YES;
+        }
+        return cell;
+    }
+    else {
+        return nil;
+    }
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    if (tableView==_tableView) {
+        return _arrViewHeader[section];
+    }
+    else {
+        return nil;
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    if (tableView==_tableView) {
+        return _arrViewHeader.count>1?44.0f:0.0f;
+    }
+    else {
+        return 0;
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (tableView==_tableView) {
+        ModelSentence *modelSentenceSrc = _arrArrSentenceSrc[indexPath.section][indexPath.row];
+        ModelSentence *modelSentenceDes = _arrArrSentenceDes[indexPath.section][indexPath.row];
+        
+        CGFloat paddingL = 10, paddingR = 40, rowHeight = 0;
+        
+        if (!modelSentenceSrc.dicUserInfo) {
+            UIFont *font = [UIFont systemFontOfSize:15];
+            CGSize size = [modelSentenceSrc.sentence sizeWithFont:font
+                                                constrainedToSize:CGSizeMake(tableView.bounds.size.width-paddingL-paddingR, MAXFLOAT)
+                                                    lineBreakMode:NSLineBreakByCharWrapping];
+            modelSentenceSrc.dicUserInfo = @{@"height":@(size.height)};
+            rowHeight+=size.height;
+        }
+        else {
+            rowHeight += [modelSentenceSrc.dicUserInfo[@"height"] floatValue];
+        }
+        
+        if (!modelSentenceDes.dicUserInfo) {
+            UIFont *font = [UIFont systemFontOfSize:13];
+            CGSize size = [modelSentenceDes.sentence sizeWithFont:font
+                                                constrainedToSize:CGSizeMake(tableView.bounds.size.width-paddingL-paddingR, MAXFLOAT)
+                                                    lineBreakMode:NSLineBreakByCharWrapping];
+            modelSentenceDes.dicUserInfo = @{@"height":@(size.height)};
+            rowHeight+=size.height;
+        }
+        else {
+            rowHeight += [modelSentenceDes.dicUserInfo[@"height"] floatValue];
+        }
+        rowHeight += 5+5+5;
+        
+        return rowHeight;
+    }
+    else {
+        return 0;
+    }
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    cell.backgroundColor = [UIColor whiteColor];
+    
+    if (tableView==_tableView) {
+        ModelSentence *modelSentenceSrc = _arrArrSentenceSrc[indexPath.section][indexPath.row];
+        ModelSentence *modelSentenceDes = _arrArrSentenceDes[indexPath.section][indexPath.row];
+        
+        UICellTrans *cellTrans = (UICellTrans *)cell;
+        
+        CGFloat hSrc = [modelSentenceSrc.dicUserInfo[@"height"] floatValue];
+        CGFloat hDes = [modelSentenceDes.dicUserInfo[@"height"] floatValue];
+        CGRect rc = cellTrans.labelSour.frame;
+        rc.size.width = tableView.bounds.size.width-50;
+        rc.origin.y = 5;
+        rc.size.height = hSrc;
+        cellTrans.labelSour.frame = rc;
+        
+        rc = cellTrans.labelDest.frame;
+        rc.size.width = tableView.bounds.size.width-50;
+        rc.origin.y = cellTrans.labelSour.frame.origin.y+cellTrans.labelSour.frame.size.height+5;
+        rc.size.height = hDes;
+        cellTrans.labelDest.frame = rc;
+    }
+    else {
+        
+    }
+}
+
+#pragma mark - UIPickerViewDataSource, UIPickerViewDelegate
+- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
+{
+    return 1;
+}
+
+- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
+{
+    if (_viewPickerBg.superview) {
+        return _arrLan.count;
+    }
+    else {
+        return 0;
+    }
+}
+
+- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
+{
+    return _arrLan[row][@"name"];
+}
+
+/*
+- (UIView *)pickerView:(UIPickerView *)pickerView viewForRow:(NSInteger)row forComponent:(NSInteger)component reusingView:(UIView *)view
+{
+    NSString *lanName = LocalizedString(_arrLan[row][@"lan"]);
+    UILabel *label = (UILabel *)view;
+    if (!label) {
+        label = [[UILabel alloc] init];
+        label.font = [UIFont systemFontOfSize:16];
+        label.backgroundColor = [UIColor clearColor];
+        label.textColor = [UIColor darkGrayColor];
+        label.textAlignment = UITextAlignmentCenter;
+    }
+    label.text = lanName;
+    return label;
+}
+ */
+
+- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
+{
+    if (_btnSource.selected) {
+        NSString *lan = _arrLan[row][@"lan"];
+        if ([lan isEqualToString:_lanDes]) {
+            _lanDes = _lanSrc;
+        }
+        _lanSrc = lan;
+    }
+    else if (_btnDest.selected) {
+        NSString *lan = _arrLan[row][@"lan"];
+        if ([lan isEqualToString:_lanSrc]) {
+            _lanSrc = _lanDes;
+        }
+        _lanDes = lan;
+    }
+    
+    // 消失的时候切换重新加载数据
+    [self changeTransLan];
+
+    // 选择完语言后消失
+//    [self showPickerView:NO];
+}
+
+- (void)onTouchCateHeader:(UIViewTransHeader *)viewCateHeader
+{
+    viewCateHeader.selected = !viewCateHeader.selected;
+    
+    if (viewCateHeader.selected) {
+        [_tableView reloadSections:[NSIndexSet indexSetWithIndex:viewCateHeader.tag] withRowAnimation:_arrSubCate.count==1?UITableViewRowAnimationNone:UITableViewRowAnimationFade];
+        
+        NSArray *arrIndexPath = [_tableView indexPathsForVisibleRows];
+        [arrIndexPath enumerateObjectsUsingBlock:^(NSIndexPath *indexPath, NSUInteger idx, BOOL *stop) {
+            UICellTrans *cell = (UICellTrans *)[_tableView cellForRowAtIndexPath:indexPath];
+            
+            ModelSentence *modelSentenceSrc = _arrArrSentenceSrc[indexPath.section][indexPath.row];
+            ModelSentence *modelSentenceDes = _arrArrSentenceDes[indexPath.section][indexPath.row];
+            
+            CGFloat hSrc = [modelSentenceSrc.dicUserInfo[@"height"] floatValue];
+            CGFloat hDes = [modelSentenceDes.dicUserInfo[@"height"] floatValue];
+            CGRect rc = cell.labelSour.frame;
+            rc.origin.y = 5;
+            rc.size.width = _tableView.bounds.size.width-50;
+            rc.size.height = hSrc;
+            cell.labelSour.frame = rc;
+            
+            rc = cell.labelDest.frame;
+            rc.size.width = _tableView.bounds.size.width-50;
+            rc.origin.y = cell.labelSour.frame.origin.y+cell.labelSour.frame.size.height+5;
+            rc.size.height = hDes;
+            cell.labelDest.frame = rc;
+        }];
+    }
+    else {
+        [_tableView reloadSections:[NSIndexSet indexSetWithIndex:viewCateHeader.tag] withRowAnimation:UITableViewRowAnimationFade];
+    }
+}
+
+- (void)onTouchPlaySound:(UIButton *)btn
+{
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:btn.tag%10000 inSection:btn.tag/10000];
+    [_tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
+    ModelSentence *modelSentenceDes = _arrArrSentenceDes[indexPath.section][indexPath.row];
+    NSString *lanDes = _lanDes;
+    if ([lanDes hasPrefix:@"zh-"]) {
+        lanDes = @"zh";
+    }
+    
+    NSString *soundFolder = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:[NSString stringWithFormat:@"sound/%@", lanDes]];
+    NSString *soundPath = [soundFolder stringByAppendingPathComponent:[NSString stringWithFormat:@"%@_%d.mp3", lanDes, modelSentenceDes.no]];
+    
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [session setActive:YES error:nil];
+    
+    if (!_player) {
+        _player = [[AVPlayer alloc] init];
+    }
+    [_player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:[NSURL fileURLWithPath:soundPath]]];
+    [_player play];
+}
+
+@end
+

@@ -1,0 +1,20 @@
+//
+//  ModelAppCate.h
+//  ChinaBrowser
+//
+//  Created by David on 14/10/29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelBase.h"
+
+/**
+ *  应用分类
+ */
+@interface ModelAppCate : ModelBase
+
+@property (nonatomic, assign) NSInteger catId;
+@property (nonatomic, strong) NSString *name;
+@property (nonatomic, strong) NSString *icon;
+
+@end

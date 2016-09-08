@@ -1,0 +1,25 @@
+//
+//  UIViewReminderEdit.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UIViewReminderEdit : UIView
+
+@property (nonatomic, assign) ProgramActionType actionType;
+
+@property (nonatomic, strong) void (^callbackSelectRepeatMode)(RemindRepeatMode);
+@property (nonatomic, strong) void (^callbackSelectTime)(NSInteger);
+@property (nonatomic, strong) void (^callbackChangeModeName)(NSString *);
+
+- (void)setTime:(NSInteger)time;
+- (void)setRepeatMode:(RemindRepeatMode)repeatMode;
+- (void)setCanSelectTime:(BOOL)canSelectTime;
+
++ (instancetype)viewFromXib;
+
+@end

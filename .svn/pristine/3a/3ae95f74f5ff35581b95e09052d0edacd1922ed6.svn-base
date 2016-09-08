@@ -1,0 +1,110 @@
+//
+//  UIControllerImageAssets.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/12/6.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerImageAssets.h"
+
+#import <AssetsLibrary/AssetsLibrary.h>
+
+#define kBtnWH 70
+#define kspacing 8
+
+@interface UIControllerImageAssets ()
+{
+    NSInteger _count;
+}
+@end
+
+@implementation UIControllerImageAssets
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.title = LocalizedString(@"xiangce");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    //导航栏设置
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnback) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+    
+    [self getImageAssetsForGroup];
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _scrollView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _scrollView.frame = rc;
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/**
+ *  获得相册里的图片.
+ */
+-(void)getImageAssetsForGroup
+{
+    ALAssetsLibrary * assetsLibrary = [[ALAssetsLibrary alloc] init];
+    [assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupAll
+                                 usingBlock:^(ALAssetsGroup *group, BOOL *stop){
+                                     if (group)
+                                     {
+
+                                         if ([[group valueForProperty:ALAssetsGroupPropertyPersistentID] isEqualToString:self.dicGroup[@"GroupID"]])
+                                         {
+                                             [group enumerateAssetsWithOptions:NSEnumerationConcurrent usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+                                                 if ([result valueForProperty:ALAssetPropertyType]==ALAssetTypePhoto) {
+                                                     UIButton * btn = [UIButton buttonWithType:UIButtonTypeCustom];
+                                                     btn.frame = CGRectMake((_count%4+1)*kspacing+_count%4*kBtnWH, (_count/4+1)*kspacing+_count/4*kBtnWH, kBtnWH, kBtnWH);
+                                                     btn.backgroundColor = [UIColor orangeColor];
+                                                     [btn setImage:[UIImage imageWithCGImage:result.thumbnail] forState:UIControlStateNormal];
+                                                     
+                                                     [_scrollView addSubview:btn];
+                                                     _scrollView.contentSize = CGSizeMake(self.view.width, btn.bottom+20);
+                                                     _count++;
+                                                     NSLog(@"%d++++++",_count);
+                                                 }
+                                            }];
+                                             
+                                         }
+                                     }
+                                     
+                                 }
+                               failureBlock:nil];
+}
+
+
+
+@end

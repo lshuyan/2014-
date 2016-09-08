@@ -1,0 +1,68 @@
+//
+//  ModelApp.h
+//  ChinaBrowser
+//
+//  Created by David on 14/10/29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelBase.h"
+
+/**
+ *  应用类型
+ */
+typedef NS_ENUM(NSInteger, AppType) {
+    /**
+     *  网页应用
+     */
+    AppTypeWeb      = 1,
+    /**
+     *  本地原生App
+     */
+    AppTypeNative   = 2,
+    /**
+     *  浏览器内置功能
+     */
+    AppTypeFunc     = 3
+};
+
+@interface ModelApp : ModelBase
+
+/**
+ *  本地数据库primary key id
+ */
+@property (nonatomic, assign) NSInteger pkid;
+/**
+ *  App分类Id
+ */
+@property (nonatomic, assign) NSInteger appCateId;
+/**
+ *  App类型
+ */
+@property (nonatomic, assign) AppType appType;
+/**
+ *  图标
+ */
+@property (nonatomic, strong) NSString *icon;
+/**
+ *  名称
+ */
+@property (nonatomic, strong) NSString *name;
+/**
+ *  网页链接地址/浏览器内置功能模块的地址
+ */
+@property (nonatomic, strong) NSString *link;
+/**
+ *  iOS 原生App 的URL Schemes
+ */
+@property (nonatomic, strong) NSString *urlSchemes;
+/**
+ *  App 下载链接地址
+ */
+@property (nonatomic, strong) NSString *downloadLink;
+/**
+ *  排序编号
+ */
+@property (nonatomic, assign) NSInteger orderIndex;
+
+@end

@@ -1,0 +1,43 @@
+//
+//  UICellItemList.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/11.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UICellItemList.h"
+#import "UIViewAppItem.h"
+
+@interface UICellItemList ()
+@property (strong, nonatomic) IBOutlet UIViewAppItem *leftAppItem;
+@property (strong, nonatomic) IBOutlet UIViewAppItem *rightAppItem;
+
+@end
+
+@implementation UICellItemList
+
+- (void)awakeFromNib {
+    // Initialization code
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+- (void)layoutSubviews
+{
+    _leftAppItem.hidden = YES;
+    _rightAppItem.hidden = YES;
+    
+}
+#pragma mark - Setter Method
+- (void)setArrAppItem:(NSArray *)arrAppItem
+{
+    if (_arrAppItem != arrAppItem) {
+        _arrAppItem = arrAppItem;
+        [self setNeedsLayout];
+    }
+}
+@end

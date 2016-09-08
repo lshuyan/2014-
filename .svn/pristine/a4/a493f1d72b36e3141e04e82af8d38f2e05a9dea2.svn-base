@@ -1,0 +1,39 @@
+//
+//  config.h
+//
+//  Created by David on 13-2-19.
+//  Copyright (c) 2013年 KOTO Inc. All rights reserved.
+//
+
+#ifndef multi_func_config_h
+#define multi_func_config_h
+
+#define _DEBUG 0
+
+
+// 百度统计 中华浏览器
+#define BaiduMobAppKey @"0d0167cbc4"
+
+//------ ShareSDK 相关
+// David
+//#define SSK_AppId_ShareSDK @"19681956c3a5"
+// 国广
+#define SSK_AppId_ShareSDK @"405867c8219e"
+
+/*
+#define SSK_AppKey_SinaWeibo @"3589864257"
+#define SSK_Secret_SinaWeibo @"db818047db26a064512a363d669ad129"
+#define SSK_Redirect_SinaWeibo @""
+
+#define SSK_AppKey_TencentWeibo @"801491108"
+#define SSK_Secret_TencentWeibo @"c0ee1785e9563b67faa62d035e294775"
+#define SSK_Redirect_TencentWeibo @""
+
+#define SSK_AppKey_QZone @"101051019"
+#define SSK_Secret_QZone @"33c9e522138ee0d5066e00a4b0e0148a"
+
+#define SSK_AppId_WeiXin @"wxdaf29011b4adb4cf"
+#define SSK_AppKey_WeiXin @"d7a7e8337b0e002f37f384bd2b8b719d"
+ */
+
+#endif

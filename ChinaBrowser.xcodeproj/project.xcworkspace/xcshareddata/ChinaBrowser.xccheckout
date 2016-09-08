@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>93564A00-1182-44CA-B7FA-E6CA42E8AB0A</string>
+	<key>IDESourceControlProjectName</key>
+	<string>ChinaBrowser</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>52e9a43a-d116-1b41-a392-8db912eea806++2994</key>
+		<string>svn://182.92.152.7/zhie/ios/%25E4%25B8%25AD%25E5%258D%258E%25E4%25BA%258C%25E6%259C%259F/%25E4%25BB%25A3%25E7%25A0%2581/ChinaBrowser</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>ChinaBrowser.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>52e9a43a-d116-1b41-a392-8db912eea806++2994</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectRepositoryRootDictionary</key>
+	<dict>
+		<key>52e9a43a-d116-1b41-a392-8db912eea806++2994</key>
+		<string>svn://182.92.152.7/zhie/ios</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>svn://182.92.152.7/zhie/ios/%25E4%25B8%25AD%25E5%258D%258E%25E4%25BA%258C%25E6%259C%259F/%25E4%25BB%25A3%25E7%25A0%2581/ChinaBrowser/ChinaBrowser.xcodeproj</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>52e9a43a-d116-1b41-a392-8db912eea806++2994</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.subversion</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>52e9a43a-d116-1b41-a392-8db912eea806++2994</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ChinaBrowser3</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>zh-Hans</key>
+	<array>
+		<integer>2</integer>
+		<integer>1</integer>
+		<integer>10</integer>
+		<integer>11</integer>
+	</array>
+	<key>zh-Hant</key>
+	<array>
+		<integer>2</integer>
+		<integer>1</integer>
+		<integer>11</integer>
+		<string>12</string>
+		<string>13</string>
+	</array>
+	<key>en</key>
+	<array>
+		<integer>10</integer>
+		<integer>11</integer>
+	</array>
+	<key>tr</key>
+	<array>
+		<integer>10</integer>
+		<integer>11</integer>
+	</array>
+</dict>
+</plist>

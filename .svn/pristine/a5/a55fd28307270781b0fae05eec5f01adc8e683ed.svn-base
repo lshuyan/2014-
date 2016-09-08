@@ -1,0 +1,18 @@
+//
+//  UIViewPopShareOption.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewPopShareOption.h"
+
+@implementation UIViewPopShareOption
+
+- (void)showInView:(UIView *)view completion:(void (^)())completion
+{
+    
+}
+
+@end

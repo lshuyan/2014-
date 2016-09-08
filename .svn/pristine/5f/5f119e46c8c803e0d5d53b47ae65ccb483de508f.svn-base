@@ -1,0 +1,337 @@
+//
+//  UIControllerSetSkin.m
+//  ChinaBrowser
+//
+//  Created by David on 14-3-14.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerSetSkin.h"
+#import "UIControllerScreenshot.h"
+#import "UIControllerImageGroup.h"
+#import "UIControllerImageAssets.h"
+
+#import "BlockUI.h"
+
+#import <AGCommon/UIImage+Common.h>
+
+#import "UIScrollViewSetSkin.h"
+#import "UIViewNav.h"
+
+#import "UIImage+BlurredFrame.h"
+#import "UIImage+ImageEffects.h"
+#import "UIImage+Resize.h"
+#import "KTAnimationKit.h"
+
+#import <AssetsLibrary/AssetsLibrary.h>
+
+@interface UIControllerSetSkin () <UIScrollViewSetSkinDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate,UIControllerScreenshotDelegate, UIControllerImageAssetsDelegate>
+{
+    IBOutlet UIImageView *_imageViewBg;
+    UIViewNav *_viewNav;
+    IBOutlet UIScrollViewSetSkin *_scrollView;
+    
+    UIImagePickerController *_pickerController;
+
+    NSInteger _fileIndex;
+    BOOL _isInternal;
+}
+
+- (void)onTouchBack;
+
+@end
+
+@implementation UIControllerSetSkin
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    UIButton *btnR = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnR addTarget:self action:@selector(onTouchGroup) forControlEvents:UIControlEventTouchUpInside];
+    [btnR setTitle:@"相册" forState:UIControlStateNormal];
+//    [btnR setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+//    [btnR setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnR sizeToFit];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnR];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+
+    _imageViewBg.image = [AppSetting shareAppSetting].skinImage;
+
+    _scrollView.delegateSetSkin = self;
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _scrollView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _scrollView.frame = rc;
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+- (void)onTouchBack
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self dismissModalViewControllerAnimated:YES];
+    }
+}
+
+- (void)onTouchGroup
+{
+    UIControllerImageGroup *controller = [[UIControllerImageGroup alloc]initWithNibName:@"UIControllerImageGroup" bundle:nil];
+    controller.controller = self;
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+#pragma mark - UIScrollViewSetSkinDelegate
+- (void)scrollViewSetSkin:(UIScrollViewSetSkin *)scrollViewSetSkin selectSkinFileIndex:(NSInteger)fileIndex isInternal:(BOOL)isInternal
+{
+    _fileIndex = fileIndex;
+    _isInternal = isInternal;
+    
+    _imageViewBg.image = [AppSetting shareAppSetting].skinImage;
+    [KTAnimationKit animationEaseIn:_imageViewBg];
+    
+    [_delegate controllerSetSkinDidChanageSkin:self];
+}
+
+- (void)scrollViewSetSkinWillAddSkin:(UIScrollViewSetSkin *)scrollViewSetSkin
+{
+    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:nil delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:nil otherButtonTitles:LocalizedString(@"paizhao"), LocalizedString(@"congxiangcexuanqu"), nil];
+    [action showInView:self.view withCompletionHandler:^(NSInteger buttonIndex) {
+        if (buttonIndex==action.cancelButtonIndex) {
+            return;
+        }
+        
+        UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+        imagePicker.delegate = self;
+        _pickerController = imagePicker;
+        if (0==buttonIndex) {
+            // take photo
+            if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+                imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
+                [self presentModalViewController:imagePicker animated:YES];
+            }
+            else {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:LocalizedString(@"zhaoxiangjibukeyong") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"congxiangcexuanqu"), nil];
+                [alert showWithCompletionHandler:^(NSInteger buttonIndex) {
+                    if (buttonIndex==1)
+                    {
+                        
+                        [self onTouchGroup];
+                    }
+                }];
+            }
+            
+        }
+        else if (1==buttonIndex) {
+
+            [self onTouchGroup];
+        }
+    }];
+}
+
+-(void)controller:(UIControllerScreenshot *)controller didCaptureImage:(UIImage *)image
+{
+    if (self.navigationController.topViewController != self) {
+        [self.navigationController popToViewController:self animated:NO];
+    }
+    
+    // 图片在这里
+    NSString *szTime = [[@((NSInteger)[[NSDate date] timeIntervalSince1970]) stringValue] stringByAppendingPathExtension:@"jpg"];
+    // UIImage* imageOriginal = [info objectForKey:UIImagePickerControllerOriginalImage];
+    NSString *dicPath = GetDocumentDirAppend(kSkinDirName);
+    NSString *filepath = [dicPath stringByAppendingPathComponent:szTime];
+    
+    CGSize size = [UIScreen mainScreen].bounds.size;
+    CGFloat scale = [[UIScreen mainScreen] scale];
+    size = CGSizeApplyAffineTransform(size, CGAffineTransformMakeScale(scale, scale));
+    if (image.size.width>size.width && image.size.height>size.height) {
+        image = [image scaleImageWithSize:size];
+    }
+    
+    [UIImageJPEGRepresentation(image, 1) writeToFile:filepath atomically:YES];
+    
+    [_scrollView addSkinImageWithPath:filepath animated:YES];
+    
+    [_scrollView selectLastSkinImage];
+}
+
+#pragma mark - UINavigationControllerDelegate, UIImagePickerControllerDelegate
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
+{
+    UIImage* imageOriginal = [info objectForKey:UIImagePickerControllerOriginalImage];
+    
+    [_pickerController dismissModalViewControllerAnimated:NO];
+    
+    [self presentControllerScreenshotWithImage:imageOriginal];
+}
+
+#pragma mark - UIControllerScreenshotDelegate
+-(void)controller:(UIControllerImageAssets *)picker didFinishPickingAssets:(ALAsset *)assets
+{
+    CGImageRef ref = [[assets  defaultRepresentation]fullResolutionImage];
+    
+    UIImage *img = [[UIImage alloc]initWithCGImage:ref scale:[[UIScreen mainScreen] scale] orientation:UIImageOrientationUp];
+    
+    [self presentControllerScreenshotWithImage:img];
+
+}
+
+/**
+ *  跳转到截取皮肤
+ *
+ *  @param image 选取的图片
+ */
+-(void)presentControllerScreenshotWithImage:(UIImage *)image
+{
+    
+    UIControllerScreenshot *controller = [UIControllerScreenshot controllerFromXib];
+    controller.delegate = self;
+    controller.screenshotType = ScreenshotSkin;
+    controller.imageOriginal = [self fixOrientation:image];
+    [self.navigationController pushViewController:controller animated:YES];
+//    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+}
+
+//pickerController消失的动画
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
+{
+    [UIView animateWithDuration:0.35 animations:^{
+        picker.view.transform = CGAffineTransformMakeScale(0.001, 0.001);
+        picker.view.alpha = 0;
+    } completion:^(BOOL finished) {
+        [picker.view removeFromSuperview];
+        [picker removeFromParentViewController];
+    }];
+}
+
+/**
+ *  把相片的方向调整为正向, 防止某些相片截图后颠倒
+ *
+ *  @param aImage 传入要处理的图片
+ *
+ *  @return 调整后的图片
+ */
+- (UIImage *)fixOrientation:(UIImage *)aImage {
+    
+    // No-op if the orientation is already correct
+    if (aImage.imageOrientation == UIImageOrientationUp)
+        return aImage;
+    
+    // We need to calculate the proper transformation to make the image upright.
+    // We do it in 2 steps: Rotate if Left/Right/Down, and then flip if Mirrored.
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    
+    switch (aImage.imageOrientation) {
+        case UIImageOrientationDown:
+        case UIImageOrientationDownMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.width, aImage.size.height);
+            transform = CGAffineTransformRotate(transform, M_PI);
+            break;
+            
+        case UIImageOrientationLeft:
+        case UIImageOrientationLeftMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.width, 0);
+            transform = CGAffineTransformRotate(transform, M_PI_2);
+            break;
+            
+        case UIImageOrientationRight:
+        case UIImageOrientationRightMirrored:
+            transform = CGAffineTransformTranslate(transform, 0, aImage.size.height);
+            transform = CGAffineTransformRotate(transform, -M_PI_2);
+            break;
+        default:
+            break;
+    }
+    
+    switch (aImage.imageOrientation) {
+        case UIImageOrientationUpMirrored:
+        case UIImageOrientationDownMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.width, 0);
+            transform = CGAffineTransformScale(transform, -1, 1);
+            break;
+            
+        case UIImageOrientationLeftMirrored:
+        case UIImageOrientationRightMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.height, 0);
+            transform = CGAffineTransformScale(transform, -1, 1);
+            break;
+        default:
+            break;
+    }
+    
+    // Now we draw the underlying CGImage into a new context, applying the transform
+    // calculated above.
+    CGContextRef ctx = CGBitmapContextCreate(NULL, aImage.size.width, aImage.size.height,
+                                             CGImageGetBitsPerComponent(aImage.CGImage), 0,
+                                             CGImageGetColorSpace(aImage.CGImage),
+                                             CGImageGetBitmapInfo(aImage.CGImage));
+    CGContextConcatCTM(ctx, transform);
+    switch (aImage.imageOrientation) {
+        case UIImageOrientationLeft:
+        case UIImageOrientationLeftMirrored:
+        case UIImageOrientationRight:
+        case UIImageOrientationRightMirrored:
+            // Grr...
+            CGContextDrawImage(ctx, CGRectMake(0,0,aImage.size.height,aImage.size.width), aImage.CGImage);
+            break;
+            
+        default:
+            CGContextDrawImage(ctx, CGRectMake(0,0,aImage.size.width,aImage.size.height), aImage.CGImage);
+            break;
+    }
+    
+    // And now we just create a new UIImage from the drawing context
+    CGImageRef cgimg = CGBitmapContextCreateImage(ctx);
+    UIImage *img = [UIImage imageWithCGImage:cgimg];
+    CGContextRelease(ctx);
+    CGImageRelease(cgimg);
+    return img;
+}
+
+
+@end

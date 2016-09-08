@@ -1,0 +1,245 @@
+//
+//  UIViewDraw.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-9.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewDraw.h"
+
+#define kLineWidth @"width"
+#define kLineColor @"color"
+#define kClearMode @"clear"
+#define kPoints @"points"
+#define kPointBegin @"begin"
+#define kPointMid @"mid"
+#define kPointEnd @"end"
+
+@implementation UIViewDraw
+{
+    /**
+     *  [{width, color, clear, [{begin,mid,end}]}]
+     */
+    NSMutableArray *_arrLine;
+    NSMutableArray *_arrLineRedo;
+    
+    CGPoint _pointBegin;
+    CGPoint _pointMid;
+    CGPoint _pointEnd;
+    
+    UIImage *_imageBuffer;
+    
+    BOOL _drawFullscreen;
+}
+
+#pragma property
+- (BOOL)canRedo
+{
+    return _arrLineRedo.count>0;
+}
+
+- (BOOL)canUndo
+{
+    return _arrLine.count>0;
+}
+
+-(void)setBrushLineWidth:(CGFloat)brushLineWidth
+{
+    _brushLineWidth = brushLineWidth;
+    _lineWidth = brushLineWidth;
+}
+
+-(void)setEraserLineWidth:(CGFloat)eraserLineWidth
+{
+    _eraserLineWidth = eraserLineWidth;
+    _lineWidth = eraserLineWidth;
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        [self setup];
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setup];
+}
+
+- (void)setup
+{
+//    _lineColor = [UIColor randomColor];
+//    _lineWidth = 1+rand()%10;
+    
+    _arrLine = [NSMutableArray array];
+    _arrLineRedo = [NSMutableArray array];
+}
+
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect
+{
+    [super drawRect:rect];
+    
+    if (_arrLine.count<=0) return;
+    
+    // Drawing code
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    if (_imageBuffer) {
+        CGContextSetBlendMode(context, kCGBlendModeCopy);
+        [_imageBuffer drawAtPoint:CGPointZero];
+        _imageBuffer = nil;
+    }
+    
+    [self.layer renderInContext:context];
+    
+    if (_drawFullscreen) {
+        for (NSDictionary *dicLine in _arrLine) {
+            _lineColor = dicLine[kLineColor];
+            _lineWidth = [dicLine[kLineWidth] floatValue];
+            _isClearMode = [dicLine[kClearMode] boolValue];
+            
+            NSArray *arrPoints = dicLine[kPoints];
+            for (NSDictionary *dicPoints in arrPoints) {
+                _pointBegin = [dicPoints[kPointBegin] CGPointValue];
+                _pointMid = [dicPoints[kPointMid] CGPointValue];
+                _pointEnd = [dicPoints[kPointEnd] CGPointValue];
+                
+                [self drawWithContext:context];
+            }
+        }
+        
+        _drawFullscreen = NO;
+//        _isClearMode = NO;
+        
+    }
+    else {
+        [self drawWithContext:context];
+    }
+}
+
+- (void)drawWithContext:(CGContextRef)context
+{
+    if (_isClearMode) {
+        CGContextSetBlendMode(context, kCGBlendModeClear);
+    }
+    else {
+        CGContextSetBlendMode(context, kCGBlendModeNormal);
+    }
+    CGContextMoveToPoint(context, (_pointBegin.x+_pointMid.x)*0.5, (_pointBegin.y+_pointMid.y)*0.5);
+    CGContextAddQuadCurveToPoint(context, _pointMid.x, _pointMid.y, (_pointEnd.x+_pointMid.x)*0.5, (_pointEnd.y+_pointMid.y)*0.5);
+    CGContextSetLineCap(context, kCGLineCapRound);
+    CGContextSetLineWidth(context, _lineWidth);
+    CGContextSetStrokeColorWithColor(context, _lineColor.CGColor);
+    CGContextStrokePath(context);
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    
+//    _lineColor = [UIColor randomColor];
+//    _lineWidth = 1+rand()%10;
+    
+    _pointBegin =
+    _pointMid =
+    _pointEnd = [touch locationInView:self];
+    
+    // 添加线条
+    [_arrLine addObject:[NSMutableDictionary dictionaryWithDictionary:@{kLineWidth:@(_lineWidth),
+                                                                        kLineColor:_lineColor,
+                                                                        kClearMode:@(_isClearMode),
+                                                                        kPoints:[NSMutableArray array]}]];
+    
+    [self touchesMoved:touches withEvent:event];
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    CGPoint pointPrev = [touch previousLocationInView:self];
+    CGPoint pointCurr = [touch locationInView:self];
+    _pointBegin = _pointMid;
+    _pointMid = pointPrev;
+    _pointEnd = pointCurr;
+    
+    // 添加关键点
+    NSMutableArray *arrPoints = [_arrLine lastObject][kPoints];
+    [arrPoints addObject:@{kPointBegin:[NSValue valueWithCGPoint:_pointBegin],
+                           kPointMid:[NSValue valueWithCGPoint:_pointMid],
+                           kPointEnd:[NSValue valueWithCGPoint:_pointEnd]}];
+    
+    // 计算当前缓存画板最小尺寸
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathMoveToPoint(path, NULL, (_pointBegin.x+_pointMid.x)*0.5, (_pointBegin.y+_pointMid.y)*0.5);
+    CGPathAddQuadCurveToPoint(path, NULL, _pointMid.x, _pointMid.y, (_pointEnd.x+_pointMid.x)*0.5, (_pointEnd.y+_pointMid.y)*0.5);
+    CGRect bounds = CGPathGetBoundingBox(path);
+    CGPathRelease(path);
+    
+    CGRect drawBox = bounds;
+    drawBox.origin.x    -= _lineWidth*0.5;
+    drawBox.origin.y    -= _lineWidth*0.5;
+    drawBox.size.width  += _lineWidth;
+    drawBox.size.height += _lineWidth;
+    
+    // 记录缓冲图片碎片
+    if(UIGraphicsBeginImageContextWithOptions != NULL) {
+        UIGraphicsBeginImageContextWithOptions(drawBox.size, NO, 1);
+    } else {
+        UIGraphicsBeginImageContext(drawBox.size);
+    }
+	[self.layer renderInContext:UIGraphicsGetCurrentContext()];
+	_imageBuffer = UIGraphicsGetImageFromCurrentImageContext();
+	UIGraphicsEndImageContext();
+    
+    // 画板上绘画
+    [self setNeedsDisplayInRect:drawBox];
+}
+
+/**
+ *  撤销
+ */
+- (void)undo
+{
+    if (_arrLine.count==0) return;
+    
+    [_arrLineRedo addObject:[_arrLine lastObject]];
+    [_arrLine removeLastObject];
+    _drawFullscreen = YES;
+    [self setNeedsDisplay];
+}
+
+/**
+ *  重做
+ */
+- (void)redo
+{
+    if (_arrLineRedo.count==0) return;
+    
+    [_arrLine addObject:[_arrLineRedo lastObject]];
+    [_arrLineRedo removeLastObject];
+    _drawFullscreen = YES;
+    [self setNeedsDisplay];
+}
+
+/**
+ *  清除
+ */
+
+- (void)clear
+{
+    [_arrLineRedo removeAllObjects];
+    [_arrLine removeAllObjects];
+    _drawFullscreen = YES;
+    [self setNeedsDisplay];
+}
+
+@end

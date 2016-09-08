@@ -1,0 +1,423 @@
+/* 
+  Localizable.strings
+  ChinaBrowser
+
+  Created by David on 14-9-25.
+  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+*/
+
+queding = "確定";
+quxiao = "取消";
+shanchu = "刪除";
+bianji = "編輯";
+xiugai = "修改";
+wancheng = "完成";
+sousuo = "搜索";
+guanbi = "關閉";
+
+changyong = "常用";
+shezhi = "設置";
+gongju = "工具";
+
+shuaxin = "刷新";
+tingzhi = "停止";
+zitidaxiao = "字體大小";
+pianda = "偏大";
+pianxiao = "偏小";
+moren = "默認";
+zitidaxiaowenzi = "滑動滑桿改變網頁字體大小\n(字體過大或過小可能會影響網頁美觀)";
+yeneichazhao = "頁內查找";
+jietutuya = "截圖塗鴉";
+fenxiang = "分享";
+zhengzaifenxiang = "正在分享...";
+fenxiangchenggong = "分享成功";
+fenxiangshibai = "分享失敗";
+jiazai = "加載";
+zhengzaijiazai = "正在加載...";
+jiazaichenggong = "加載成功";
+jiazaishibai = "加載失敗";
+tianjiashuqian = "添加書籤";
+shanchushuqian = "刪除書籤";
+shuqian = "書籤";
+lishijilu = "歷史記錄";
+shuqian_lishijilu = "書籤/歷史記錄";
+xinjianbiaoqian = "新建標籤";
+liangdutiaojie = "亮度調節";
+wutumoshi = "無圖模式";
+wutuyikaiqi = "無圖模式已開啟";
+wutuyiguanbi = "無圖模式已關閉，刷新網頁可加載圖片";
+wuhenmoshi = "無痕模式";
+yinshenmoshi = "隱身模式";
+jiechuyinshen = "解除隱身";
+jinruyinshenmoshi = "進入隱身模式，您的瀏覽歷史不會被記錄";
+yijiechuyinshenmoshi = "已解除隱身模式";
+suodingxuanzhuan = "鎖定旋轉";
+jiesuoxuanzhuan = "解鎖旋轉";
+quanping = "全屏";
+tuichuquanping = "退出全屏";
+pifushezhi = "皮膚設置";
+yuyan = "語言";
+pifu = "皮膚";
+shizhongshoucang = "時鐘收藏";
+dangqianshijianwushoucang = "当前時間段沒有收藏";
+tianjiashizhongshoucang = "添加時鐘收藏";
+yicunzaishizhongshoucang = "該時間段已經存在收藏，請選擇操作";
+shanchushizhongshoucang = "刪除時鐘收藏";
+yuedu = "閱讀";
+
+jianchagengxin = "檢查更新";
+tixing = "提醒";
+tishi = "提示";
+jianchayouxinbanben = "檢查有新版本";
+lijigengxin = "立即更新";
+lijishengji = "立即升級";
+bugengxin = "不更新";
+bushengji = "不升級";
+buzaitixing = "不再提醒";
+buzaitishi = "不再提示";
+wuxugengxin = "您已經擁有最新版，無需更新";
+wuxushengji = "您已經擁有最新版，無需升級";
+weizhaodaoapp = "AppStore的上未找到該應用程序，可能還未提交或還未通過審核！";
+guanbi = "關閉";
+hao = "好";
+
+biaoqianyiman = "標籤已滿";
+tianjiashouyedaohang = "添加快速鏈接";
+yijianfankui = "意見反饋";
+erweima = "二維碼";
+saomiaoerweima = "掃描二維碼";
+rijianmoshi = "日間模式";
+yejianmoshi = "夜間模式";
+fankui = "反饋";
+
+//--------------------------------------------------------------------------------------------------
+tianjiapifu = "添加皮膚";
+paizhao = "拍照";
+congxiangcexuanqu = "從相冊選取";
+shezhipifu = "設置皮膚";
+zhaoxiangjibukeyong = "照相機不可用";
+
+//--------------------------------------------------------------------------------------------------
+erweimasaomiao = "二維碼掃描";
+erweimaquyu = "將二維碼圖案置於掃描區域";
+shuruwangzhihuosaomiaoerweima = "輸入網址或掃描二維碼";
+
+baocuntupian = "保存圖片";
+zhengzaibaocuntupian = "正在保存圖片...";
+tupianbaocunchenggong = "圖片保存成功";
+tupianbaocunshibai = "圖片保存失敗";
+zhaopianwuquanxian = "無權限，請授權允許訪問照片庫";
+
+quedingshanchuma = "確定要刪除嗎";
+
+//------------------------------------------------ --------------------------------------------------
+jintian = "今天";
+zuotian = "昨天";
+gengzaode = "更早的";
+ganggang = "剛剛";
+
+quedingqingchulishi = "確定清除歷史記錄";
+quedingqingchushuqian = "確定清空書籤";
+xuanzeyaoqingkongdelishijilu = "選擇要清空的歷史記錄";
+qingchujintiande = "清除今天的";
+qingchuzuotiande = "清除昨天的";
+qingchugengzaode = "清除更早的";
+
+yiqingkongjintiandelishijilu = "已清空今天的歷史記錄";
+yiqingkongzuotiandelishijilu = "已清空昨天的歷史記錄";
+yiqingkonggengzaodelishijilu = "已清空更早的歷史記錄";
+yiqingkongsuoyoulishijilu = "已清空所有歷史記錄";
+
+gensuixitongyuyan = "跟隨系統語言";
+zuijingliulanlishi = "最近瀏覽歷史";
+
+//------------------------------------------------ --------------------------------------------------
+biaoti = "標題";
+fanhui = "返回";
+huabi = "畫筆";
+xiangpi = "橡皮";
+chongzuo = "重做";
+dongzuo = "動作";
+wangcheng = "完成";
+qingchu = "清除";
+caidan = "菜單";
+kuan = "寬";
+gao = "高";
+huabishezhi = "畫筆設置";
+shouye = "首頁";
+
+baocun = "保存";
+fenxiang = "分享";
+quxiao = "取消";
+
+zhengzaifenxiang = "正在分享...";
+fenxiangchenggong = "分享成功";
+fenxiangshibai = "分享失敗";
+
+wangye = "網頁";
+xinwen = "新聞";
+xiaoshuo = "小說";
+gouwu = "購物";
+yinyue = "音樂";
+shipin = "視頻";
+
+baidu = "百度";
+biying = "必應";
+yahu = "雅虎";
+sougou = "搜狗";
+guge = "谷歌";
+youdao = "有道";
+yandex = "Yandex";
+
+xinlang = "新浪";
+fenghuang = "鳳凰";
+renminwang = "人民網";
+
+qidian = "起點";
+hongxiu = "紅袖";
+tengxun = "騰訊";
+fenghuang = "鳳凰";
+
+taobao = "淘寶";
+yamaxun = "亞馬遜";
+jingdong = "京東";
+dangdang = "噹噹";
+yihaodian = "1號店";
+yixun = "易迅";
+lefeng = "樂峰";
+
+qqyinyue = "QQ音樂";
+kuwo = "酷我";
+baiduyinyue = "百度音樂";
+xiami = "蝦米";
+
+souku = "搜庫";
+aiqiyi = "愛奇藝";
+souhu = "搜狐";
+
+//------------------------------------------------ --------------------------------------------------
+tianjiashouyedaohang = "添加首頁導航";
+conglishizhongxuanqu = "從歷史中選取";
+congshuqianzhongxuanqu = "從書籤中選取";
+shouyedaohangyicunzai = "首頁導航已存在";
+qingshurulianjiedizhi = "請輸入鏈接地址";
+qingshrubiaoti = "請輸入標題";
+
+//------------------------------------------------ --------------------------------------------------"
+yonghuming = "用戶名";
+nicheng = "暱稱";
+mima = "密碼";
+youxiang = "郵箱";
+yuanmima = "原密碼";
+querenmima = "確認密碼";
+xinmima = "新密碼";
+jizhumima = "記住密碼";
+denglu = "登錄";
+zhuce = "註冊";
+shiyongdisanfangdenglu = "使用第三方登錄";
+xinlangweibo = "新浪微博";
+tengxunweibo = "騰訊微博";
+qq = "QQ";
+denglushibai = "登錄失敗";
+dengluchenggong = "登錄成功";
+jianjie = "簡介";
+
+qingshuruyonghuming = "請輸入用戶名";
+qingshurumima = "請輸入密碼";
+qingshurunicheng = "請輸入暱稱";
+qingshuruyouxiang = "請輸入郵箱";
+qingshuruquerenmima = "請輸入確認密碼";
+qingshuruyuanmima = "請輸入原密碼";
+qingshuruxinmima = "請輸入新密碼";
+qingshuruquerenmima = "請輸入確認密碼";
+
+yonghumingchangdubugou = "用戶名長度不夠";
+nichengchangdubugou = "暱稱長度不夠";
+yuanmimachangdubugou = "原密碼長度不夠";
+mimachangdubugou = "密碼長度不夠（6位以上）";
+qingshuruxinmima = "請輸入新密碼";
+xinmimachangdubugou = "新密碼長度不夠";
+meizuorenhexiugai = "沒做任何修改";
+youxiangwuxiao = "郵箱無效";
+liangcimimabuyizhi = "兩次密碼不一致";
+meizuorenhexiugai = "沒做任何修改";
+
+tigong = "提供";
+tongbufuwu = "同步服務";
+shangcitongbushijian = "上次同步時間";
+shangcitongbuneirong = "上次同步內容";
+congweitongbu = "從未同步";
+
+tongbuxinxi = "同步信息";
+tongbuxuanxiang = "同步選項";
+qingdenglu = "請登錄";
+
+shouyedaohang = "首頁導航";
+
+tongbu = "同步";
+yijiantongbu = "一鍵同步";
+tuichu = "退出";
+
+xiugaiyonghumingmima = "修改用戶名/暱稱";
+buxuyaoxiugaiqingliukong = "不需要修改的項，請留空！";
+
+xiugaimima = "修改密碼";
+tijiao = "提交";
+
+zhonghualiulanqi = "中華瀏覽器";
+mashangtiyan = "馬上體驗";
+zuichangfangwen = "最常訪問";
+shujuyouwu = "數據有誤";
+wuneirong = "無內容";
+
+dakai = "打開";
+fuzhiwangzhi = "複製網址";
+xinchuangkoudaikai = "新窗口打開";
+houtaidakai = "在後台打開";
+yongsafaridakai = "用Safari打開";
+chakantupian = "查看圖片";
+xiazaitupian = "下載圖片";
+kongbaiye = "空白頁";
+
+dangqianyemiandakai = "當前頁面打開鏈接";
+xinbiaoqianzhongdakai = "新標籤中打開鏈接";
+tianjiadaoshuqian = "添加到書籤";
+
+shanglajiazaigengduo = "上拉可以加載更多數據";
+songkaijiazaigengduo = "鬆開立即加載更多數據";
+xialashuaxin = "下拉可以刷新";
+songkailijishuaxin = "鬆開立即刷新";
+
+quedingqiehuanyuyan = "切換語言將會退出並清除該用戶已記住的密碼，確定切換？";
+
+// ----------------- 情景翻譯
+qingjingfanyi = "情景翻譯";
+
+jichang = "機場";
+banlidengji = "辦理登機";
+xinglituoyun = "行李托運";
+zhuanji = "轉機";
+quxingli = "取行李";
+duihuanwaibi = "兌換外幣";
+
+jiaotong = "交通";
+gongjiaoche = "公交車";
+chuzuche = "出租車";
+ditie = "地鐵";
+huoche = "火車";
+lunchuan = "輪船";
+zijiache = "自駕車";
+
+binguan = "賓館";
+dengjiruzhu = "登記入住";
+kefangfuwu = "客房服務";
+tousu = "投訴";
+tuifang = "退房";
+
+canting = "餐廳";
+souluomeishi = "搜羅美食";
+diancai = "點餐";
+fuwu = "服務";
+maidan = "買單";
+
+jingdian = "景點";
+
+yule = "娛樂";
+meishuguan = "美術館";
+bowuguan = "博物館";
+shangchang = "商場";
+tiaoxuan = "挑選";
+jiage = "價格";
+tuihuan = "退換";
+fukuan = "付款";
+
+yinhang = "銀行";
+
+youju = "郵局";
+
+zuche = "租車";
+
+shenghuo = "生活";
+jiaoji = "交際";
+chaoshi = "超市";
+dadianhua = "打電話";
+xunzhaoxishoujian = "尋找洗手間";
+
+yiyuan = "醫院";
+guahao = "掛號";
+kanzhen = "看診";
+jiaofei = "繳費";
+
+jinji = "緊急";
+
+duanju = "短句";
+
+// ------------- 语言
+zh-Hans = "中文";
+zh-Hanz = "中文";
+en = "英語";
+tr = "土耳其語";
+
+yuanyuyan = "源語言";
+mubiaoyuyan = "目標語言";
+
+// ------------- 分享
+ShareType_1 = "新浪微博";
+ShareType_2 = "騰訊微博";
+ShareType_24 = "QQ";
+ShareType_6 = "QQ空間";
+ShareType_22 = "微信好友";
+ShareType_23 = "微信朋友圈";
+ShareType_19 = "短信";
+ShareType_18 = "郵件";
+
+// -------------- App 启动介绍文字
+jieshao0 = "為信息海洋導航！";
+jieshao1 = "帶著她環遊世界吧！";
+jieshao2 = "請您體驗中華瀏覽器！";
+
+// ----------- 城市列表
+anhui = "安徽";
+aomen = "澳門";
+beijing = "北京";
+fujian = "福建";
+gansu = "甘肅";
+guangdong = "廣東";
+guangxi = "廣西";
+guizhou = "貴州";
+hainan = "海南";
+haiwai = "海外";
+hebei = "河北";
+henan = "河南";
+heilongjiang = "黑龍江";
+hubei = "湖北";
+hunan = "湖南";
+jilin = "吉林";
+jiangsu = "江蘇";
+jiangxi = "江西";
+liaoning = "遼寧";
+neimenggu = "內蒙古";
+ningxia = "寧夏";
+shandong = "山東";
+shanxi = "山西";
+shaanxi = "陝西";
+shanghai = "上海";
+sichuan = "四川";
+taiwan = "台灣";
+tianjin = "天津";
+xizang = "西藏";
+xianggang = "香港";
+xinjiang = "新疆";
+yunnan = "雲南";
+zhejiang = "浙江";
+chongqing = "重慶";
+
+// -------------- 后来新增的
+qingchulishi = "清除歷史";
+xinbiaoqian = "新標籤";
+qingxuanze = "請選擇";
+quedingchongzuo = "確定重做";
+zhucechenggong = "註冊成功";
+zhuceshibai = "註冊失敗";
+suoyou = "清除所有";
+zhengzaidenglu = "正在登錄...";

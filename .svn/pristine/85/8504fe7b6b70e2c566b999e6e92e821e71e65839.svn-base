@@ -1,0 +1,121 @@
+//
+//  UIControllerDraw.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-9.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerDraw.h"
+
+#import "UIViewDraw.h"
+
+@interface UIControllerDraw ()
+{
+    __weak IBOutlet UIView *_viewPanel;
+    __weak IBOutlet UIImageView *_imageView;
+    __weak IBOutlet UIViewDraw *_viewDraw;
+    
+    BOOL _rotateLockOriginal;
+}
+
+@end
+
+@implementation UIControllerDraw
+
+#pragma mark - property
+- (void)setImageOriginal:(UIImage *)imageOriginal
+{
+    _imageOriginal = imageOriginal;
+    if (_imageView) {
+        [self setupImage];
+    }
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = NO;
+    _rotateLockOriginal = [RotateUtil shareRotateUtil].rotateLock;
+    [RotateUtil shareRotateUtil].rotateLock = YES;
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = YES;
+    [RotateUtil shareRotateUtil].rotateLock = _rotateLockOriginal;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    if (_imageOriginal) {
+        [self setupImage];
+    }
+    
+    _viewDraw.lineColor = [UIColor blackColor];
+    _viewDraw.brushLineWidth = 10;
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - private methods
+- (void)setupImage
+{
+    _imageView.image = _imageOriginal;
+    CGRect rc = _viewPanel.frame;
+    rc.size = _imageOriginal.size;
+    rc.origin = CGPointMake((self.view.width-rc.size.width)*0.5, (self.view.height-rc.size.height)*0.5);
+    _viewPanel.frame = rc;
+}
+
+
+#pragma mark - IBAction
+- (IBAction)onTouchBack
+{
+    if (self.navigationController) {
+        [self.navigationController popToRootViewControllerAnimated:NO];
+    }
+    else {
+        [self dismissViewControllerAnimated:NO completion:nil];
+    }
+}
+
+- (IBAction)onTouchUndo
+{
+    [_viewDraw undo];
+}
+
+- (IBAction)onTouchRedo
+{
+    [_viewDraw redo];
+}
+
+- (IBAction)onTouchClear
+{
+    [_viewDraw clear];
+}
+
+- (IBAction)onTouchAction
+{
+}
+
+@end

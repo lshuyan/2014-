@@ -1,0 +1,86 @@
+//
+//  ADOSyncDelete.m
+//  ChinaBrowser
+//
+//  Created by David on 14/12/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOSyncDelete.h"
+
+#import "ModelSyncDelete.h"
+#import "DBHelper.h"
+
+@implementation ADOSyncDelete
+
+/**
+ *  添加删除记录
+ *
+ *  @param model ModelSyncDelete
+ *
+ *  @return 返回pkid，<=0 表示失败，>0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelSyncDelete *)model
+{
+    return [[DBHelper db] executeUpdate:@"insert into tab_sync_delete (user_id, lan, pkid_server, sync_data_type, update_time) values (?,?,?,?,?)", @(model.userId), model.lan?:@"", @(model.pkidServer), @(model.syncDataType), @(model.updateTime)];
+}
+
+/**
+ *  删除一条数据
+ *
+ *  @param pkid pkid description
+ *
+ *  @return BOOL 是否删除成功
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    return [[DBHelper db] executeUpdate:@"delete from tab_sync_delete where pkid=?", @(pkid)];
+}
+
+/**
+ *  删除一条数据
+ *
+ *  @param pkidServer   服务器数据id
+ *  @param syncDateType 同步数据类型
+ *  @param userId       用户id
+ *
+ *  @return BOOL 是否删除成功
+ */
++ (BOOL)deleteWithPkidServer:(NSInteger)pkidServer syncDataType:(SyncDataType)syncDateType userId:(NSInteger)userId
+{
+    return [[DBHelper db] executeUpdate:@"delete from tab_sync_delete where pkid_server=? and sync_data_type=? and user_id=? and lan=?", @(pkidServer), @(syncDateType), @(userId), [LocalizationUtil currLanguage]];
+}
+
+/**
+ *  查询指定用户的制定的数据类型 已删除pkidServer 拼接的字符串，多个使用英文逗号隔开
+ *
+ *  @param syncDateType syncDateType description
+ *  @param userId       userId description
+ *
+ *  @return NSArray [NSString]
+ */
++ (NSString *)queryPkidServerStringWithSyncDataType:(SyncDataType)syncDateType userId:(NSInteger)userId
+{
+    NSArray *arrPkidServer = [ADOSyncDelete queryPkidServerWithSyncDataType:syncDateType userId:userId];
+    return [arrPkidServer componentsJoinedByString:@","];
+}
+
+/**
+ *  查询指定用户的制定的数据类型 已删除pkidServer 数组
+ *
+ *  @param syncDateType syncDateType description
+ *  @param userId       userId description
+ *
+ *  @return NSArray [NSString]
+ */
++ (NSArray *)queryPkidServerWithSyncDataType:(SyncDataType)syncDateType userId:(NSInteger)userId
+{
+    FMResultSet *resultSet = [[DBHelper db] executeQuery:@"select pkid_server from tab_sync_delete where sync_data_type=? and user_id=? and lan=?", @(syncDateType), @(userId), [LocalizationUtil currLanguage]];
+    NSMutableArray *arrPkidServer = [NSMutableArray array];
+    while ([resultSet next]) {
+        [arrPkidServer addObject:[resultSet resultDictionary][@"pkid_server"]];
+    }
+    return arrPkidServer;
+}
+
+@end

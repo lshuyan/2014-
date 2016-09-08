@@ -1,0 +1,177 @@
+//
+//  API.h
+//  WKBrowser
+//
+//  Created by David on 13-10-18.
+//  Copyright (c) 2013年 VeryApps. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+/**
+ *  得到完整api，如果没有对应语言环境的的域名，默认使用英语
+ *
+ *  @param api api名称
+ *
+ *  @return 完整的api路径
+ */
+extern NSString * GetApiWithName(NSString *api);
+
+extern NSString * GetApiBaseUrl();
+
+// -------------------- 启动图
+/**
+ *  启动图接口
+ *  m=index
+ *  a=start
+ *  device=android|iphone|iphone5|iphone6|iphone6plus|ipad
+ */
+extern NSString * const API_LaunchImg;
+
+// -------------------- 检查更新
+/**
+ *  检查更新
+ *  m=index
+ *  a=check_version
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_CheckVersion;
+
+// -------------------- 推荐屏
+/**
+ *  推荐屏广告
+ *  m=index
+ *  a=home_ad
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_RecommendAd;
+
+/**
+ *  推荐屏分类
+ *  m=index
+ *  a=home_cate_header
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_RecommendCate;
+
+/**
+ *  推荐屏子分类
+ *  device=android|iphone|ipad
+ *  catid：分类id
+ */
+extern NSString * const API_RecommendSubCate;
+
+/**
+ *  新闻列表
+ *  device=android|iphone|ipad
+ *  catid：分类id
+ *  pagesize：不传默认 10 条
+ *  sid：最后一条数据id
+ */
+extern NSString * const API_RecommendNews;
+
+// -------------------- 应用屏
+/**
+ *  应用分类
+ *  m=index
+ *  a=home_app_show
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_AppCate;
+
+/**
+ *  大家都在搜的App
+ *  m=index
+ *  a=home_app_dsearch
+ *  device=android|iphone|ipad
+ *  pagesize:
+ *  Keyword:
+ */
+extern NSString * const API_AppHotSearch;
+
+/**
+ *  应用搜索
+ *  device=android|iphone|ipad
+ *  Keyword:
+ *  page:
+ *  pagesize:
+ *  sid:
+ */
+extern NSString * const API_AppSearch;
+
+/**
+ *  默认推荐应用
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_AppDefault;
+
+// -------------------- 情景翻译
+/**
+ *  翻译顶部图
+ *  device=android|iphone|ipad
+ *
+ */
+extern NSString * const API_TransTopImg;
+
+// -------------------- 旅游模块
+/**
+ *  旅游顶部图片
+ *  m=index
+ *  a=travelad
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_TravelAd;
+
+/**
+ *  旅游城市瀑布流列表
+ *  device=android|iphone|ipad
+ *
+ */
+extern NSString * const API_Travel;
+
+/**
+ *  旅游详细多媒体列表
+ *  cid:  省份ID
+ *  device=android|iphone|ipad
+ *
+ */
+extern NSString * const API_TravelDetail;
+
+// -------------------- 搜索模块
+/**
+ *  搜索引擎
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_SearchEngine;
+
+/**
+ *  【热门话题/热门搜索关键字】
+ *  m=index
+ *  a=
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_SearchHot;
+
+// -------------------- 分享项
+/**
+ *  分享项列表
+ *  device=android|iphone|ipad
+ */
+extern NSString * const API_ShareList;
+
+// -------------------- 用户接口
+/**
+ *  用户注册
+ *  username:邮箱/手机号
+ *  nickname:昵称
+ *  passwd:密码
+ */
+extern NSString * const API_UserRegister;
+
+/**
+ *  用户登录
+ *  username:邮箱/手机号
+ *  passwd:密码
+ */
+extern NSString * const API_UserLogin;
+

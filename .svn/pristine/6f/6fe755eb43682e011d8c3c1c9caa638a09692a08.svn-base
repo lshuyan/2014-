@@ -1,0 +1,49 @@
+//
+//  UIViewAppItem.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/11.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewAppItem.h"
+#import "UIImageView+WebCache.h"
+#import "ModelAppItem.h"
+
+@interface UIViewAppItem ()
+{
+    // 背景图片
+    IBOutlet UIImageView *_bgImageView;
+    // 应用图标
+    IBOutlet UIImageView *_itemIcon;
+    // 应用标题
+    IBOutlet UILabel     *_itemTitle;
+}
+@end
+
+@implementation UIViewAppItem
+
+
+
+- (void)layoutSubviews
+{
+    [_itemIcon setImageWithURL:[NSURL URLWithString:_item.icon] placeholderImage:nil];
+    _itemTitle.text = _item.title;
+}
+
+#pragma mark - Action Method
+- (IBAction)chickAdd:(UIButton *)sender
+{
+    
+}
+
+#pragma mark - Setter Method
+- (void)setItem:(ModelAppItem *)item
+{
+    if (_item != item) {
+        _item = item;
+        [self setNeedsLayout];
+    }
+}
+
+@end

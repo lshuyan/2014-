@@ -1,0 +1,213 @@
+//
+//  UIScrollViewTravelDetail.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-17.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIScrollViewTravelDetail.h"
+
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+#import "UIViewTravelItem.h"
+#import "ModelTravelDetail.h"
+
+@interface UIScrollViewTravelDetail ()
+
+@end
+
+@implementation UIScrollViewTravelDetail
+{
+    IBOutlet UIImageView *_imageView;
+    CGFloat _htRate;
+    
+    NSMutableArray *_arrItem;
+    NSMutableArray *_arrViewItem;
+    
+    AFJSONRequestOperation *_reqVideo;
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [_reqVideo cancel];
+    _reqVideo = nil;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    _paddingLR = _paddingTB = 0;
+    _spacex = _spacey = 3;
+    _htRate = 0;
+    
+    _arrItem = [NSMutableArray array];
+    _arrViewItem = [NSMutableArray array];
+}
+
+#pragma mark - super methods
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    
+    [self resizeItem];
+}
+
+#pragma mark - private methods
+- (void)resizeItem
+{
+    
+    CGRect rc = CGRectMake(_paddingLR, _paddingTB, self.bounds.size.width-_paddingLR*2, 0);
+    rc.size.height = rc.size.width*_htRate;
+    _imageView.frame = rc;
+    
+    if (_arrViewItem.count<=0) {
+        self.contentSize = CGSizeMake(self.bounds.size.width, _imageView.bottom);
+        return;
+    }
+    
+    rc.size.width = (_imageView.bounds.size.width-_spacex)/2;
+    CGFloat imageH = 0; // 计算
+    
+    CGFloat colHeight[] = {0, 0};
+    NSInteger (^getCol)(CGFloat *) = ^(CGFloat *colH){
+        CGFloat h1 = colH[0];
+        CGFloat h2 = colH[1];
+        if (h2>=h1) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    };
+    for (NSInteger i=0; i<_arrViewItem.count; i++) {
+        UIViewTravelItem *viewTravelItem = _arrViewItem[i];
+        ModelTravelDetail *model = _arrItem[i];
+        CGFloat w = model.imageSize.width;
+        CGFloat h = model.imageSize.height;
+        if (h==0 || w==0) {
+            viewTravelItem.alpha = 0;
+            continue;
+        }
+        viewTravelItem.alpha = 1;
+        
+        imageH = h/w*rc.size.width;
+        NSInteger col = getCol(colHeight);
+        CGFloat colH = colHeight[col];
+        rc.size.height = imageH;
+        rc.origin.x = _paddingLR+(rc.size.width+_spacex)*col;
+        rc.origin.y = _imageView.bottom+_spacey+colH;
+        colHeight[col] = colH+imageH+_spacey;
+        viewTravelItem.frame = CGRectIntegral(rc);
+    }
+    self.contentSize = CGSizeMake(self.bounds.size.width, _imageView.bottom+MAX(colHeight[0], colHeight[1])+5);
+}
+
+- (void)onTouchItem:(UIViewTravelItem *)item
+{
+    NSInteger index = [_arrViewItem indexOfObject:item];
+    ModelTravelDetail *model = _arrItem[index];
+    
+    if (TravelMediaTypeVideo==model.mediaType) {
+        [_delegateTravelDetail scrollViewTravelDetail:self willPlayWithUrl:model.videoLink title:model.name thumb:model.videoThumb];
+    }
+    else {
+        [_delegateTravelDetail scrollViewTravelDetail:self reqLink:model.link];
+    }
+}
+
+#pragma mark - public methods
+
+- (void)setImageUrl:(NSString *)imageUrl imageSize:(CGSize)imageSize
+{
+    _htRate = imageSize.height/imageSize.width;
+    [_imageView setImageWithURL:[NSURL URLWithString:imageUrl] placeholderImage:[UIImage imageWithBundleFile:@"home/ad_default.jpg"] usingActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    
+    CGRect rc = CGRectMake(_paddingLR, _paddingTB, self.bounds.size.width-_paddingLR*2, 0);
+    rc.size.height = rc.size.width*_htRate;
+    _imageView.frame = rc;
+}
+
+- (void)reqVideoWithProvinceId:(NSInteger)provinceId
+{
+    [_reqVideo cancel];
+    _reqVideo = nil;
+    
+    NSString *device = IsiPad?@"ipad":@"iphone";
+    NSDictionary *dicParam = @{@"device":device, @"cid":@(provinceId)};
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client requestWithMethod:@"GET" path:GetApiWithName(API_TravelDetail) parameters:dicParam];
+    NSString *filepath = [GetCacheDataDir() stringByAppendingPathComponent:[req.URL.absoluteString fileNameMD5WithExtension:@"json"]];
+    
+    BOOL (^resetProvince)(NSDictionary *) = ^(NSDictionary *dicResult){
+        [_arrViewItem makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        [_arrViewItem removeAllObjects];
+        [_arrItem removeAllObjects];
+        
+        BOOL retVal = NO;
+        do {
+            if (![dicResult isKindOfClass:[NSDictionary class]]) break;
+            NSArray *arrDicDetail = dicResult[@"data"];
+            if (![arrDicDetail isKindOfClass:[NSArray class]]) break;
+            
+            for (NSDictionary *dicDetail in arrDicDetail) {
+                ModelTravelDetail *model = [ModelTravelDetail modelWithDict:dicDetail];
+                [_arrItem addObject:model];
+                CGRect rc = CGRectZero;
+                rc.size = model.imageSize;
+                
+                UIViewTravelItem *viewTravelItem = [UIViewTravelItem viewFromXib];
+                viewTravelItem.backgroundColor = [UIColor lightGrayColor];
+                viewTravelItem.frame = rc;
+                viewTravelItem.labelTitle.text = model.name;
+                [viewTravelItem.imageView setImageWithURL:[NSURL URLWithString:model.image]];
+                [viewTravelItem addTarget:self action:@selector(onTouchItem:) forControlEvents:UIControlEventTouchUpInside];
+                
+                if (TravelMediaTypeVideo==model.mediaType) {
+                    UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageWithBundleFile:@"play_video.png"]];
+                    imageView.clipsToBounds = YES;
+                    imageView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin;
+                    rc = imageView.frame;
+                    rc.origin.x = (viewTravelItem.bounds.size.width-rc.size.width)*0.5;
+                    rc.origin.y = (viewTravelItem.bounds.size.height-rc.size.height)*0.5;
+                    imageView.frame = rc;
+                    [viewTravelItem addSubview:imageView];
+                }
+                
+                [self addSubview:viewTravelItem];
+                [_arrViewItem addObject:viewTravelItem];
+            }
+            
+            [self resizeItem];
+            
+            retVal = _arrViewItem.count>0;
+        } while (NO);
+        
+        return retVal;
+    };
+    
+    _reqVideo = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        if (resetProvince(JSON)) {
+            [_reqVideo.responseData writeToFile:filepath atomically:YES];
+        }
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSData *data = [NSData dataWithContentsOfFile:filepath];
+        if (data) {
+            resetProvince([NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil]);
+        }
+        
+        _DEBUG_LOG(@"%s:%@", __FUNCTION__, error);
+    }];
+    [_reqVideo start];
+}
+
+@end

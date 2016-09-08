@@ -1,0 +1,226 @@
+//
+//  UIViewBrushSet.m
+//  KTBrowser
+//
+//  Created by David on 14-2-26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewBrushSet.h"
+#import "UIColor+Expanded.h"
+#import "UIImage+ImageEffects.h"
+
+
+
+
+@interface UIViewBrushSet ()
+
+{
+    BOOL _isH;
+}
+- (void)setup;
+
+@end
+
+@implementation UIViewBrushSet
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        [self setup];
+    }
+    return self;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self) {
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setup];
+}
+
++ (UIViewBrushSet *)viewBrushSetFromXib
+{
+    return [[[NSBundle mainBundle] loadNibNamed:@"UIViewBrushSet" owner:self options:nil] lastObject];
+}
+
+- (void)setColor:(UIColor *)color width:(CGFloat)width
+{
+    _slider.value = width;
+    
+    CGRect rc = _viewBrush.bounds;
+    rc.size.width = rc.size.height = _slider.value;
+    _viewBrush.bounds = rc;
+    _viewBrush.layer.cornerRadius = rc.size.width/2;
+    
+    _viewBrush.backgroundColor = color;
+    
+//    [_delegate viewBrushSetLineColor:color];
+//    [_delegate viewBrushSetLineWidth:width];
+}
+
+-(void)animation
+{
+    CGRect rect = [UIScreen mainScreen].bounds;
+    
+    float heightScreen =  self.frame.size.height;
+    
+    //当没有加入到父视图的时候执行执行显示
+    if(!self.superview)
+    {
+        rect.origin.y = heightScreen;
+        _viewBottom.frame = rect;
+        
+        [UIView animateWithDuration:0.5 animations:^{
+            CGRect rect =  _viewBottom.frame;
+            rect.origin.y = heightScreen-rect.size.height;
+            _viewBottom.frame = rect;
+            
+            _bgImageVIew.alpha = 0.8;
+        }];
+    }
+    else
+    {
+        //当以及加入到父视图时 执行消失
+        [UIView animateWithDuration:0.5 animations:^{
+            CGRect rect =  _viewBottom.frame;
+            rect.origin.y = heightScreen;
+            _viewBottom.frame = rect;
+            
+            _bgImageVIew.alpha = 0;
+        } completion:^(BOOL finished) {
+            [self removeFromSuperview];
+        }];
+    }
+}
+
+-(void)autoLayout
+{
+    
+    CGRect rect = [UIScreen mainScreen].bounds;
+
+//    rect.size.height = rect.size.width;
+//    rect.size.width = [UIScreen mainScreen].bounds.size.height;
+    
+    self.frame = rect;
+    _bgImageVIew.frame = rect;
+    
+    //
+    rect = _viewBottom.frame;
+    float oldWidth = rect.size.width;
+    rect.size.height -= 40;
+    rect.size.width = self.bounds.size.width;
+    _viewBottom.frame = rect;
+    
+    rect = _slider.frame;
+    rect.size.width += self.frame.size.width-oldWidth;
+    _slider.frame = rect;
+    
+    rect = _viewWrap.frame;
+    rect.origin.x += self.frame.size.width-oldWidth;
+    _viewWrap.frame = rect;
+    
+    float i = 0;
+    float spacing = (self.bounds.size.width-360)*1.0/13;
+    
+    for (UIView *subView in _viewBottom.subviews) {
+        if ([subView isMemberOfClass:[UIButton class]]) {
+            UIButton *but = (UIButton *)subView;
+            but.frame = CGRectMake(spacing+(30+spacing)*1.0*i,57,30,30);
+            i++;
+        }
+    }
+}
+
+#pragma mark - private
+- (void)setup
+{
+    //如果是横屏调整布局
+    
+    if(!(UIInterfaceOrientationIsPortrait([UIApplication sharedApplication].statusBarOrientation)))
+        {
+            [self autoLayout];
+        }
+    
+    //添加动画效果
+    [self animation];
+    
+    [self bringSubviewToFront:_viewBottom];
+   //模糊背景
+    _bgImageVIew.image = [_bgImageVIew.image applyDarkEffect];
+   
+    //背景添加手势
+    _bgImageVIew.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(animation)];
+    [_bgImageVIew addGestureRecognizer:tap];
+    
+//    CGPoint center = _slider.center;
+//    center.y = _viewWrap.center.y;
+//    _slider.center = center;
+    
+    _arrColor = @[@"#FFFFFF", @"#FFFF00",
+                  @"#FF00FF", @"#00FFFF",
+                  @"#FF0000", @"#00FF00",
+                  @"#0000FF", @"#000000",
+                  @"#258B2A", @"#7B4117",
+                  @"#5E5E5E", @"#BBBBBB"];
+    
+    _viewWrap.layer.cornerRadius  = 
+    _viewBrush.layer.cornerRadius = _viewBrush.bounds.size.width/2;
+    
+    _viewWrap.layer.borderWidth  = 
+    _viewBrush.layer.borderWidth = 0.5;
+    _viewWrap.layer.borderColor  = 
+    _viewBrush.layer.borderColor = [UIColor lightGrayColor].CGColor;
+    
+    [_viewBottom.subviews enumerateObjectsUsingBlock:^(UIView* subView, NSUInteger idx, BOOL *stop) {
+        if ([subView isKindOfClass:[UISlider class]]) {
+            [(UISlider *)subView setMinimumValue:1];
+            [(UISlider *)subView setMaximumValue:MIN(_viewWrap.bounds.size.height, _viewWrap.bounds.size.width)];
+            [(UISlider *)subView addTarget:self action:@selector(sliderValuechanged:) forControlEvents:UIControlEventValueChanged];
+
+        }
+    
+        else if ([subView isMemberOfClass:[UIButton class]]) {
+            subView.layer.borderWidth = _viewWrap.layer.borderWidth;
+            subView.layer.borderColor = _viewWrap.layer.borderColor;
+            
+            subView.backgroundColor = [UIColor colorWithHexString:_arrColor[subView.tag]];
+            [(UIButton *)subView addTarget:self action:@selector(onClickColorBtn:) forControlEvents:UIControlEventTouchUpInside];
+        }
+    }];
+    
+}
+
+-(void)onClickColorBtn:(UIButton *)btn
+{
+    _viewBrush.backgroundColor = btn.backgroundColor;
+    
+    [_delegate viewBrushSetLineColor:btn.backgroundColor];
+}
+
+-(void)sliderValuechanged:(UISlider *)sender
+{
+    CGRect rc = _viewBrush.bounds;
+    rc.size.width = rc.size.height = sender.value;
+    _viewBrush.bounds = rc;
+    _viewBrush.layer.cornerRadius = rc.size.width/2;
+    
+    if ([_delegate respondsToSelector:@selector(viewBrushSetLineWidth:)]) {
+        [_delegate viewBrushSetLineWidth:_slider.value];
+    }
+}
+
+
+
+@end

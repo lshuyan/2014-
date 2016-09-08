@@ -1,0 +1,101 @@
+//
+//  UIViewScrollPreviewTab.h
+//  TaoKe
+//
+//  Created by David on 14-1-17.
+//  Copyright (c) 2014年 KOTO. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@protocol UIViewScrollPreviewTabDelegate;
+
+@interface UIViewScrollPreviewTab : UIScrollView <UIScrollViewDelegate>
+{
+    NSMutableArray *_arrPreviewTab;
+}
+
+@property (nonatomic, weak) id<UIViewScrollPreviewTabDelegate> delegatePreviewTab;
+@property (nonatomic, assign, readonly) NSInteger selectedIndex;
+
+@property (nonatomic, assign) CGRect rcOrigin;
+@property (nonatomic, assign, readonly) BOOL show;
+
+/**
+ *  显示
+ *
+ *  @param view             现在到的目标视图，将自己插入到父视图的最底层，index=0 的位置
+ *  @param arrView          arrView
+ *  @param selectIndex      选中缩略索引
+ *  @param complation       动画结束
+ */
+- (void)showInView:(UIView *)view arrView:(NSArray *)arrView selectIndex:(NSInteger)selectIndex rcOrigin:(CGRect)rcOrigin completion:(void(^)(void))completion;
+
+/**
+ *  消失
+ *
+ *  @param animated     是否允许动画
+ *  @param complation   动画结束
+ */
+- (void)dismissWithCompletion:(void(^)(void))completion;
+
+/**
+ *  滚动到某个缩略图位置，使其居中显示
+ *
+ *  @param index      缩略图索引
+ *  @param animated   是否动画
+ *  @param complation 动画结束
+ */
+- (void)scrollToIndex:(NSInteger)index animated:(BOOL)animated completion:(void(^)(void))completion;
+
+/**
+ *  删除 缩略图
+ *
+ *  @param index    缩略图索引
+ */
+- (void)removeThumbAtIndex:(NSInteger)index;
+
+- (void)newThumbWithPreviewView:(UIView *)view;
+
+/**
+ *  更新标题
+ *
+ *  @param title 标题
+ *  @param index 索引
+ */
+- (void)updateTitle:(NSString *)title atIndex:(NSInteger)index;
+
+@end
+
+@protocol UIViewScrollPreviewTabDelegate <NSObject>
+
+@optional
+- (NSString *)titleForTabViewScrollPreviewTab:(UIViewScrollPreviewTab *)viewScrollPreviewTab atIndex:(NSInteger)index;
+
+@required
+
+/**
+ *  删除标签
+ *
+ *  @param viewScrollPreviewTab  UIViewScrollPreviewTab
+ *  @param removeAtIndex    删除的标签 索引
+ *  @param newIndex         删除后新标签索引,newIndex = -1
+ */
+- (void)viewScrollPreviewTab:(UIViewScrollPreviewTab *)viewScrollPreviewTab didRemoveAtIndex:(NSInteger)removeAtIndex newIndex:(NSInteger)newIndex;
+
+/**
+ *  选中标签
+ *
+ *  @param viewScrollPreviewTab  UIViewScrollPreviewTab
+ *  @param selectIndex          选中目标 标签索引
+ */
+- (void)viewScrollPreviewTabDidSelect:(UIViewScrollPreviewTab *)viewScrollPreviewTab selectIndex:(NSInteger)selectIndex;
+
+/**
+ *  将要消失
+ *
+ *  @param viewScrollPreviewTab UIViewScrollPreviewTab
+ */
+- (void)viewScrollPreviewTabWillDismiss:(UIViewScrollPreviewTab *)viewScrollPreviewTab;
+
+@end

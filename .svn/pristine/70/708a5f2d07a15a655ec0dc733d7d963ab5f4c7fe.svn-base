@@ -1,0 +1,101 @@
+//
+//  common.m
+//
+
+#import "common.h"
+
+#import <ShareSDK/ShareSDK.h>
+
+// -------------------------- notification
+NSString * const KNotificationDidChanageDesktopStyle = @"KNotificationDidChanageDesktopStyle";
+
+NSString * const KNotificationDidLogin = @"KNotificationDidLogin";
+NSString * const KNotificationDidLogout = @"KNotificationDidLogout";
+NSString * const KNotificationDidUpdateUserInfo = @"KNotificationDidUpdateUserInfo";
+NSString * const KNotificationDidChangedPageStyle = @"KNotificationDidChangedPageStyle";
+NSString * const KNotificationDidChangedSearchEngine = @"KNotificationDidChangedSearchEngine";
+
+// -------------------------- functions
+NSUInteger DeviceSystemMajorVersion() {
+    static NSUInteger _deviceSystemMajorVersion = -1;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _deviceSystemMajorVersion = [[[[[UIDevice currentDevice] systemVersion] componentsSeparatedByString:@"."] objectAtIndex:0] intValue];
+    });
+    
+    return _deviceSystemMajorVersion;
+}
+
+CGFloat InterfaceDegrees() {
+    CGFloat degrees;
+    
+    switch ([UIApplication sharedApplication].statusBarOrientation) {
+        case UIInterfaceOrientationPortraitUpsideDown:
+            degrees = 180.0;
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            degrees = -90.0;
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            degrees = 90.0;
+            break;
+        default: // UIInterfaceOrientationPortrait
+            degrees = 0.0;
+            break;
+    }
+    
+    return degrees;
+}
+
+BOOL ShouldShowGuide()
+{
+    NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleVersionKey];
+    
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    id ver = [ud objectForKey:kShouldShowGuide];
+    if (ver) {
+        if ([ver isKindOfClass:[NSString class]]) {
+            // 新版使用 版本号
+            if ([version compare:ver]==NSOrderedDescending) {
+                // 倒序
+                return YES;
+            }
+            else {
+                return NO;
+            }
+        }
+        else {
+            // 说明是旧版，只有旧版才是 NSNumber 类型
+            return YES;
+        }
+    }
+    else {
+        return YES;
+    }
+}
+
+void SetGuideVersion()
+{
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleVersionKey];
+    [ud setObject:version forKey:kShouldShowGuide];
+    [ud synchronize];
+}
+
+NSString *SNSNameWithShareType(ShareType shareType)
+{
+    NSString *key = [NSString stringWithFormat:@"ShareType_%d", shareType];
+    return LocalizedString(key);
+}
+
+UIImage *SNSIconWithShareType(ShareType shareType, BOOL iOS7)
+{
+    NSString *filepath = nil;
+    if (iOS7) {
+        filepath = [NSString stringWithFormat:@"Resource.bundle/Icon_7/sns_icon_%d.png", shareType];
+    }
+    else {
+        filepath = [NSString stringWithFormat:@"Resource.bundle/Icon/sns_icon_%d.png", shareType];
+    }
+    return [UIImage imageWithBundleFile:filepath];
+}

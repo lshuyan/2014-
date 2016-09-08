@@ -1,0 +1,510 @@
+//
+//  UIControllerUserInfo.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/10/31.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerUserInfo.h"
+#import "UIControllerLogin.h"
+#import "UIControllerEditUserInfo.h"
+
+#import "UICellHead.h"
+
+#import "UserManager.h"
+#import "ModelUserSettings.h"
+#import "ADOUserSettings.h"
+
+#import "UIImageView+WebCache.h"
+#import "UIViewPopSyncStyle.h"
+
+#import "BlockUI.h"
+#import "KTAnimationKit.h"
+
+#define  kSectionTitle @"kSectionTitle"
+#define  kCells @"kCells"
+
+#define kTitle @"title"
+#define kSubTitle @"kSubTitle"
+#define kRightView @"kRightView"
+#define kRightHasArrow @"kRightHasArrow"
+#define kSettingsCellType @"kSettingsCellType"
+
+typedef NS_ENUM(NSInteger, UserCellType) {
+    UserCellUserHead,
+    
+    UserCellBookmark,
+    UserCellHistory,
+    UserCellReminder,
+    
+    UserCellSyncType,
+    
+    UserCellOut
+};
+
+@interface UIControllerUserInfo ()
+{
+    UISwitch *_switchBoormark;
+    UISwitch *_switchHistory;
+    UISwitch *_switchReminder;
+    
+    UICellHead * _cellHead;
+    
+    //保存Cell里的控件  键为indexpathd的区行
+    NSArray *_arrDicCell;
+}
+@end
+
+@implementation UIControllerUserInfo
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangedUserInfoNotification:) name:KNotificationDidUpdateUserInfo object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didSyncNotification2:) name:kNotificationDidSync object:nil];
+    
+    _switchBoormark = [[UISwitch alloc]init];
+    [_switchBoormark addTarget:self action:@selector(onTouchSwitch:) forControlEvents:UIControlEventTouchUpInside];
+    _switchBoormark.on = [UserManager shareUserManager].currUser.settings.syncBookmark;
+    _switchHistory = [[UISwitch alloc]init];
+    [_switchHistory addTarget:self action:@selector(onTouchSwitch:) forControlEvents:UIControlEventTouchUpInside];
+    _switchHistory.on = [UserManager shareUserManager].currUser.settings.syncLastVisit;
+    _switchReminder = [[UISwitch alloc]init];
+    [_switchReminder addTarget:self action:@selector(onTouchSwitch:) forControlEvents:UIControlEventTouchUpInside];
+    _switchReminder.on = [UserManager shareUserManager].currUser.settings.syncReminder;
+    
+    _arrDicCell = @[@{kSectionTitle:@"",
+                      kCells:@[@{kTitle:@"weidenglu",
+                                 kSettingsCellType:@(UserCellUserHead),
+                                 kRightHasArrow:@(NO)}]},
+                    @{kSectionTitle:@"",
+                      kCells:@[@{kTitle:@"shuqian",
+                                 kRightView:_switchBoormark,
+                                 kSettingsCellType:@(UserCellBookmark),
+                                 kSubTitle:@"",
+                                 kRightHasArrow:@(NO)},
+                               @{kTitle:@"zueijinfangwen",
+                                 kSubTitle:@"",
+                                 kSettingsCellType:@(UserCellHistory),
+                                 kRightView:_switchHistory,
+                                 kRightHasArrow:@(NO)},
+                               @{kTitle:@"gexinghuadingzhi",
+                                 kRightView:_switchReminder,
+                                 kSettingsCellType:@(UserCellReminder),
+                                 kSubTitle:@"",
+                                 kRightHasArrow:@(NO)}]},
+                    @{kSectionTitle:@"",
+                      kCells:@[@{kTitle:@"tongbufangshi",
+                                 kSubTitle:@[@"jinzaiWifixiazidong",@"zongshizidong",@"zongshishoudong"],
+                                 kSettingsCellType:@(UserCellSyncType),
+                                 kRightHasArrow:@(YES)}]},
+                    @{kSectionTitle:@"",
+                      kCells:@[@{kTitle:@"注销当前账号",
+                                 kSubTitle:@"",
+                                 kSettingsCellType:@(UserCellOut),
+                                 kRightHasArrow:@(NO)}]}
+                    ];
+    [self updateByLanguage];
+    
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    [self updateStatus];
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+#pragma mark - AppLanguageProtocol.h
+-(void)updateByLanguage
+{
+    self.title = LocalizedString(@"gerenzhongxin");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)didChangedUserInfoNotification:(NSNotification *)notification
+{
+    [_tableView reloadData];
+}
+
+- (void)didSyncNotification2:(NSNotification *)notification
+{
+    [self updateStatus];
+    _DEBUG_LOG(@"%s", __FUNCTION__);
+}
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return _arrDicCell.count;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    NSDictionary *dicSection = _arrDicCell[section];
+    return [dicSection[kCells] count];
+    
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (indexPath.section == 0) {
+        return 80;
+    }
+    return 44;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:indexPath.section==0?@"UICellHead":@"UICellSysNone"];
+    if (!cell)
+    {
+        if (indexPath.section==0) {
+            cell = [[[NSBundle mainBundle] loadNibNamed:@"UICellHead" owner:self options:nil] lastObject];
+        }
+        else if(indexPath.section == (_arrDicCell.count-1))
+        {
+            cell=[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"UICellSysNone"];
+            cell.textLabel.textColor = [UIColor redColor];
+            cell.textLabel.textAlignment = NSTextAlignmentCenter;
+        }
+        else {
+            cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"UICellSysNone"];
+        }
+    }
+    
+    NSDictionary *dicSection = _arrDicCell[indexPath.section];
+    NSArray *arrCell = dicSection[kCells];
+    NSDictionary *dicCell = arrCell[indexPath.row];
+    cell.detailTextLabel.textColor = [UIColor grayColor];
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    
+    if (indexPath.section==0)
+    {
+        //头像
+        if (!_cellHead) {
+            _cellHead = (UICellHead *)cell;
+        }
+        
+        [self updateStatus];
+        
+        _cellHead.labelName.text = [UserManager shareUserManager].currUser.nickname;
+        [_cellHead.btnSynchro addTarget:self action:@selector(onTouchBtnSynchro) forControlEvents:UIControlEventTouchUpInside];
+        
+        __weak UIImageView *wImageViewIcon = _cellHead.imageViewIcon;
+        [wImageViewIcon setImageWithURL:[NSURL URLWithString:[UserManager shareUserManager].currUser.avatar]
+                                placeholderImage:[UIImage imageWithBundleFile:@"iPhone/User/avatar_default.png"]
+                                       completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType)
+        {
+            if (image) {
+                wImageViewIcon.image = [UIImage imageWithData:UIImagePNGRepresentation(image) scale:[UIScreen mainScreen].scale];
+            }
+            else {
+                wImageViewIcon.image = [UIImage imageWithBundleFile:@"iPhone/User/avatar_default.png"];
+            }
+        }];
+    }
+    else
+    {
+        cell.textLabel.text = LocalizedString(dicCell[kTitle]);
+    }
+    
+    //辅助视图 有没有箭头
+    BOOL hasArrow = [dicCell[kRightHasArrow] boolValue];
+    cell.accessoryType = hasArrow?UITableViewCellAccessoryDisclosureIndicator:UITableViewCellAccessoryNone;
+    
+    // 辅助视图 选择状态
+    UIView *accessoryView = dicCell[kRightView];
+    cell.accessoryView = accessoryView;
+    if (accessoryView)
+    {
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    }
+    else {
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+    }
+    
+    // --------
+    UserCellType type = (UserCellType)[dicCell[kSettingsCellType] integerValue];
+    switch (type) {
+        case UserCellBookmark:
+        {
+            _switchBoormark.on = [UserManager shareUserManager].currUser.settings.syncBookmark;
+        }break;
+        case UserCellHistory:
+        {
+            _switchHistory.on = [UserManager shareUserManager].currUser.settings.syncLastVisit;
+        }break;
+        case UserCellReminder:
+        {
+            _switchReminder.on = [UserManager shareUserManager].currUser.settings.syncReminder;
+        }break;
+        case UserCellSyncType:
+        {
+            cell.detailTextLabel.text = LocalizedString(dicCell[kSubTitle][[UserManager shareUserManager].currUser.settings.syncStyle-SyncStyleWiFi]);
+        }break;
+        case UserCellOut:
+        {
+            cell.detailTextLabel.text = LocalizedString(dicCell[kSubTitle]);
+        }break;
+            
+        default:
+            break;
+    }
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    NSDictionary *dicSection = _arrDicCell[indexPath.section];
+    NSArray *arrCellss = dicSection[kCells];
+    NSMutableDictionary *dicCell = arrCellss[indexPath.row];
+    UserCellType userCellType = (UserCellType)[dicCell[kSettingsCellType] integerValue];
+    switch (userCellType) {
+        case UserCellOut:
+        {
+            UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:LocalizedString(@"quedingtuichu") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:LocalizedString(@"tuichu") otherButtonTitles:nil];
+            [actionSheet showInView:self.view withCompletionHandler:^(NSInteger buttonIndex) {
+                if (actionSheet.cancelButtonIndex==buttonIndex) return;
+                
+                switch (_fromController) {
+                    case FromControllerUnknow:
+                    case FromControllerRoot:
+                    {
+                        UIControllerLogin *controllerLogin = [UIControllerLogin controllerFromXib];
+                        controllerLogin.fromController = _fromController;
+                        
+                        [self.navigationController pushViewController:controllerLogin animated:YES];
+                    }break;
+                    case FromControllerSystemSettings:
+                    {
+                        [self.navigationController popToViewController:self.navigationController.viewControllers[1] animated:YES];
+                    }break;
+                    case FromControllerSync:
+                    {
+                        [self.navigationController popToViewController:self.navigationController.viewControllers[1] animated:YES];
+                    }break;
+                    default:
+                        break;
+                }
+                
+                //注销第三方登录
+                [ShareSDK cancelAuthWithType:self.type];
+                [[UserManager shareUserManager] logout];
+                [[NSNotificationCenter defaultCenter] postNotificationName:KNotificationDidLogout object:nil];
+            }];
+        }break;
+        case UserCellSyncType:
+        {
+            //同步方式
+            UIViewPopSyncStyle *viewPop = [UIViewPopSyncStyle viewFromXib];
+            viewPop.labelTitle.text = LocalizedString(@"tongbufangshi");
+            [viewPop setCallbackDidSelectSyncStyle:^(SyncStyle syncStyle) {
+                [UserManager shareUserManager].currUser.settings.syncStyle = syncStyle;
+                [_tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+                
+                NSInteger updateTime = [[NSDate date] timeIntervalSince1970];
+                [UserManager shareUserManager].currUser.settings.updateTime =
+                [UserManager shareUserManager].currUser.settings.updateTimeServer = updateTime;
+                
+                // TODO:同步
+                [[SyncHelper shareSync] syncUpdateUserSetting:[UserManager shareUserManager].currUser.settings completion:^{
+                } fail:^(NSError *error) {
+                }];
+            }];
+            [viewPop showInView:self.view completion:nil];
+            
+        }break;
+        case UserCellUserHead:
+        {
+            UIControllerEditUserInfo *vc = [UIControllerEditUserInfo controllerFromXib];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        break;
+        
+        default:
+            break;
+    }
+    
+}
+
+#pragma mark - private methods
+//点击同步按钮
+-(void)onTouchBtnSynchro
+{
+    _cellHead.labelSynchro.text = LocalizedString(@"zhengzaitongbu_");
+
+    [[SyncHelper shareSync] syncAllIfNeededWithCompletion:^{
+        NSInteger syncTime = (NSInteger)[[NSDate date] timeIntervalSince1970];
+        [UserManager shareUserManager].currUser.syncTime = syncTime;
+        _cellHead.labelSynchro.text = [NSString stringWithFormat:@"%@%@", LocalizedString(@"shangcitongbu_"), [NSString stringWithTimeInterval:syncTime]];
+    } fail:^(NSError *error) {
+        _cellHead.labelSynchro.text = LocalizedString(@"tongbushibai");
+        //两秒后恢复
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [KTAnimationKit animationEaseIn:_cellHead.labelSynchro];
+            if([UserManager shareUserManager].currUser.syncTime == 0)
+                _cellHead.labelSynchro.text = LocalizedString(@"ninhaiweitongbu");
+            else
+                _cellHead.labelSynchro.text = [NSString stringWithFormat:@"%@%@",LocalizedString(@"shangcitongbu_"),[NSString stringWithTimeInterval:[UserManager shareUserManager].currUser.syncTime]];
+        });
+    } syncDataTypeCompletion:^(SyncDataType type) {
+        switch (type) {
+            case SyncDataTypeUserSettings:
+            {
+                [_tableView reloadData];
+            }break;
+            case SyncDataTypeBookmark:
+            {
+                
+            }break;
+            case SyncDataTypeHistory:
+            {
+                
+            }break;
+            case SyncDataTypeMode:
+            case SyncDataTypeModeProgram:
+            case SyncDataTypeReminder:
+            {
+                
+            }break;
+            default:
+                break;
+        }
+    }];
+}
+
+/**
+ *  获得由indexpath 区行组成的 字符串
+ */
+-(NSString *)getKeyForIndexPath:(NSIndexPath *)indexPath
+{
+    return [NSString stringWithFormat:@"%ld%ld", (long)indexPath.section, (long)indexPath.row];
+}
+
+//Switch按钮
+-(void)onTouchSwitch:(UISwitch *)sender
+{
+    if (sender == _switchBoormark) {
+        [UserManager shareUserManager].currUser.settings.syncBookmark = _switchBoormark.on;
+    }
+    else if(sender == _switchHistory)
+    {
+        [UserManager shareUserManager].currUser.settings.syncLastVisit = _switchHistory.on;
+    }
+    else if(sender == _switchReminder)
+    {
+        [UserManager shareUserManager].currUser.settings.syncReminder = _switchReminder.on;
+    }
+    NSInteger updateTime = [[NSDate date] timeIntervalSince1970];
+    [UserManager shareUserManager].currUser.settings.updateTime =
+    [UserManager shareUserManager].currUser.settings.updateTimeServer = updateTime;
+    [[SyncHelper shareSync] syncUpdateUserSetting:[UserManager shareUserManager].currUser.settings completion:^{
+        _switchBoormark.on = [UserManager shareUserManager].currUser.settings.syncBookmark;
+        _switchHistory.on = [UserManager shareUserManager].currUser.settings.syncLastVisit;
+        _switchReminder.on = [UserManager shareUserManager].currUser.settings.syncReminder;
+    } fail:^(NSError *error) {
+        
+    }];
+}
+
+//返回按钮 lianjie
+-(void)onTouchBtnBack
+{
+    if (IsiPad) {
+        [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    }
+    else
+    {
+        //iPhone跳转
+        switch (_fromController) {
+            case FromControllerUnknow:
+            {
+                [self.navigationController popToRootViewControllerAnimated:YES];
+            }break;
+            case FromControllerRoot:
+            {
+                [self.navigationController popToRootViewControllerAnimated:YES];
+            }break;
+            case FromControllerSystemSettings:
+            {
+                [self.navigationController popToViewController:self.navigationController.viewControllers[1] animated:YES];
+            }break;
+            case FromControllerSync:
+            {
+                [self.navigationController popToViewController:self.navigationController.viewControllers[1] animated:YES];
+            }break;
+            default:
+                break;
+        }
+    }
+}
+
+- (void)updateStatus
+{
+    if ([[SyncHelper shareSync] isSyncing]) {
+        _cellHead.labelSynchro.text = LocalizedString(@"zhengzaitongbu_");
+    }
+    else {
+        if([UserManager shareUserManager].currUser.syncTime == 0)
+            _cellHead.labelSynchro.text = LocalizedString(@"ninhaiweitongbu");
+        else
+            _cellHead.labelSynchro.text = [NSString stringWithFormat:@"%@%@",LocalizedString(@"shangcitongbu_"),[NSString stringWithTimeInterval:[UserManager shareUserManager].currUser.syncTime]];
+    }
+}
+
+@end

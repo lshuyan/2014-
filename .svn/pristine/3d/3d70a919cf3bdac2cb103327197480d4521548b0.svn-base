@@ -1,0 +1,17 @@
+//
+//  UIViewPopShareOption.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewPopButtomBase.h"
+
+#import <ShareSDK/ShareSDKTypeDef.h>
+
+@interface UIViewPopShareOption : UIViewPopButtomBase
+
+@property (nonatomic, copy) void (^callbackSelectShareType)(ShareType);
+
+@end

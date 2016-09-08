@@ -1,0 +1,116 @@
+//
+//  ADOHistory.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOHistory.h"
+
+#import "DBHelper.h"
+
+@implementation ADOHistory
+/**
+ *  判断是否存在
+ *
+ *  @param link 连接地址/功能模块的地址
+ *  @param urlSchemes urlSchemes
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithlink:(NSString *)link title:(NSString *)title userId:(NSInteger)userId
+{
+    NSInteger pkid = [[DBHelper shareDBHelper].db intForQuery:@"select pkid from tab_history where link=? and title=? and lan=? and user_id=?", link?:@"", title?:@"", [LocalizationUtil currLanguage], @(userId)];
+    return pkid>0;
+}
+
+/**
+ *  添加
+ *
+ *  @param model ModelApp
+ *
+ *  @return NSInteger  最后添加的id； <= 0，表示错误； > 0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelHistory *)model
+{
+    NSInteger lastInsertId = -1;
+    
+    if ([ADOHistory isExistWithlink:model.link title:model.title userId:model.userid]) {
+        return lastInsertId;
+    }
+    
+    BOOL flag = [[DBHelper shareDBHelper].db executeUpdate:@"insert into tab_history (pkid_server, user_id, lan, title, link, icon, time, times) values (?,?,?,?,?,?,?,?)", @(model.pkid_server), @(model.userid), model.lan?:@"", model.title?:@"", model.link?:@"", model.icon?:@"", @(model.time), @(model.times)];
+    if (flag) {
+        lastInsertId = (NSInteger)[[DBHelper shareDBHelper].db lastInsertRowId];
+    }
+    return lastInsertId;
+}
+
+/**
+ *  根据链接地址查询一条记录
+ *
+ *  @param link 链接地址
+ *
+ *  @return ModelHistory
+ */
++ (ModelHistory *)queryWithLink:(NSString *)link userId:(NSInteger)userId
+{
+    ModelHistory *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_history where link=? and lan=? and user_id=?", link, [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        model = [ModelHistory modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (BOOL)updateTime:(NSInteger)time times:(NSInteger)times title:(NSString *)title withPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_history set time=?, times=?, title=? where pkid=?", @(time), @(times), title, @(pkid)];
+}
+
+/**
+ *  查询所有书签及文件夹
+ *
+ *  @return NSArray 所有
+ */
++ (NSArray *)queryAllWithUserId:(NSInteger)userId
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_history where lan=? and user_id=? order by time desc", [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        ModelHistory *model = [ModelHistory modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
+/**
+ *  删除
+ *
+ *  @param 唯一键
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_history where pkid = ?", @(pkid)];
+}
+
+/**
+ *  清空数据表
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)clear
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_history where lan=?", [LocalizationUtil currLanguage]];
+}
+
++ (BOOL)clearWithUserId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_history where lan=? and user_id=?", [LocalizationUtil currLanguage], @(userId)];
+}
+
+@end

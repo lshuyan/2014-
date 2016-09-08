@@ -1,0 +1,45 @@
+//
+//  UIViewMenu.h
+//  ChinaBrowser
+//
+//  Created by David on 14-9-25.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+#import "UIControlItem.h"
+
+@protocol UIViewMenuDelegate;
+
+@interface UIViewMenu : UIView
+
+@property (nonatomic, weak) id<UIViewMenuDelegate> delegate;
+
+@property (nonatomic, weak) UIControlItem *viewMenuItemBookmark;
+@property (nonatomic, weak) UIControlItem *viewMenuItemRefresh;
+@property (nonatomic, weak) UIControlItem *viewMenuItemFindInPage;
+@property (nonatomic, weak) UIControlItem *viewMenuItemNoImageMode;
+@property (nonatomic, weak) UIControlItem *viewMenuItemFullscreen;
+@property (nonatomic, weak) UIControlItem *viewMenuItemNoSaveHistory;
+
++ (instancetype)viewFromXib;
+
+/**
+ *  根据链接地址更新菜单状态
+ *
+ *  @param link 当前标签页的网址链接地址, link = nil 表示当前标签非网页
+ */
+- (void)updateStateWithLink:(NSString *)link;
+
+- (void)showInView:(UIView *)view centerOfDock:(CGPoint)centerOfDock dockDirection:(DockDirection)dockDirection;
+- (void)dismiss;
+- (void)dismissWithCompletion:(void(^)(void))completion;
+
+@end
+
+@protocol UIViewMenuDelegate <NSObject>
+
+- (void)viewMenu:(UIViewMenu *)viewMenu seletedMenuItem:(MenuItem)menuItem;
+
+@end

@@ -1,0 +1,43 @@
+//
+//  UINavigationBarCustom.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UINavigationBarCustom.h"
+
+#import <AGCommon/UINavigationBar+Common.h>
+
+@implementation UINavigationBarCustom
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        [self setup];
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setup];
+}
+
+- (void)setup
+{
+    self.backgroundColor = [UIColor colorWithRed:0.161 green:0.161 blue:0.161 alpha:1.000];
+    [self setBackgroundImage:[UIImage imageWithBundleFile:@"iPhone/bg_nav1.png"]];
+    [self setTitleTextAttributes:@{
+                                   UITextAttributeTextColor:[UIColor colorWithWhite:1 alpha:1],
+//                                   UITextAttributeTextShadowColor:[UIColor colorWithRed:0 green:0.7 blue:0.8 alpha:1],
+//                                   UITextAttributeTextShadowOffset:[NSValue valueWithCGSize:CGSizeMake(0, 1)]
+                                   }];
+}
+
+@end

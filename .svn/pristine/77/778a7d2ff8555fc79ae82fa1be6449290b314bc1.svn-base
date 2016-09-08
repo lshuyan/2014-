@@ -1,0 +1,310 @@
+//
+//  ADOBookmark.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ADOBookmark.h"
+
+#import "DBHelper.h"
+
+@implementation ADOBookmark
+
+/**
+ *  判断是否存在
+ *
+ *  @param link 连接地址/功能模块的地址
+ *  @param urlSchemes urlSchemes
+ *
+ *  @return BOOL
+ */
++ (BOOL)isExistWithLink:(NSString *)link userId:(NSInteger)userId
+{
+    NSInteger pkid = [[DBHelper shareDBHelper].db intForQuery:@"select pkid from tab_bookmark where is_folder=0 and link=? and lan=? and user_id=?", link?:@"", [LocalizationUtil currLanguage], @(userId)];
+    return pkid>0;
+}
+
+/**
+ *  判断同名文件夹是否存在
+ *
+ *  @param title  文件夹名
+ *  @param userId 用户id
+ *
+ *  @return bool
+ */
++ (BOOL)isExistFolderWithTitil:(NSString *)title userId:(NSInteger)userId parentPkid:(NSInteger)parentPkid
+{
+    NSInteger pkid = [[DBHelper shareDBHelper].db intForQuery:@"select pkid from tab_bookmark where is_folder = 1 and title=? and lan=? and user_id=? and parent_pkid=?", title?:@"", [LocalizationUtil currLanguage], @(userId), @(parentPkid)];
+    return pkid>0;
+}
+
+/**
+ *  添加
+ *
+ *  @param model Model
+ *
+ *  @return NSInteger  最后添加的id； <= 0，表示错误； > 0 表示添加成功
+ */
++ (NSInteger)addModel:(ModelBookmark *)model
+{
+    NSInteger lastInsertId = -1;
+    
+    if (0>=model.title.length || (0>=model.link.length && model.isFolder==0)) {
+        return lastInsertId;
+    }
+    
+    if ([ADOBookmark isExistWithLink:model.link userId:model.userid] && model.isFolder==0) {
+        return lastInsertId;
+    }
+    
+    BOOL flag = [[DBHelper shareDBHelper].db executeUpdate:@"insert into tab_bookmark (user_id, lan, parent_pkid, sort_index, title, link, icon, is_folder, can_edit, pkid_server, parent_pkid_server, update_time, update_time_server) values (?,?,?,?,?,?,?,?,?,?,?,?,?)", @(model.userid), model.lan?:@"", @(model.parent_pkid), @(model.sortIndex), model.title?:@"", model.link?:@"", model.icon?:@"", @(model.isFolder), @(model.canEdit), @(model.pkid_server), @(model.parent_pkid_server), @(model.updateTime), @(model.updateTimeServer)];
+    if (flag) {
+        lastInsertId = (NSInteger)[[DBHelper shareDBHelper].db lastInsertRowId];
+    }
+    return lastInsertId;
+}
+
+/**
+ *  删除
+ *
+ *  @param aid 本地数据库
+ *
+ *  @return BOOL
+ */
++ (BOOL)deleteWithPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_bookmark where pkid=? or parent_pkid=?", @(pkid), @(pkid)];
+}
+
+/**
+ *  根据链接地址和用户id删除一条书签
+ *
+ *  @param link   链接地址
+ *  @param userId 所属用户id
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)deleteWithLink:(NSString *)link userId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_bookmark where link=? and user_id=? and lan=?", link, @(userId), [LocalizationUtil currLanguage]];
+}
+
++ (BOOL)deleteWithArrPkidServer:(NSArray *)arrPkidServer userId:(NSInteger)userId
+{
+    NSString *pkidServers = [arrPkidServer componentsJoinedByString:@","];
+    return [[DBHelper db] executeUpdateWithFormat:@"delete from tab_bookmark where where user_id=%d and lan='%@' and pkid_server>0 and pkid_server not in(%@)", userId, [LocalizationUtil currLanguage], pkidServers];
+}
+
+/**
+ *  清空数据表
+ *
+ *  @return BOOL 是否成功
+ */
+//+ (BOOL)clear
+//{
+//    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_bookmark where lan=?", [LocalizationUtil currLanguage]];
+//}
+
++ (BOOL)clearWithUserId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"delete from tab_bookmark where lan=? and user_id=?", [LocalizationUtil currLanguage], @(userId)];
+}
+
+/**
+ *  通过唯一键更新排序索引
+ *
+ *  @param orderIndex 排序索引
+ *  @param pkid       唯一键id
+ *
+ *  @return BOOL 是否成功
+ */
++ (BOOL)updateSort:(NSInteger)sort withPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_bookmark set sort_index=?, update_time=? where pkid=?", @(sort), @((NSInteger)[[NSDate date] timeIntervalSince1970]), @(pkid)];
+}
+
+/**
+ *  通过唯一键更新 标题，链接地址
+ *
+ *  @param title 标题
+ *  @param link  链接地址
+ *  @param parentPkid 父级id(文件夹id)
+ *  @param pkid  pkid
+ *
+ *  @return BOOL
+ */
++ (BOOL)updateTitle:(NSString *)title link:(NSString *)link parentPkid:(NSInteger)parentPkid withPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_bookmark set title=?, link=?, parent_pkid=?,update_time=? where pkid=?", title, link, @(parentPkid), @((NSInteger)[[NSDate date] timeIntervalSince1970]), @(pkid)];
+}
+
++ (BOOL)updateTitle:(NSString *)title link:(NSString *)link parentPkid:(NSInteger)parentPkid parentPkidServer:(NSInteger)parentPkidServer withPkid:(NSInteger)pkid
+{
+    return [[DBHelper shareDBHelper].db executeUpdate:@"update tab_bookmark set title=?, link=?, parent_pkid=?, parent_pkid_server=?,update_time=? where pkid=?", title, link, @(parentPkid), @(parentPkidServer), @((NSInteger)[[NSDate date] timeIntervalSince1970]), @(pkid)];
+}
+
++ (BOOL)updateModel:(ModelBookmark *)model
+{
+    return [[DBHelper db] executeUpdate:@"update tab_bookmark set title=?, link=?, icon=?, is_folder=?, can_edit=?, sort_index=?, parent_pkid=?, parent_pkid_server=?, pkid_server=?, update_time=?, update_time_server=?, user_id=?", model.title, model.link, model.icon, @(model.isFolder), @(model.canEdit), @(model.sortIndex), @(model.parent_pkid), @(model.parent_pkid_server), @(model.pkid_server), @(model.updateTime), @(model.updateTimeServer)];
+}
+
+/**
+ *  查询所有书签及文件夹
+ *
+ *  @return NSArray 所有
+ */
++ (NSArray *)queryWithUserId:(NSInteger)userId
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where lan=? and user_id=? order by time desc", [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        ModelBookmark *model = [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
+/**
+ *  查询所有文件夹
+ *
+ *  @return NSArray 所有文件夹
+ */
++ (NSArray *)queryAllFolderWithUserId:(NSInteger)userId
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where is_folder = 1 and lan=? and user_id=? order by sort_index", [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        ModelBookmark *model = [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
+/**
+ *  按文件夹查询书签
+ *
+ *  @param parent_pkid 文件夹编号
+ *
+ *  @return NSArray bookmark
+ */
++ (NSArray *)queryWithParent_pkid:(NSInteger )parent_pkid userId:(NSInteger)userId
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where parent_pkid = ? and lan=? and user_id=? order by sort_index", @(parent_pkid), [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        ModelBookmark *model = [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
+/**
+ *  按文件夹查询  索引内书签
+ *
+ *  @param parent_pkid 文件夹编号
+ *  @param fromSort    起始索引
+ *  @param toSort      结束索引
+ *
+ *  @return nsarray bookmark
+ */
++ (NSArray *)queryWithParent_pkid:(NSInteger )parent_pkid userId:(NSInteger)userId fromSort:(NSInteger)fromSort toSort:(NSInteger)toSort
+{
+    NSMutableArray *arrResult = [NSMutableArray array];
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where parent_pkid = ? and lan=? and user_id=? and sort_index >= ? and sort_index <= ? order by sort_index", @(parent_pkid),[LocalizationUtil currLanguage], @(userId), @(fromSort),@(toSort)];
+    while ([set next]) {
+        ModelBookmark *model = [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        [arrResult addObject:model];
+    }
+    return arrResult;
+}
+
+/**
+ *  按唯一ID查询某一条数据
+ *
+ *  @param pkid 唯一ID
+ *
+ *  @return
+ */
++ (ModelBookmark *)queryWithPkid:(NSInteger)pkid
+{
+    ModelBookmark *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where pkid=?", @(pkid)];
+    while ([set next]) {
+        model= [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (ModelBookmark *)queryFolderWithTitil:(NSString *)title userId:(NSInteger)userId parentPkidServer:(NSInteger)parentPkidServer exceptPkid:(NSInteger)exceptPkid
+{
+    ModelBookmark *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where lan=? and user_id=? and is_folder=1 and title=? and parent_pkid_server=? and pkid<>?", [LocalizationUtil currLanguage], @(userId), title, parentPkidServer, @(exceptPkid)];
+    while ([set next]) {
+        model= [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (ModelBookmark *)queryFolderWithTitil:(NSString *)title userId:(NSInteger)userId parentPkidServer:(NSInteger)parentPkidServer
+{
+    ModelBookmark *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where lan=? and user_id=? and is_folder=1 and title=? and parent_pkid_server=?", [LocalizationUtil currLanguage], @(userId), title, parentPkidServer];
+    while ([set next]) {
+        model= [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (ModelBookmark *)queryWithPkidServer:(NSInteger)pkidServer userId:(NSInteger)userId
+{
+    ModelBookmark *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where lan=? and user_id=? and pkid_server=?", [LocalizationUtil currLanguage], @(userId), @(pkidServer)];
+    while ([set next]) {
+        model= [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
+/**
+ *  按link查询一条书签
+ *
+ *  @param link 连接地址/功能模块的地址
+ *  @param urlSchemes urlSchemes
+ *
+ *  @return BOOL
+ */
++ (ModelBookmark *)queryWithLink:(NSString *)link userId:(NSInteger)userId
+{
+    ModelBookmark *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where is_folder=0 and link=? and lan=? and user_id=?", link?:@"", [LocalizationUtil currLanguage], @(userId)];
+    while ([set next]) {
+        model= [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+
+}
+
++ (ModelBookmark *)queryWithLink:(NSString *)link userId:(NSInteger)userId exceptPkid:(NSInteger)exceptPkid
+{
+    ModelBookmark *model = nil;
+    FMResultSet *set = [[DBHelper shareDBHelper].db executeQuery:@"select * from tab_bookmark where is_folder=0 and link=? and lan=? and user_id=? and pkid<>?", link?:@"", [LocalizationUtil currLanguage], @(userId), @(exceptPkid)];
+    while ([set next]) {
+        model= [ModelBookmark modelWithResultSetDict:[set resultDictionary]];
+        break;
+    }
+    return model;
+}
+
++ (NSInteger)queryMaxSortIndexWithParentPkid:(NSInteger)parentPkid userId:(NSInteger)userId
+{
+    return [[DBHelper shareDBHelper].db intForQuery:@"select max(sort_index) from tab_bookmark where parent_pkid=? and user_id=? and lan=?", @(parentPkid), @(userId), [LocalizationUtil currLanguage]];
+}
+
+@end

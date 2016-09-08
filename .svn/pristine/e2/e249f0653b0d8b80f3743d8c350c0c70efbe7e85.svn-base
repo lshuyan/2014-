@@ -1,0 +1,70 @@
+//
+//  UIControllerCollectAndHistory.h
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/7.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+#import "UIViewNav.h"
+
+#import "ADOBookmark.h"
+#import "ADOHistory.h"
+
+/**
+ *  书签OR历史
+ */
+typedef NS_ENUM(NSInteger, UrlType) {
+    /**
+     *  书签
+     */
+    UrlTypeBookmark,
+    /**
+     *  历史
+     */
+    UrlTypeHistory,
+    /**
+     *  子文件
+     */
+    urlTypeFolder
+};
+
+@protocol UIControllerBookmarkHistoryDelegate;
+
+@interface UIControllerBookmarkHistory: UIControllerBase <UITableViewDelegate, UITableViewDataSource>
+{
+    IBOutlet UITableView *_tableView;
+    
+    UIViewNav *_viewNav;
+    UISegmentedControl *_segment;
+    
+    IBOutlet UIView *_viewBotton;
+    
+    IBOutlet UIView *_viewUser;
+    IBOutlet UILabel *_labelSynchro;
+    IBOutlet UILabel *_labelNick;
+    IBOutlet UIImageView *_imageIcon;
+    
+    IBOutlet UIButton *_btnNewBookmark;
+    IBOutlet UIButton *_btnNewFolder;
+    IBOutlet UIButton *_btnSynchro;
+    
+    IBOutlet UIImageView *_imageNil;
+    IBOutlet UILabel *_labelNil;
+    
+
+}
+
+@property(nonatomic, assign)UrlType urlType;
+@property(nonatomic, strong)ModelBookmark *model;
+
+@property (nonatomic, weak)id<UIControllerBookmarkHistoryDelegate> delegate;
+@end
+
+@protocol UIControllerBookmarkHistoryDelegate <NSObject>
+//点击某一书签or历史的 代理方法
+- (void)controllerBookmarkHistory:(UIControllerBookmarkHistory *)controllerBookmarkHistory reqLink:(NSString *)link;
+
+@end
+

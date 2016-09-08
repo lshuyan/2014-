@@ -1,0 +1,348 @@
+//
+//  UIControllerScreenshot.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-8.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerScreenshot.h"
+
+#import <AGCommon/UIImage+Common.h>
+
+@interface UIControllerScreenshot ()
+{
+    __weak IBOutlet UIImageView *_imageViewOriginal;
+    __weak IBOutlet UIViewCapture *_viewCapture;
+    
+    __weak IBOutlet UIButton *_btnFullscreen;
+    __weak IBOutlet UIButton *_btnCancel;
+    __weak IBOutlet UIButton *_btnCapture;
+    
+    IBOutlet UIButton *_btnOk;
+    IBOutlet UIButton *_btnBack;
+    
+    BOOL _rotateLockOriginal;
+    
+    IBOutlet UIView *_viewBtn;
+    ScreenshotType _screenshotType;
+}
+
+@end
+
+@implementation UIControllerScreenshot
+
+#pragma mark - property
+- (void)setImageOriginal:(UIImage *)imageOriginal
+{
+    _imageOriginal = imageOriginal;
+    if (_imageViewOriginal) {
+        _imageViewOriginal.image = _imageOriginal;
+    }
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = NO;
+    _rotateLockOriginal = [RotateUtil shareRotateUtil].rotateLock;
+    [RotateUtil shareRotateUtil].rotateLock = YES;
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    [RotateUtil shareRotateUtil].shouldShowRotateLock = YES;
+    [RotateUtil shareRotateUtil].rotateLock = _rotateLockOriginal;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    _imageViewOriginal.contentMode = UIViewContentModeScaleAspectFit;
+    
+    if (_imageOriginal) {
+        _imageViewOriginal.image = _imageOriginal;
+    }
+    
+    _btnBack.hidden = YES;
+    [_btnBack.layer setCornerRadius:20];
+    [_btnBack.layer setMasksToBounds:YES];
+    [_btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/Settings/SetSkin/delete_0.png"] forState:UIControlStateNormal];
+    [_btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/Settings/SetSkin/delete_1.png"] forState:UIControlStateHighlighted];
+
+    _btnOk.hidden = YES ;
+    [_btnOk.layer setCornerRadius:20];
+    [_btnOk.layer setMasksToBounds:YES];
+    [_btnOk setImage:[UIImage imageWithBundleFile:@"iPhone/Settings/SetSkin/enter_0.png"] forState:UIControlStateNormal];
+    [_btnOk setImage:[UIImage imageWithBundleFile:@"iPhone/Settings/SetSkin/enter_1.png"] forState:UIControlStateHighlighted];
+    
+    [_btnFullscreen setTitle:LocalizedString(@"chongman") forState:UIControlStateNormal];
+    [_btnFullscreen setTitle:LocalizedString(@"juzhong") forState:UIControlStateSelected];
+    [_btnCancel setTitle:LocalizedString(@"quxiao") forState:UIControlStateNormal];
+    if (ScreenshotSkin == self.screenshotType)
+    {
+        [_btnCapture setTitle:LocalizedString(@"yulan") forState:UIControlStateNormal];
+    }
+    else
+    {
+        [_btnCapture setTitle:LocalizedString(@"jiequ") forState:UIControlStateNormal];
+    }
+    
+    _viewCapture.screenshotType = self.screenshotType;
+    _viewCapture.imageFrame = [self getCurImageFrame];
+    
+    //调整image的方向属性. 不然某些相片截图后会倒转
+    self.imageOriginal = [self fixOrientation:self.imageOriginal];
+    
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+ #pragma mark - Navigation
+ 
+ // In a storyboard-based application, you will often want to do a little preparation before navigation
+ - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+ {
+ // Get the new view controller using [segue destinationViewController].
+ // Pass the selected object to the new view controller.
+ }
+ */
+//获得 图片在UIViewContentModeScaleAspectFit
+-(CGRect)getCurImageFrame
+{
+    CGRect rect = [UIScreen mainScreen].bounds;
+    //    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    //        rect.size.width = [UIScreen mainScreen].bounds.size.width;
+    //        rect.size.height = [UIScreen mainScreen].bounds.size.height;
+    //    }
+//    NSLog(@"+++%@  \n  ",NSStringFromCGRect(rect));
+    float scaleWidth = rect.size.width/_imageOriginal.size.width;
+    float scaleHeight = rect.size.height/_imageOriginal.size.height;
+    //最小的缩放比
+    float minScale = scaleWidth<scaleHeight?scaleWidth:scaleHeight;
+    // yes 宽度满屏 上下留白   no 高度满屏 左右留白
+    BOOL isminScale = scaleWidth<scaleHeight;
+    //满屏后 图片的大小
+    CGSize oriSize = _imageOriginal.size;
+    CGSize curSize = CGSizeMake(oriSize.width*minScale, oriSize.height*minScale);
+    
+    CGRect curRect = CGRectZero;
+    curRect.size = curSize;
+    if (isminScale) {
+        curRect.origin.y = 0.5*(rect.size.height-curSize.height);
+    }
+    else
+    {
+        curRect.origin.x = 0.5*(rect.size.width-curSize.width);
+    }
+    
+    return curRect;
+}
+
+#pragma mark - private methods
+- (IBAction)onTouchCancel
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:NO];
+    }
+    else {
+        [self dismissModalViewControllerAnimated:NO];
+    }
+}
+
+- (IBAction)onTouchFullscreen
+{
+    _btnFullscreen.selected = !_btnFullscreen.selected;
+    if (_btnFullscreen.selected) {
+        _viewCapture.captureFrame = _viewCapture.bounds;
+    }
+    else {
+        _viewCapture.captureFrame = CGRectApplyAffineTransform(_viewCapture.bounds, CGAffineTransformMakeScale(0.6, 0.6));
+    }
+}
+
+//皮肤模式下, 为预览
+- (IBAction)onTouchCapture
+{
+    CGRect screenRect = self.view.bounds;
+    float scaleWidth = screenRect.size.width/_imageOriginal.size.width;
+    float scaleHeight = screenRect.size.height/_imageOriginal.size.height;
+    //最小的缩放比
+    float minScale = scaleWidth<scaleHeight?scaleWidth:scaleHeight;
+    //    // yes 宽度满屏 上下留白   no 高度满屏 左右留白
+    //    BOOL isminScale = scaleWidth<scaleHeight;
+    CGRect curImageRect = [self getCurImageFrame];
+    
+    CGRect captureRect = _viewCapture.captureFrame;
+    CGRect shotRect = CGRectMake((captureRect.origin.x-curImageRect.origin.x)/minScale,
+                                 (captureRect.origin.y-curImageRect.origin.y)/minScale,
+                                 captureRect.size.width/minScale, captureRect.size.height/minScale);
+    float scale = [UIScreen mainScreen].scale;
+    if (!(ScreenshotDraw == self.screenshotType)){
+        scale = 1;
+    }
+    
+    CGImageRef imageRef = CGImageCreateWithImageInRect(_imageOriginal.CGImage, CGRectApplyAffineTransform(shotRect, CGAffineTransformMakeScale(scale, scale)));
+    
+    UIImage *image = [UIImage imageWithCGImage:imageRef scale:scale orientation:UIImageOrientationUp];
+    
+    //非皮肤状态 直接保存 没有预览
+    if (!(ScreenshotSkin == self.screenshotType)) {
+        [self delegateForImage:image];
+    }
+    else
+    {
+        _viewBtn.hidden = YES;
+        _btnOk.hidden = NO;
+        _btnBack.hidden = NO;
+        _viewCapture.hidden = YES;
+        
+        //隐藏状态栏
+        [[UIApplication sharedApplication] setStatusBarHidden:YES];
+        
+        CGSize size = [UIScreen mainScreen].bounds.size;
+        CGFloat scale = [[UIScreen mainScreen] scale];
+        size = CGSizeApplyAffineTransform(size, CGAffineTransformMakeScale(scale, scale));
+        if (image.size.width>size.width && image.size.height>size.height) {
+            image = [image scaleImageWithSize:size];
+        }
+        _imageViewOriginal.image = image;
+        _imageViewOriginal.contentMode = UIViewContentModeScaleAspectFill;
+        
+    }
+}
+
+//预览情况下  返回选择
+- (IBAction)onTouchBack:(id)sender
+{
+    _viewBtn.hidden = NO ;
+    _btnBack.hidden = YES;
+    _btnOk.hidden = YES;
+    _viewCapture.hidden = NO;
+    
+    _imageViewOriginal.image = _imageOriginal;
+    _imageViewOriginal.contentMode = UIViewContentModeScaleAspectFit;
+}
+
+//预览状态下的保存图片
+- (IBAction)onTouchOk:(id)sender {
+    [self delegateForImage:_imageViewOriginal.image];
+}
+
+
+-(void)delegateForImage:(UIImage *)image
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:NO];
+        [_delegate controller:self didCaptureImage:image];
+    }
+    else {
+        [self dismissViewControllerAnimated:NO completion:^{
+            [_delegate controller:self didCaptureImage:image];
+        }];
+    }
+}
+
+/**
+ *  把相片的方向调整为正向, 防止某些相片截图后颠倒
+ *
+ *  @param aImage 传入要处理的图片
+ *
+ *  @return 调整后的图片
+ */
+- (UIImage *)fixOrientation:(UIImage *)aImage {
+    
+    // No-op if the orientation is already correct
+    if (aImage.imageOrientation == UIImageOrientationUp)
+        return aImage;
+    
+    // We need to calculate the proper transformation to make the image upright.
+    // We do it in 2 steps: Rotate if Left/Right/Down, and then flip if Mirrored.
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    
+    switch (aImage.imageOrientation) {
+        case UIImageOrientationDown:
+        case UIImageOrientationDownMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.width, aImage.size.height);
+            transform = CGAffineTransformRotate(transform, M_PI);
+            break;
+            
+        case UIImageOrientationLeft:
+        case UIImageOrientationLeftMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.width, 0);
+            transform = CGAffineTransformRotate(transform, M_PI_2);
+            break;
+            
+        case UIImageOrientationRight:
+        case UIImageOrientationRightMirrored:
+            transform = CGAffineTransformTranslate(transform, 0, aImage.size.height);
+            transform = CGAffineTransformRotate(transform, -M_PI_2);
+            break;
+        default:
+            break;
+    }
+    
+    switch (aImage.imageOrientation) {
+        case UIImageOrientationUpMirrored:
+        case UIImageOrientationDownMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.width, 0);
+            transform = CGAffineTransformScale(transform, -1, 1);
+            break;
+            
+        case UIImageOrientationLeftMirrored:
+        case UIImageOrientationRightMirrored:
+            transform = CGAffineTransformTranslate(transform, aImage.size.height, 0);
+            transform = CGAffineTransformScale(transform, -1, 1);
+            break;
+        default:
+            break;
+    }
+    
+    // Now we draw the underlying CGImage into a new context, applying the transform
+    // calculated above.
+    CGContextRef ctx = CGBitmapContextCreate(NULL, aImage.size.width, aImage.size.height,
+                                             CGImageGetBitsPerComponent(aImage.CGImage), 0,
+                                             CGImageGetColorSpace(aImage.CGImage),
+                                             CGImageGetBitmapInfo(aImage.CGImage));
+    CGContextConcatCTM(ctx, transform);
+    switch (aImage.imageOrientation) {
+        case UIImageOrientationLeft:
+        case UIImageOrientationLeftMirrored:
+        case UIImageOrientationRight:
+        case UIImageOrientationRightMirrored:
+            // Grr...
+            CGContextDrawImage(ctx, CGRectMake(0,0,aImage.size.height,aImage.size.width), aImage.CGImage);
+            break;
+            
+        default:
+            CGContextDrawImage(ctx, CGRectMake(0,0,aImage.size.width,aImage.size.height), aImage.CGImage);
+            break;
+    }
+    
+    // And now we just create a new UIImage from the drawing context
+    CGImageRef cgimg = CGBitmapContextCreateImage(ctx);
+    UIImage *img = [UIImage imageWithCGImage:cgimg];
+    CGContextRelease(ctx);
+    CGImageRelease(cgimg);
+    return img;
+}
+
+@end

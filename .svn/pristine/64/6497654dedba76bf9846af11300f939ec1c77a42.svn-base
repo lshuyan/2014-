@@ -1,0 +1,52 @@
+//
+//  ModelSyncBase.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/21.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelSyncBase.h"
+
+@implementation ModelSyncBase
+
+#pragma mark - property
+- (void)setLan:(NSString *)lan
+{
+    _lan = [lan isKindOfClass:[NSString class]]?lan:nil;
+}
+
+#pragma mark - instance
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.lan = [LocalizationUtil currLanguage];
+        self.userid = [UserManager shareUserManager].currUser.uid;
+    }
+    return self;
+}
+
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    self = [super initWithDict:dict];
+    if (self) {
+        self.pkid_server = [dict[@"pkid"] integerValue];
+        self.userid = [dict[@"user_id"] integerValue];
+    }
+    return self;
+}
+
+- (instancetype)initWithResultSetDict:(NSDictionary *)dict
+{
+    self = [super initWithResultSetDict:dict];
+    if (self) {
+        self.pkid = [dict[@"pkid"] integerValue];
+        self.pkid_server = [dict[@"pkid_server"] integerValue];
+        self.userid = [dict[@"user_id"] integerValue];
+        self.lan = dict[@"lan"];
+    }
+    return self;
+}
+
+@end

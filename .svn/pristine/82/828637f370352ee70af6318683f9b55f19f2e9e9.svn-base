@@ -1,0 +1,444 @@
+//
+//  UIScrollViewSetSkin.m
+//  ChinaBrowser
+//
+//  Created by David on 14-3-17.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIScrollViewSetSkin.h"
+
+@interface UIScrollViewSetSkin ()
+{
+    NSMutableArray *_arrViewItem;
+    
+    CGFloat _colCount;
+    CGFloat _rowCount;
+    
+    UIViewSetSkinItem *_viewSetSkinItemAdd;
+    
+    NSMutableArray *_arrSkinImagePath;
+    NSInteger _sysItemCount;
+    
+    //系统皮肤名字
+    NSMutableArray *_arrSysSkinName;
+}
+
+- (void)removeItemAtIndex:(NSInteger)index;
+- (void)removeItem:(UIViewSetSkinItem *)viewSetSkinItem;
+- (void)removeAll;
+
+- (void)setupSysSkinImageWithAnimated:(BOOL)animated;
+- (void)setupCustomSkinImageWithAnimated:(BOOL)animated;
+
+- (void)createAddtionButton;
+- (NSInteger)getColCount;
+- (void)resizeItem;
+
+- (void)tapGesture:(UITapGestureRecognizer *)gesture;
+- (void)longPressGesture:(UILongPressGestureRecognizer *)gesture;
+- (void)onTouchDel:(UIButton *)btnDel;
+
+- (void)setup;
+
+@end
+
+@implementation UIScrollViewSetSkin
+
+- (void)setEdit:(BOOL)edit
+{
+    if (_arrViewItem.count==0 && edit) {
+        return;
+    }
+    _edit = edit;
+    for (NSInteger i=_sysItemCount; i<_arrViewItem.count; i++) {
+        UIViewSetSkinItem *item = _arrViewItem[i];
+        item.edit = _edit;
+    }
+    [UIView animateWithDuration:0.3 animations:^{
+        _viewSetSkinItemAdd.alpha = _edit?0:1;
+    }];
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        
+        [self setup];
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setup];
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    
+    if (_viewSetSkinItemAdd) {
+        [self resizeItem];
+    }
+    
+    [self setNeedsDisplay];
+}
+
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect
+{
+    // Drawing code
+}
+*/
+
+#pragma mark - private method 
+// --------------------------------- private
+- (void)setup
+{
+    self.itemW = 75;
+    self.itemH = 130;
+    self.minPaddingLR = 10;
+    self.paddingTB = 20;
+    self.spaceX = 25;
+    self.spaceY = 20;
+    
+    _arrViewItem = [NSMutableArray array];
+    _arrSkinImagePath = [NSMutableArray array];
+    _arrSysSkinName = [NSMutableArray array];
+    
+    [self createAddtionButton];
+    
+    [self setupSysSkinImageWithAnimated:NO];
+    [self setupCustomSkinImageWithAnimated:NO];
+    
+    BOOL isInternal = [AppSetting shareAppSetting].skinInfo.isAppInternal;
+    NSInteger index = [AppSetting shareAppSetting].skinInfo.skinIndex;
+    if (!isInternal) {
+        index += _sysItemCount;
+    }
+    NSInteger count = _arrViewItem.count;
+    for (NSInteger i=0; i<count; i++) {
+        UIViewSetSkinItem *viewSetSkinItem = _arrViewItem[i];
+        if (i==index) {
+            viewSetSkinItem.selected = YES;
+            break;
+        }
+    }
+}
+
+- (void)createAddtionButton
+{
+    _viewSetSkinItemAdd = [UIViewSetSkinItem viewSetSkinItemFromXib];
+    _viewSetSkinItemAdd.imageView.image = [UIImage imageWithBundleFile:@"iPhone/Settings/SetSkin/bg_pifu_0.png"];
+    _viewSetSkinItemAdd.labelTitle.text = LocalizedString(@"tianjiapifu");
+    NSInteger colCount = [self getColCount];
+    CGFloat paddingLR = (self.bounds.size.width-(colCount-1)*_spaceX-colCount*_itemW)/2;
+    
+    CGRect rc = CGRectMake(paddingLR, _paddingTB, _itemW, _itemH);
+    _viewSetSkinItemAdd.frame = CGRectIntegral(rc);
+    
+    [self addSubview:_viewSetSkinItemAdd];
+    
+    // 添加事件
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGesture:)];
+    [_viewSetSkinItemAdd addGestureRecognizer:tap];
+}
+
+- (NSInteger)getColCount {
+    CGFloat w = _minPaddingLR+_itemW;
+    NSInteger colCount = 0;
+    while (w+_minPaddingLR<=self.bounds.size.width) {
+        colCount++;
+        w+=_itemW+_spaceX;
+    }
+    return colCount;
+}
+
+- (void)resizeItem
+{
+    NSInteger colCount = [self getColCount];
+    CGFloat paddingLR = (self.bounds.size.width-(colCount-1)*_spaceX-colCount*_itemW)/2;
+    
+    NSMutableArray *arrItem = [NSMutableArray arrayWithArray:_arrViewItem];
+    [arrItem addObject:_viewSetSkinItemAdd];
+    NSInteger itemCount = arrItem.count;
+    
+    for (NSInteger i=0; i<itemCount; i++) {
+        NSInteger col = GetColWithIndexCol(i, colCount);
+        NSInteger row = GetRowWithIndexCol(i, colCount);
+        CGRect rc = CGRectMake(paddingLR+(_itemW+_spaceX)*col,
+                               _paddingTB+(_itemH+_spaceY)*row,
+                               _itemW,
+                               _itemH);
+        UIViewSetSkinItem *viewSetSkinItem = arrItem[i];
+        viewSetSkinItem.frame = CGRectIntegral(rc);
+        
+        viewSetSkinItem.tag =
+        viewSetSkinItem.btnDel.tag = i;
+    }
+    
+    UIViewSetSkinItem *viewSetSkinItem = [arrItem lastObject];
+    self.contentSize = CGSizeMake(self.bounds.size.width, viewSetSkinItem.frame.origin.y+viewSetSkinItem.bounds.size.height+_paddingTB);
+}
+
+- (void)tapGesture:(UITapGestureRecognizer *)gesture
+{
+    if (UIGestureRecognizerStateRecognized==gesture.state) {
+        UIViewSetSkinItem *viewSetSkinItem = (UIViewSetSkinItem *)gesture.view;
+        NSInteger fileIndex = viewSetSkinItem.tag;
+        BOOL isInternal = YES;
+        if (fileIndex>=_sysItemCount) {
+            fileIndex -= _sysItemCount;
+            isInternal = NO;
+        }
+        if (_edit) {
+            self.edit = NO;
+        }
+        else {
+            if (viewSetSkinItem==_viewSetSkinItemAdd) {
+                // TODO:添加操作
+                [_delegateSetSkin scrollViewSetSkinWillAddSkin:self];
+            }
+            else {
+                // 点击皮肤
+                for (UIViewSetSkinItem *viewSetSkinItemEach in _arrViewItem) {
+                    BOOL selected = viewSetSkinItem==viewSetSkinItemEach;
+                    viewSetSkinItemEach.selected = selected;
+                }
+                
+                [AppSetting shareAppSetting].skinInfo = (SkinInfo){isInternal, fileIndex};
+                [_delegateSetSkin scrollViewSetSkin:self selectSkinFileIndex:fileIndex isInternal:isInternal];
+            }
+        }
+    }
+}
+
+- (void)longPressGesture:(UILongPressGestureRecognizer *)gesture
+{
+    if (UIGestureRecognizerStateBegan==gesture.state) {
+        if (_arrViewItem.count<=_sysItemCount) {
+            return;
+        }
+        self.edit = !_edit;
+    }
+}
+
+- (void)onTouchDel:(UIButton *)btnDel
+{
+    [self removeItemAtIndex:btnDel.tag];
+}
+
+#pragma mark - public methods
+// --------------------------------- public
+- (void)addSkinImageWithPath:(NSString *)path animated:(BOOL)animated;
+{
+    UIViewSetSkinItem *viewSetSkinItem = [UIViewSetSkinItem viewSetSkinItemFromXib];
+    
+    [_arrSkinImagePath addObject:path];
+    [_arrViewItem addObject:viewSetSkinItem];
+    [self addSubview:viewSetSkinItem];
+    
+    [viewSetSkinItem.btnDel addTarget:self action:@selector(onTouchDel:) forControlEvents:UIControlEventTouchUpInside];
+    viewSetSkinItem.imageView.image = [UIImage imageWithContentsOfFile:path];
+    
+    //系统皮肤名称
+    if (_arrViewItem.count == _arrSysSkinName.count) {
+        viewSetSkinItem.labelTitle.text = _arrSysSkinName.lastObject;
+    }
+    else
+    {
+        NSString *skinName = [NSString stringWithFormat:@"%@%d",LocalizedString(@"pifu"),_arrViewItem.count - _arrSysSkinName.count];
+        viewSetSkinItem.labelTitle.text = skinName;
+    }
+    
+    viewSetSkinItem.frame = _viewSetSkinItemAdd.frame;
+    
+    
+    NSInteger colCount = [self getColCount];
+    if (colCount<=0) {
+        return;
+    }
+    CGFloat paddingLR = (self.bounds.size.width-(colCount-1)*_spaceX-colCount*_itemW)/2;
+    NSInteger index = _arrViewItem.count;
+    NSInteger col = GetColWithIndexCol(index, colCount);
+    NSInteger row = GetRowWithIndexCol(index, colCount);
+    CGRect rc = CGRectMake(paddingLR+(_itemW+_spaceX)*col, _paddingTB+(_itemH+_spaceY)*row, _itemW, _itemH);
+    
+    if (animated) {
+        viewSetSkinItem.transform = CGAffineTransformMakeScale(0.001, 0.001);
+        viewSetSkinItem.alpha = 0.2;
+        [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
+            _viewSetSkinItemAdd.frame = CGRectIntegral(rc);
+            viewSetSkinItem.alpha = 1;
+            viewSetSkinItem.transform = CGAffineTransformIdentity;
+            
+            self.contentSize = CGSizeMake(self.bounds.size.width, _viewSetSkinItemAdd.frame.origin.y+_viewSetSkinItemAdd.bounds.size.height+_paddingTB);
+        } completion:^(BOOL finished) {
+            
+        }];
+    }
+    else {
+        _viewSetSkinItemAdd.frame = CGRectIntegral(rc);
+        viewSetSkinItem.alpha = 1;
+        self.contentSize = CGSizeMake(self.bounds.size.width, _viewSetSkinItemAdd.frame.origin.y+_viewSetSkinItemAdd.bounds.size.height+_paddingTB);
+    }
+    
+    // 添加事件
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGesture:)];
+    [viewSetSkinItem addGestureRecognizer:tap];
+    
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressGesture:)];
+    [viewSetSkinItem addGestureRecognizer:longPress];
+    
+    [viewSetSkinItem.btnDel addTarget:self action:@selector(onTouchDel:) forControlEvents:UIControlEventTouchUpInside];
+    viewSetSkinItem.btnDel.tag = viewSetSkinItem.tag = _arrViewItem.count-1;
+    
+    // 是否是当前的皮肤
+    //    if ([[AppConfig config].skinImagePath isEqualToString:model.imagePath]) {
+    //        viewSetSkinItem.selected = YES;
+    //    }
+}
+
+- (void)selectLastSkinImage
+{
+    UIViewSetSkinItem *viewSetSkinItem = (UIViewSetSkinItem *)[_arrViewItem lastObject];
+    NSInteger fileIndex = viewSetSkinItem.tag;
+    BOOL isInternal = YES;
+    if (fileIndex>=_sysItemCount) {
+        fileIndex -= _sysItemCount;
+        isInternal = NO;
+    }
+    
+    // 点击皮肤
+    for (UIViewSetSkinItem *viewSetSkinItemEach in _arrViewItem) {
+        BOOL selected = viewSetSkinItem==viewSetSkinItemEach;
+        viewSetSkinItemEach.selected = selected;
+    }
+    
+    [AppSetting shareAppSetting].skinInfo = (SkinInfo){isInternal, fileIndex};
+    
+    [_delegateSetSkin scrollViewSetSkin:self selectSkinFileIndex:fileIndex isInternal:isInternal];
+}
+
+- (void)removeItemAtIndex:(NSInteger)index
+{
+    NSInteger currIndex = 0;
+    for (UIViewSetSkinItem *viewSetSkin in _arrViewItem) {
+        if (viewSetSkin.selected) {
+            currIndex = viewSetSkin.tag;
+        }
+        if (viewSetSkin.selected && viewSetSkin.tag==index) {
+            [SVProgressHUD showErrorWithStatus:LocalizedString(@"bunengshanchudangqianpifu")];
+            return;
+        }
+    }
+    
+    if (index<currIndex) {
+        // 非内置的才可以删除，所有 为 NO
+        [AppSetting shareAppSetting].skinInfo = (SkinInfo){NO, (currIndex-1-_sysItemCount)};
+    }
+    
+    if ((index+1)>_sysItemCount) {
+        [[NSFileManager defaultManager] removeItemAtPath:_arrSkinImagePath[index] error:nil];
+    }
+    
+    UIViewSetSkinItem *viewIconWebItemWillRemove = _arrViewItem[index];
+    [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
+        _viewSetSkinItemAdd.frame = [(UIViewSetSkinItem *)[_arrViewItem lastObject] frame];
+        for (NSInteger i=_arrViewItem.count-1; i>index; i--) {
+            NSInteger prevIndex = i-1;
+            UIViewSetSkinItem *viewIconWebItemCurr = _arrViewItem[i];
+            UIViewSetSkinItem *viewIconWebItemPrev = _arrViewItem[prevIndex];
+            viewIconWebItemCurr.frame = viewIconWebItemPrev.frame;
+            
+            viewIconWebItemCurr.tag =
+            viewIconWebItemCurr.btnDel.tag = prevIndex;
+            //替换皮肤名
+            viewIconWebItemCurr.labelTitle.text = viewIconWebItemPrev.labelTitle.text;
+        }
+        
+        self.contentSize = CGSizeMake(self.bounds.size.width, _viewSetSkinItemAdd.frame.origin.y+_viewSetSkinItemAdd.bounds.size.height+_paddingTB);
+        
+        viewIconWebItemWillRemove.transform = CGAffineTransformMakeScale(0.001, 0.001);
+        viewIconWebItemWillRemove.alpha = 0;
+        
+        [viewIconWebItemWillRemove.btnDel removeFromSuperview];
+        [_arrViewItem removeObject:viewIconWebItemWillRemove];
+        [_arrSkinImagePath removeObjectAtIndex:index];
+    } completion:^(BOOL finished) {
+        [viewIconWebItemWillRemove removeFromSuperview];
+        if (_arrViewItem.count==_sysItemCount) {
+            self.edit = NO;
+        }
+    }];
+}
+
+- (void)removeItem:(UIViewSetSkinItem *)viewSetSkinItem
+{
+    [self removeItemAtIndex:[_arrViewItem indexOfObject:viewSetSkinItem]];
+}
+
+- (void)removeAll
+{
+    if (_arrViewItem.count>0) {
+        CGRect rcFirst = [(UIView *)_arrViewItem[0] frame];
+        [UIView animateWithDuration:0.3 animations:^{
+            for (UIViewSetSkinItem *viewItem in _arrViewItem) {
+                viewItem.transform = CGAffineTransformMakeScale(0.001, 0.001);
+            }
+            _viewSetSkinItemAdd.frame = rcFirst;
+            
+        } completion:^(BOOL finished) {
+            // 从视图中移除
+            [_arrViewItem makeObjectsPerformSelector:@selector(removeFromSuperview)];
+            self.contentSize = CGSizeMake(self.bounds.size.width, _viewSetSkinItemAdd.frame.origin.y+_viewSetSkinItemAdd.bounds.size.height+_paddingTB);
+        }];
+        
+        [_arrViewItem removeAllObjects];
+        [_arrSkinImagePath removeAllObjects];
+    }
+}
+
+- (void)setupSysSkinImageWithAnimated:(BOOL)animated
+{
+    NSString *dirName = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:kSkinDirName];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELf MATCHES[cd] %@", @"\\w*(?!@2x).jpg"];
+    NSArray *arrFileName = [[fm contentsOfDirectoryAtPath:dirName error:nil] filteredArrayUsingPredicate:predicate];
+    
+    _sysItemCount = arrFileName.count;
+    //生成系统皮肤名称
+    int i = 0;
+    for (NSString *filename in arrFileName) {
+        i++;
+        NSString * sysName = [NSString stringWithFormat:@"%@%d",LocalizedString(@"xitongpifu"),i];
+        [_arrSysSkinName addObject:sysName];
+        
+         NSString *filepath = [dirName stringByAppendingPathComponent:filename];
+        [self addSkinImageWithPath:filepath animated:animated];
+    }
+
+}
+
+- (void)setupCustomSkinImageWithAnimated:(BOOL)animated
+{
+    NSString *dirName = GetDocumentDirAppend(kSkinDirName);
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSArray *arrFileName = [fm contentsOfDirectoryAtPath:dirName error:nil];
+    
+    for (NSString *filename in arrFileName) {
+        NSString *filepath = [dirName stringByAppendingPathComponent:filename];
+        [self addSkinImageWithPath:filepath animated:animated];
+    }
+}
+
+@end

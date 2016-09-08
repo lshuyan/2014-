@@ -1,0 +1,17 @@
+//
+//  UIControllerManuallyAdd.h
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+@class ModelApp;
+@interface UIControllerManuallyAdd : UIControllerBase
+
+@property (nonatomic, strong) void (^manuallyAddDelegate)(ModelApp *);
+
+@property (nonatomic, strong) ModelApp *editApp;
+
+@end

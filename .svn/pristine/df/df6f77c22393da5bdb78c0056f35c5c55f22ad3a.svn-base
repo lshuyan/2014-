@@ -1,0 +1,272 @@
+//
+//  UIControllerLanguage.m
+//  ChinaBrowser
+//
+//  Created by David on 14-9-2.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerLanguage.h"
+
+#import "UIViewNav.h"
+#import "BlockUI.h"
+
+@interface UIControllerLanguage () <UITableViewDataSource, UITableViewDelegate>
+
+@end
+
+@implementation UIControllerLanguage
+{
+    NSArray *_arrLan;
+    
+    UIViewNav *_viewNav;
+    __weak IBOutlet UITableView *_tableView;
+    
+    
+    BOOL _followSystem;
+    NSString *_currLan;
+    
+    NSInteger _selectRow;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    if (IsiOS7) {
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+    }
+    
+    _tableView.backgroundColor = [UIColor whiteColor];
+    
+    _followSystem = [LocalizationUtil followSysLan];
+    _currLan = [LocalizationUtil currLanguage];
+    
+    _arrLan = [NSArray arrayWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"lan_localizable" ofType:@"plist"]];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"self.enable = true"];
+    _arrLan = [_arrLan filteredArrayUsingPredicate:predicate];
+    
+    if (_followSystem) {
+        _selectRow = 0;
+    }
+    else {
+        [_arrLan enumerateObjectsUsingBlock:^(NSDictionary *dicLan, NSUInteger idx, BOOL *stop) {
+            if ([[LocalizationUtil appLanguage] isEqualToString:dicLan[@"lan"]]) {
+                _selectRow = idx+1;
+                *stop = YES;
+            }
+        }];
+    }
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSIndexPath *indexPathSelect = [NSIndexPath indexPathForRow:_selectRow inSection:0];
+        UITableViewCell *cell = [_tableView cellForRowAtIndexPath:indexPathSelect];
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+    });
+    
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    [self updateByLanguage];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+#pragma mark - private methods
+- (void)onTouchCancel
+{
+    [LocalizationUtil setAppLanguage:_currLan];
+    [LocalizationUtil setFollowSysLan:_followSystem];
+    
+    [self dismiss];
+}
+
+- (void)onTouchOk
+{
+    // 判断语言是否有修改
+    NSString *lan = [LocalizationUtil currLanguage];
+    if (![lan isEqualToString:_currLan]) {
+        if ([UserManager shareUserManager].currUser) {
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:LocalizedString(@"jinggao") message:LocalizedString(@"qiehuanyuyan_quedingqiehuan") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"queding"), nil];
+            [alert showWithCompletionHandler:^(NSInteger buttonIndex) {
+                if (buttonIndex==alert.cancelButtonIndex) {
+                    return;
+                }
+                
+                // 切换账号
+                [UserManager shareUserManager].currUser = nil;
+                
+                // 发出 切换 语言通知
+                NSDictionary *userInfo = @{kUserInfoCurrLanguage:lan,
+                                           kUserInfoFollowSystemLanguage:[NSNumber numberWithBool:[LocalizationUtil followSysLan]]};
+                [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationDidChangedAppLan object:nil userInfo:userInfo];
+                
+                [self dismiss];
+            }];
+        }
+        else {
+            // 发出 切换 语言通知
+            NSDictionary *userInfo = @{kUserInfoCurrLanguage:lan,
+                                       kUserInfoFollowSystemLanguage:[NSNumber numberWithBool:[LocalizationUtil followSysLan]]};
+            [[NSNotificationCenter defaultCenter] postNotificationName:kNotificationDidChangedAppLan object:nil userInfo:userInfo];
+            
+            [self dismiss];
+        }
+        
+    }
+    else {
+        [self dismiss];
+    }
+}
+
+- (void)dismiss
+{
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }
+    else {
+        [self dismissModalViewControllerAnimated:YES];
+    }
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _arrLan.count+1;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"UICell"];
+    if (!cell) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"UICell"];
+        
+        cell.textLabel.font = [UIFont systemFontOfSize:14];
+        cell.textLabel.textColor = [UIColor colorWithWhite:0.1 alpha:1];
+        
+        UIView *view = [[UIView alloc] init];
+        view.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
+        cell.selectedBackgroundView = view;
+        
+        
+        
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+    }
+    
+    if (indexPath.row==0) {
+        cell.textLabel.text = LocalizedString(@"gensuixitongyuyan");
+    }
+    else {
+        NSString *name = _arrLan[indexPath.row-1][@"name"];
+        cell.textLabel.text = name;
+    }
+    
+    if (indexPath.row==_selectRow) {
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+    }
+    else {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
+    
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    cell.backgroundColor = [UIColor clearColor];
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (indexPath.row==_selectRow) {
+        return;
+    }
+    if (indexPath.row==0) {
+        [LocalizationUtil setFollowSysLan:YES];
+    }
+    else {
+        [LocalizationUtil setFollowSysLan:NO];
+        NSString *lan = _arrLan[indexPath.row-1][@"lan"];
+        [LocalizationUtil setAppLanguage:lan];
+    }
+    
+    [self updateByLanguage];
+    
+    UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:_selectRow inSection:0]];
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    
+    cell = [_tableView cellForRowAtIndexPath:indexPath];
+    cell.accessoryType = UITableViewCellAccessoryCheckmark;
+    _selectRow = indexPath.row;
+    
+}
+
+#pragma mark - AppLanguageProtocol
+- (void)updateByLanguage
+{
+    UIButton *btnLeft = [[UIButton alloc] init];
+    [btnLeft addTarget:self action:@selector(onTouchCancel) forControlEvents:UIControlEventTouchUpInside];
+    [btnLeft setTitle:[NSString stringWithFormat:@"%@", LocalizedString(@"quxiao")] forState:UIControlStateNormal];
+    [btnLeft sizeToFit];
+    [btnLeft setTitleColor:[UIColor colorWithWhite:1 alpha:1] forState:UIControlStateNormal];
+    [btnLeft setTitleColor:[UIColor colorWithWhite:0.6 alpha:1] forState:UIControlStateHighlighted];
+    
+    UIButton *btnRight = [[UIButton alloc] init];
+    [btnRight addTarget:self action:@selector(onTouchOk) forControlEvents:UIControlEventTouchUpInside];
+    [btnRight setTitle:[NSString stringWithFormat:@"%@", LocalizedString(@"queding")] forState:UIControlStateNormal];
+    [btnRight sizeToFit];
+    [btnRight setTitleColor:[UIColor colorWithWhite:1 alpha:1] forState:UIControlStateNormal];
+    [btnRight setTitleColor:[UIColor colorWithWhite:0.6 alpha:1] forState:UIControlStateHighlighted];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnLeft];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnRight];
+    _viewNav.title = LocalizedString(@"yuyanshezhi");
+    
+    NSArray *arrVisible = [_tableView indexPathsForVisibleRows];
+    [arrVisible enumerateObjectsUsingBlock:^(NSIndexPath *indexpath, NSUInteger idx, BOOL *stop) {
+        if (indexpath.row==0) {
+            UITableViewCell *cell = [_tableView cellForRowAtIndexPath:indexpath];
+            cell.textLabel.text = LocalizedString(@"gensuixitongyuyan");
+            *stop = YES;
+        }
+    }];
+}
+
+@end

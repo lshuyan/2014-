@@ -1,0 +1,149 @@
+//
+//  UIControllerPlayer.m
+//  ChinaBrowser
+//
+//  Created by David on 14-10-18.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerPlayer.h"
+
+#import "UINavigationBarCustom.h"
+#import <MediaPlayer/MediaPlayer.h>
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+
+@interface UIControllerPlayer ()
+{
+    UINavigationBarCustom *_navBar;
+    MPMoviePlayerController *_moviePlayer;
+    UIImageView *_imageViewLoading;
+}
+
+@end
+
+@implementation UIControllerPlayer
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(playerLoadStateDidChangeNotification:)
+                                                 name:MPMoviePlayerLoadStateDidChangeNotification
+                                               object:nil];
+    
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    
+    _DEBUG_LOG(@"%@", _url);
+    _DEBUG_LOG(@"%@", _thumb);
+    
+    CGRect rc = self.view.bounds;
+    rc.size.height = 44;
+    _navBar = [[UINavigationBarCustom alloc] initWithFrame:rc];
+    _navBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [self.view addSubview:_navBar];
+    
+    _moviePlayer = [[MPMoviePlayerController alloc] init];
+    _moviePlayer.scalingMode = MPMovieScalingModeAspectFit;
+    _moviePlayer.view.frame = self.view.bounds;//CGRectInset(self.view.bounds, 20, 20);
+    _moviePlayer.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    _moviePlayer.allowsAirPlay = NO;
+    _moviePlayer.shouldAutoplay = YES;
+    _moviePlayer.repeatMode = MPMovieRepeatModeOne;
+    _moviePlayer.movieSourceType = MPMovieSourceTypeStreaming;
+    [self.view insertSubview:_moviePlayer.view belowSubview:_navBar];
+    _moviePlayer.contentURL = [NSURL URLWithString:_url];
+
+    UINavigationItem *navItem = [[UINavigationItem alloc] init];
+    [_navBar pushNavigationItem:navItem animated:NO];
+    
+    _navBar.topItem.title = self.title;
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"guanbi") style:UIBarButtonItemStylePlain target:self action:@selector(onTouchClose)];
+    
+    _imageViewLoading = [[UIImageView alloc] initWithFrame:self.view.bounds];
+    _imageViewLoading.backgroundColor = [UIColor blackColor];
+    _imageViewLoading.autoresizingMask = UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth;
+    _imageViewLoading.contentMode = UIViewContentModeScaleAspectFit;
+    [_imageViewLoading setImageWithURL:[NSURL URLWithString:_thumb] usingActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+    [self.view insertSubview:_imageViewLoading belowSubview:_navBar];
+    
+    [_moviePlayer prepareToPlay];
+    
+    [self layoutSubViewsWithInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - private methods
+- (void)onTouchClose
+{
+    [_moviePlayer stop];
+    [self dismissModalViewControllerAnimated:YES];
+    
+    if ([UIApplication sharedApplication].statusBarHidden) {
+        [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    }
+    
+    if (IsiPad) {
+        [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    }
+}
+
+- (void)playerLoadStateDidChangeNotification:(NSNotification *)notification
+{
+    if ((MPMovieLoadStatePlayable|MPMovieLoadStatePlaythroughOK)==_moviePlayer.loadState) {
+        _imageViewLoading.alpha = 0;
+    }
+    _DEBUG_LOG(@"%s:%d:%d", __FUNCTION__, _moviePlayer.loadState, _moviePlayer.playbackState);
+}
+
+#pragma mark - rotate
+- (BOOL)shouldAutorotate
+{
+    return NO;
+}
+
+- (NSUInteger)supportedInterfaceOrientations
+{
+    return UIInterfaceOrientationMaskLandscape;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
+{
+    return UIInterfaceOrientationIsLandscape(toInterfaceOrientation);
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (IsiPad) return;
+    
+    CGRect rc = _navBar.frame;
+    if (IsiOS7) {
+        if (![UIApplication sharedApplication].statusBarHidden) {
+            rc.origin.y = 20;
+        }
+    }
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    _navBar.frame = rc;
+}
+
+@end

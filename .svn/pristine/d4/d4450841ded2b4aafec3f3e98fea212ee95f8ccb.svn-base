@@ -1,0 +1,23 @@
+//
+//  ModelBase.h
+//  ChinaBrowser
+//
+//  Created by David on 14/10/29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface ModelBase : NSObject <NSCoding>
+
++ (instancetype)model;
++ (instancetype)modelWithDict:(NSDictionary *)dict;
+- (instancetype)initWithDict:(NSDictionary *)dict;
+
++ (instancetype)modelWithResultSetDict:(NSDictionary *)dict;
+- (instancetype)initWithResultSetDict:(NSDictionary *)dict;
+
++ (NSData *)dataWithModel:(ModelBase *)model;
++ (instancetype)modelWithData:(NSData *)data;
+
+@end

@@ -1,0 +1,43 @@
+//
+//  UIViewBanner.h
+//  DailyHeadlines
+//
+//  Created by David on 2011-12-16.
+//  Copyright 2011年 com.veryapps. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+#import "UIViewBannerDelegate.h"
+#import "SMPageControl.h"
+
+@interface UIScrollViewBanner : UIScrollView
+
+@end
+
+@interface UIViewBanner : UIView <UIScrollViewDelegate> {
+    UIScrollViewBanner *_scrollView;
+    SMPageControl *_pageControl;
+    
+    NSArray *_arrBanner;
+    
+    NSMutableArray *_arrBannerItems;
+    
+    NSInteger _currIndex;
+    NSInteger _pageCount;
+    
+    // 自动滚动 相关
+    NSTimer *_timerScroll;  // 自动滚动定时器器
+}
+
+@property (nonatomic, assign) id<UIViewBannerDelegate> delegate;
+@property (nonatomic, assign) BOOL shouldShowCloseBtn;
+@property (nonatomic, assign) BOOL shouldShowPageControl;
+@property (nonatomic, assign) UIViewContentMode viewContentMode;
+
+- (void)startAutoScroll:(NSTimeInterval)tiScroll;
+- (void)stopAutoScroll;
+
+- (void)setArrBanner:(NSArray *)arrBanner;
+
+@end

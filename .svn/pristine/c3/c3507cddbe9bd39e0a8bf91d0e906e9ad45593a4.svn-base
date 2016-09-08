@@ -1,0 +1,43 @@
+//
+//  UIScrollViewApp.h
+//  ChinaBrowser
+//
+//  Created by David on 14-9-29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+#import "AppLanguageProtocol.h"
+
+@class ModelApp;
+
+@protocol UIScrollViewAppDelegate;
+
+@interface UIScrollViewApp : UIScrollView <AppLanguageProtocol>
+
+@property (nonatomic, weak) IBOutlet id<UIScrollViewAppDelegate> delegateApps;
+
+/**
+ *  编辑状态，外部修改edit会触发 应用屏 编辑状态协议；外部许谨慎修改此属性值
+ */
+@property (nonatomic, assign) BOOL edit;
+
+/**
+ *  添加一个自定义App到UI
+ *
+ *  @param model    App 实体对象
+ *  @param animated 是否动画
+ */
+- (void)addAppWithModel:(ModelApp *)model animated:(BOOL)animated;
+
+@end
+
+@protocol UIScrollViewAppDelegate <NSObject>
+
+- (void)scrollViewApp:(UIScrollViewApp *)scrollViewApp reqLink:(NSString *)link;
+- (void)scrollViewApp:(UIScrollViewApp *)scrollViewApp edit:(BOOL)edit;
+- (void)scrollViewAppWillAddItem:(UIScrollViewApp *)scrollViewApp;
+- (void)scrollViewApp:(UIScrollViewApp *)scrollViewApp willEditItem:(ModelApp *)model;
+
+@end

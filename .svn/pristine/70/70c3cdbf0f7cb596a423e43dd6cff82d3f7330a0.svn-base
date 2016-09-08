@@ -1,0 +1,440 @@
+//
+//  UIViewFMPlayer.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/19.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIViewFMPlayer.h"
+
+#import "ModelModeProgram.h"
+#import "ModelProgram.h"
+
+#import "ModelPlayItem.h"
+
+#import "ADOModeProgram.h"
+
+#import "BlockUI.h"
+
+#import "CBAudioPlayer.h"
+
+@interface UIViewFMPlayer ()
+{
+    IBOutlet UIImageView *_imageViewBgPlayer;
+    IBOutlet UIView *_viewContentPlayer;
+    IBOutlet UIImageView *_imageViewWave;
+    IBOutlet UIButton *_btnAdd;
+    
+    UIImageView *_bgFM;
+    IBOutlet UILabel *_labelFM;
+    IBOutlet UILabel *_labelTitle;
+    IBOutlet UILabel *_labelNextTitle;
+    IBOutlet UILabel *_labelTime;
+    IBOutlet UIButton *_btnPlayPause;
+    
+    // 当前模式 节目列表 计时器
+    NSTimer *_timerPList;
+    // 选择 播放的 模式id
+    NSInteger _modePkid;
+    ModelModeProgram *_modeProgramAlertTmp;
+    ModelModeProgram *_modeProgramCurr;
+    ModelModeProgram *_modeProgramNext;
+    NSArray *_arrModeProgram;
+    NSLock *_lockPList;
+    
+    NSTimer *_timerWave;
+    NSArray *_arrWaveImage;
+    NSInteger _iWaveIndex;
+}
+
+@end
+
+@implementation UIViewFMPlayer
+
+#pragma mark - instance
++ (instancetype)viewFromXib
+{
+    return [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:nil options:nil][0];
+}
+
+- (void)dealloc
+{
+    [[CBAudioPlayer player] removeObserver:self forKeyPath:@"playbackState"];
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(playerPlaybackStateDidChangeNotification:)
+                                                 name:MPMoviePlayerPlaybackStateDidChangeNotification
+                                               object:nil];
+    
+    _modeProgramNext = nil;
+    
+    NSMutableArray *arrImage = [NSMutableArray arrayWithCapacity:24];;
+    for (NSInteger i=1; i<=24; i++) {
+        [arrImage addObject:[UIImage imageWithBundleFile:[NSString stringWithFormat:@"iPhone/FM/wave_%d.png", i]]];
+    }
+    _arrWaveImage = arrImage;
+    _imageViewWave.image = _arrWaveImage[0];
+    
+    _imageViewBgPlayer.image = [UIImage imageWithBundleFile:@"iPhone/FM/bg_player.png"];
+    
+    [_btnAdd setImage:[UIImage imageWithBundleFile:@"iPhone/FM/add_0.png"] forState:UIControlStateNormal];
+    [_btnAdd setImage:[UIImage imageWithBundleFile:@"iPhone/FM/add_1.png"] forState:UIControlStateHighlighted];
+    
+    [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_0.png"] forState:UIControlStateNormal];
+    [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_1.png"] forState:UIControlStateHighlighted];
+    
+    _labelFM.textColor = [UIColor grayColor];
+    _bgFM = [[UIImageView alloc] initWithImage:[[UIImage imageWithBundleFile:@"iPhone/FM/bg_fm_0.png"] stretchableImageWithLeftCapWidth:14 topCapHeight:10]];
+    [_viewContentPlayer insertSubview:_bgFM belowSubview:_labelFM];
+    
+    CAShapeLayer *mask = [CAShapeLayer layer];
+    mask.frame = _viewContentPlayer.bounds;
+    mask.path = [UIBezierPath bezierPathWithRoundedRect:_viewContentPlayer.bounds cornerRadius:MIN(_viewContentPlayer.width, _viewContentPlayer.height)/2].CGPath;
+    _viewContentPlayer.layer.mask = mask;
+    
+    // 开启计时器
+    _lockPList = [[NSLock alloc] init];
+    _timerPList = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(checkPlayList) userInfo:nil repeats:YES];;
+    [[NSRunLoop currentRunLoop] addTimer:_timerPList forMode:NSRunLoopCommonModes];
+    
+    [self updatePlayState];
+}
+
+- (void)playerPlaybackStateDidChangeNotification:(NSNotification *)notification
+{
+    _DEBUG_LOG(@"%s===state:%d", __FUNCTION__, [CBAudioPlayer player].playbackState);
+    
+    [self updatePlayState];
+}
+
+// ------------------- 波形图 begin
+/**
+ *  开始波形图动画
+ */
+- (void)startWaveAnimation
+{
+    _timerWave = [NSTimer scheduledTimerWithTimeInterval:0.08 target:self selector:@selector(waveAnimating) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_timerWave forMode:NSRunLoopCommonModes];
+}
+
+/**
+ *  停止波形图动画
+ */
+- (void)stopWaveAnimation
+{
+    [_timerWave invalidate];
+    _timerWave = nil;
+}
+
+- (void)waveAnimating
+{
+    _iWaveIndex++;
+    if (_iWaveIndex>=_arrWaveImage.count) {
+        _iWaveIndex = 0;
+    }
+    _imageViewWave.image = _arrWaveImage[_iWaveIndex];
+}
+// ----------------- 波形图 end
+
+#pragma mark - private methods
+/**
+ *  添加 模式 事件
+ */
+- (IBAction)onTouchAdd
+{
+    if (_callbackWillAdd) {
+        _callbackWillAdd();
+    }
+}
+
+/**
+ *  播放 或 暂停
+ */
+- (IBAction)onTouchPlayOrPause
+{
+    if ([CBAudioPlayer isPlaying]) {
+        [CBAudioPlayer pause];
+    }
+    else {
+        [CBAudioPlayer play];
+    }
+    
+    if ([CBAudioPlayer isPlaying]) {
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/stop_0.png"] forState:UIControlStateNormal];
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/stop_1.png"] forState:UIControlStateHighlighted];
+    }
+    else {
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_0.png"] forState:UIControlStateNormal];
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_1.png"] forState:UIControlStateHighlighted];
+    }
+}
+
+/**
+ *  检查播放列表，并更新时间
+ */
+- (void)checkPlayList
+{
+    NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSHourCalendarUnit|NSMinuteCalendarUnit|NSSecondCalendarUnit fromDate:[NSDate date]];
+    NSInteger timestmp = dateComp.hour*3600+dateComp.minute*60+dateComp.second;
+    
+    _labelTime.text = [NSString stringWithFormat:@"%02d:%02d:%02d", dateComp.hour, dateComp.minute, dateComp.second];
+    
+    [self findNextModeProgramWithTime:timestmp];
+    
+    // ------- 下面开始查找当前节目
+    if (_modeProgramAlertTmp) return;
+    
+    _modeProgramAlertTmp = [self findCurrentModeProgramWithTime:timestmp];
+    
+    // ---------- 如果找到了提醒内容，提醒用户 选择 提醒操作
+    if (!_modeProgramAlertTmp) return;
+    
+    if (ProgramSrcTypeFM==_modeProgramAlertTmp.modelProgram.srcType
+        &&![CBAudioPlayer isPlaying]) {
+        _modeProgramCurr = _modeProgramAlertTmp;
+        [CBAudioPlayer player].playItem = [ModelPlayItem modelWithTitle:_modeProgramCurr.modelProgram.title
+                                                                   link:_modeProgramCurr.modelProgram.link
+                                                                     fm:_modeProgramCurr.modelProgram.fm
+                                                                   icon:nil];
+        [self updatePlayState];
+    }
+    
+    NSString *title = nil;
+    NSString *btnTitle = nil;
+    switch (_modeProgramAlertTmp.modelProgram.srcType) {
+        case ProgramSrcTypeFM:
+        {
+            title = [NSString stringWithFormat:@"您订阅的 %@ 即将开始，是否收听？", _modeProgramAlertTmp.modelProgram.title];
+            btnTitle = LocalizedString(@"shouting");
+        }break;
+        case ProgramSrcTypeRecommendCate:
+        {
+            title = [NSString stringWithFormat:@"您订阅的 %@ 时间已到，是否阅读", _modeProgramAlertTmp.modelProgram.title];
+            btnTitle = LocalizedString(@"yuedu");
+        }break;
+        case ProgramSrcTypeWeb:
+        {
+            title = [NSString stringWithFormat:@"您订阅的 %@ 时间已到，是否阅读", _modeProgramAlertTmp.modelProgram.title];
+            btnTitle = LocalizedString(@"yuedu");
+        }break;
+            
+        default:
+            break;
+    }
+    
+    // 到点提醒 是否收听 电台，阅读新闻，或 访问网站
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:title delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:btnTitle otherButtonTitles:nil];
+    UIView *showView = ((UIWindow *)[[UIApplication sharedApplication] windows][0]).rootViewController.view;
+    [actionSheet showInView:showView withCompletionHandler:^(NSInteger buttonIndex) {
+        if (buttonIndex==actionSheet.cancelButtonIndex) {
+            _modeProgramAlertTmp = nil;
+            return;
+        }
+        
+        switch (_modeProgramAlertTmp.modelProgram.srcType) {
+            case ProgramSrcTypeFM:
+            {
+                // 电台才 设置 成当前播放的
+                _modeProgramCurr = _modeProgramAlertTmp;
+                [CBAudioPlayer playWithItem:[ModelPlayItem modelWithTitle:_modeProgramCurr.modelProgram.title
+                                                                     link:_modeProgramCurr.modelProgram.link
+                                                                       fm:_modeProgramCurr.modelProgram.fm
+                                                                     icon:nil]];
+            }break;
+            case ProgramSrcTypeRecommendCate:
+            {
+#warning TODO:控制App从任何界面回到主界面的 新闻列表 界面
+                
+            }break;
+            case ProgramSrcTypeWeb:
+            {
+#warning TODO:控制App从任何界面回 主界面 浏览网页
+                
+            }break;
+            default:
+                break;
+        }
+        
+        _modeProgramAlertTmp = nil;
+    }];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kReminderActionDuration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // 超过规定时间还没做出选择，App 会关掉提醒视图
+        [actionSheet dismissWithClickedButtonIndex:actionSheet.cancelButtonIndex animated:YES];
+        _modeProgramAlertTmp = nil;
+    });
+}
+
+- (ModelModeProgram *)findCurrentModeProgramWithTime:(NSInteger)time
+{
+    ModelModeProgram *modelAlertTmp = nil;
+    if (_arrModeProgram.count>0) {
+        [_lockPList lock];
+        for (ModelModeProgram *modeProgram in _arrModeProgram) {
+            if (time==modeProgram.time) {
+                modelAlertTmp = modeProgram;
+                break;
+            }
+        }
+        [_lockPList unlock];
+    }
+    return modelAlertTmp;
+}
+
+- (void)findNextModeProgramWithTime:(NSInteger)time
+{
+    [_lockPList lock];
+    ModelModeProgram *modelModeProgramNext = nil;
+    
+    if (_modeProgramCurr) {
+        NSInteger indexBegin = [_arrModeProgram indexOfObject:_modeProgramCurr]+1;
+        for (NSInteger i=indexBegin; i<_arrModeProgram.count; i++) {
+            ModelModeProgram *modeProgram = _arrModeProgram[i];
+            if (ProgramSrcTypeFM==modeProgram.modelProgram.srcType) {
+                modelModeProgramNext = modeProgram;
+                break;
+            }
+        }
+    }
+    else {
+        for (NSInteger i=0; i<_arrModeProgram.count; i++) {
+            ModelModeProgram *modeProgram = _arrModeProgram[i];
+            if (ProgramSrcTypeFM==modeProgram.modelProgram.srcType && modeProgram.time>time) {
+                modelModeProgramNext = modeProgram;
+                break;
+            }
+        }
+    }
+    
+    if (modelModeProgramNext) {
+        if (modelModeProgramNext!=_modeProgramNext) {
+            _labelNextTitle.text = [NSString stringWithFormat:@"%@: %@", LocalizedString(@"xiayijiemuyugao"), modelModeProgramNext.modelProgram.title];
+        }
+    }
+    else {
+        _labelNextTitle.text = [NSString stringWithFormat:@"%@: %@", LocalizedString(@"xiayijiemuyugao"), LocalizedString(@"zanwujiemu")];
+    }
+    
+    _modeProgramNext = modelModeProgramNext;
+    
+    [_lockPList unlock];
+    
+}
+
+/**
+ *  更新播放状态
+ */
+- (void)updatePlayState
+{
+    ModelPlayItem *playItem = [CBAudioPlayer player].playItem;
+    
+    if (playItem) {
+        if (playItem.fm.length>0) {
+            _bgFM.hidden = NO;
+            _labelFM.hidden = NO;
+            
+            _labelFM.text = playItem.fm;
+        }
+        else {
+            _bgFM.hidden =
+            _labelFM.hidden = YES;
+        }
+        
+        _labelTitle.text = playItem.title;
+        if (_modeProgramNext) {
+            _labelNextTitle.text = [NSString stringWithFormat:@"%@: %@", LocalizedString(@"xiayijiemuyugao"), _modeProgramNext.modelProgram.title];
+        }
+        else {
+            _labelNextTitle.text = [NSString stringWithFormat:@"%@: %@", LocalizedString(@"xiayijiemuyugao"), LocalizedString(@"zanwujiemu")];
+        }
+        
+        // 如果现实 FM 频道，则需要重新调整布局
+        if (!_bgFM.hidden) {
+            CGFloat fY = _labelFM.top;
+            CGFloat fH = _labelFM.height;
+            [_labelFM sizeToFit];
+            CGRect rc = _labelFM.frame;
+            rc.size.height = fH;
+            rc.size.width = MIN(_labelFM.width, 100);
+            rc.origin.y = fY;
+            rc.origin.x = (_viewContentPlayer.width-rc.size.width)*0.5;
+            _labelFM.frame = rc;
+            _bgFM.frame = CGRectOffset(CGRectIntegral(CGRectInset(_labelFM.frame, -5, (_labelFM.height-_bgFM.height)*0.5)), 0, 1);
+        }
+    }
+    else {
+        _labelTitle.text = LocalizedString(@"zanwujiemu");
+        _labelNextTitle.text = [NSString stringWithFormat:@"%@: %@", LocalizedString(@"xiayijiemuyugao"), LocalizedString(@"zanwujiemu")];
+        
+        _bgFM.hidden =
+        _labelFM.hidden = YES;
+    }
+    
+    if ([CBAudioPlayer isPlaying]) {
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/stop_0.png"] forState:UIControlStateNormal];
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/stop_1.png"] forState:UIControlStateHighlighted];
+        
+        [self startWaveAnimation];
+    }
+    else {
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_0.png"] forState:UIControlStateNormal];
+        [_btnPlayPause setImage:[UIImage imageWithBundleFile:@"iPhone/FM/play_1.png"] forState:UIControlStateHighlighted];
+        
+        [self stopWaveAnimation];
+    }
+}
+
+#pragma mark - public methods
+- (void)setModePkid:(NSInteger)modePkid
+{
+    if (_modePkid!=modePkid) {
+        _modeProgramNext = nil;
+    }
+    
+    _modePkid = modePkid;
+    
+    [_lockPList lock];
+    _arrModeProgram = nil;
+    
+    NSArray *arrRepeat = @[@(RemindRepeatMode0),
+                           @(RemindRepeatMode1),
+                           @(RemindRepeatMode2),
+                           @(RemindRepeatMode3),
+                           @(RemindRepeatMode4),
+                           @(RemindRepeatMode5),
+                           @(RemindRepeatMode6)];
+    NSDateComponents *comp = [[NSCalendar currentCalendar] components:NSWeekdayCalendarUnit fromDate:[NSDate date]];
+    _arrModeProgram = [ADOModeProgram queryWithModePkid:_modePkid on:YES repeat:[arrRepeat[comp.weekday-1] integerValue]];
+    [_lockPList unlock];
+    
+    // 查找下一个节目
+    NSDateComponents *dateComp = [[NSCalendar currentCalendar] components:NSHourCalendarUnit|NSMinuteCalendarUnit|NSSecondCalendarUnit fromDate:[NSDate date]];
+    NSInteger timestmp = dateComp.hour*3600+dateComp.minute*60+dateComp.second;
+    [self findNextModeProgramWithTime:timestmp];
+}
+
+/**
+ *  即将更新节目列表
+ *
+ *  @param modePkid
+ */
+- (void)updatePListIfNeedWithModePkid:(NSInteger)modePkid
+{
+    if (modePkid==_modePkid) {
+        [self setModePkid:modePkid];
+    }
+}
+
+#pragma mark - AppLanguageProtocol
+- (void)updateByLanguage
+{
+    [self updatePlayState];
+}
+
+@end

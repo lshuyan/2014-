@@ -1,0 +1,152 @@
+//
+//  UIControllerProgramList.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/27.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerProgramList.h"
+
+#import "UIViewNav.h"
+#import "ModelProgram.h"
+
+@interface UIControllerProgramList () <UITableViewDataSource, UITableViewDelegate>
+{
+    UIViewNav *_viewNav;
+    UIButton *_btnFM;
+    UIButton *_btnNews;
+    
+    IBOutlet UITableView *_tabelView;
+}
+
+@end
+
+@implementation UIControllerProgramList
+
+#pragma mark - property
+- (void)setSelectProgramServerId:(NSInteger)selectProgramServerId
+{
+    _selectProgramServerId = selectProgramServerId;
+}
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    _viewNav = [UIViewNav viewNav];
+    {
+        UIView *titleView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 140, 24)];
+        titleView.backgroundColor = [UIColor clearColor];
+        
+        _btnFM = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, titleView.width/2, titleView.height)];
+        [_btnFM setTitle:LocalizedString(@"diantai") forState:UIControlStateNormal];
+        _btnFM.titleLabel.font = [UIFont systemFontOfSize:15];
+        [_btnFM setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [_btnFM setTitleColor:[UIColor blackColor] forState:UIControlStateDisabled];
+        [_btnFM setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/segment_left_0.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateNormal];
+        [_btnFM setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/segment_left_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateHighlighted];
+        [_btnFM setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/segment_left_2.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateDisabled];
+        [_btnFM addTarget:self action:@selector(onTouchFM) forControlEvents:UIControlEventTouchUpInside];
+        
+        _btnNews = [[UIButton alloc] initWithFrame:CGRectMake(_btnFM.right, _btnFM.top, _btnFM.width, _btnFM.height)];
+        _btnNews.titleLabel.font = [UIFont systemFontOfSize:15];
+        [_btnNews setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [_btnNews setTitleColor:[UIColor blackColor] forState:UIControlStateDisabled];
+        [_btnNews setTitle:LocalizedString(@"zixun") forState:UIControlStateNormal];
+        [_btnNews setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/segment_right_0.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateNormal];
+        [_btnNews setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/segment_right_1.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateHighlighted];
+        [_btnNews setBackgroundImage:[[UIImage imageWithBundleFile:@"iPhone/segment_right_2.png"] stretchableImageWithLeftCapWidth:10 topCapHeight:10] forState:UIControlStateDisabled];
+        [_btnNews addTarget:self action:@selector(onTouchNews) forControlEvents:UIControlEventTouchUpInside];
+        
+        [titleView addSubview:_btnFM];
+        [titleView addSubview:_btnNews];
+        
+        _viewNav.titleView = titleView;
+    }
+    
+    {
+        UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+        [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+        [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+        [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+        [btnBack sizeToFit];
+        _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    }
+    [self.view addSubview:_viewNav];
+    
+    [self onTouchFM];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = CGRectMake(0, _viewNav.bottom, self.view.width, self.view.height-_viewNav.bottom);
+    _tabelView.frame = rc;
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    if (_callbackSelectProgram) {
+        _callbackSelectProgram(nil);
+    }
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)onTouchFM
+{
+    _btnFM.enabled = NO;
+    _btnNews.enabled = YES;
+}
+
+- (void)onTouchNews
+{
+    _btnNews.enabled = NO;
+    _btnFM.enabled = YES;
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 0;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    return nil;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return nil;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [_tabelView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+@end

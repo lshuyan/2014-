@@ -1,0 +1,136 @@
+//
+//  DatabaseUtil.m
+//  ChinaBrowser
+//
+//  Created by David on 12-7-24.
+//  Copyright (c) 2012年 KOTO Inc. All rights reserved.
+//
+
+#import "DatabaseUtil.h"
+#import <sqlite3.h>
+
+/**
+ *  --------------------------------
+ *  巨大更新 重新设计数据库，Model，ADO，支持同步操作，部分ADO还未实现同步支持
+ *  巨大更新 重新设计数据库，Model，ADO，支持同步操作，部分ADO还未实现同步支持
+ *  巨大更新 重新设计数据库，Model，ADO，支持同步操作，部分ADO还未实现同步支持
+ *  巨大更新 重新设计数据库，Model，ADO，支持同步操作，部分ADO还未实现同步支持
+ *  --------------------------------
+ */
+@implementation DatabaseUtil
+
++ (void)createDatabase {
+    void (^newDB)()=^{
+        char * error = nil;
+        sqlite3 *db = nil;
+        
+        // 新闻阅读状态
+        char *sql_news_status = "create table if not exists tab_news_status ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "newsid integer,"
+        "status integer default 0)";
+        
+        // 搜索历史记录
+        char *sql_search_history = "create table if not exists tab_search_history ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "keyword text)";
+        
+        // 用户设置
+        char *sql_user_settings = "create table if not exists tab_user_settings ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        "user_id integer default 0,"
+        
+        "sync_bookmark integer default 0,"
+        "sync_lastvisit integer default 0,"
+        "sync_reminder integer default 0)";
+        
+        // 应用
+        char *sql_app = "create table if not exists tab_app ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        "user_id integer default 0,"
+        
+        "app_type integer,"
+        "name text,"
+        "icon text,"
+        "link text,"
+        "url_schemes text,"
+        "package text,"
+        "download_link text,"
+        "sort_index integer)";
+        
+        // 书签
+        char *sql_bookmark = "create table if not exists tab_bookmark ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        "user_id integer default 0,"
+        
+        "parent_pkid integer default 0,"
+        "sort integer default 0,"
+        "title text,"
+        "link text,"
+        "icon text,"
+        "is_folder integer default 0,"
+        "can_edit integer default 0)";
+        
+        // 历史
+        char *sql_history = "create table if not exists tab_history ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        "user_id integer default 0,"
+        
+        "title text,"
+        "link text,"
+        "icon text,"
+        "time integer default 0,"
+        "times integer default 0)";
+        
+        // 模式表
+        char *sql_mode = "create table if not exists tab_mode ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        "user_id integer default 0,"
+        
+        "name text,"
+        "sys_recommend integer)";
+        
+        // 节目表
+        char *sql_program = "create table if not exists tab_program ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        
+        "type integer default 0,"
+        "title text,"
+        "link text,"
+        "fm text,"
+        "recommend_catid integer default 0)";
+        
+        // 模式-节目表
+        char *sql_mode_program = "create table if not exists tab_mode_program ("
+        "pkid integer not null primary key autoincrement default 1,"
+        "pkid_server integer default 0,"
+        
+        "mode_pkid_server integer default 0,"
+        "program_pkid_server integer default 0,"
+        "time integer default 0,"
+        "repeat integer default 0,"
+        "on integer default 0)";
+        
+        char * arrSql[] = {sql_app, sql_search_history, sql_history, sql_bookmark, sql_news_status, sql_user_settings, sql_mode, sql_program, sql_mode_program};
+        int nSql = sizeof(arrSql)/sizeof(char*);
+        
+        if (SQLITE_OK == sqlite3_open([GetDBPathWithName(DB_NAME) UTF8String], &db)) {
+            for (int i=0; i<nSql; i++) {
+                sqlite3_exec(db, arrSql[i], NULL, NULL, &error);
+            }
+        }
+        
+        if (error) sqlite3_free(error);
+        if (db) sqlite3_close(db);
+    };
+    
+    newDB();
+}
+
+@end

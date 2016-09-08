@@ -1,0 +1,54 @@
+//
+//  ModelBookmark.h
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/8.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelBase.h"
+
+@interface ModelBookmark : ModelBase
+
+/**
+ *  唯一ID
+ */
+@property (nonatomic, assign) NSInteger pkid;
+/**
+ *  父id
+ */
+@property (nonatomic, assign) NSInteger paren_pkid;
+/**
+ *  序号
+ */
+@property (nonatomic, assign) NSInteger sort;
+/**
+ *  是否是文件
+ */
+@property (nonatomic, assign) BOOL isFolder;
+/**
+ *  能否编辑
+ */
+@property (nonatomic, assign) BOOL canEdit;
+/**
+ *  书签标题
+ */
+@property (nonatomic, strong) NSString *title;
+/**
+ *  书签链接
+ */
+@property (nonatomic, strong) NSString *link;
+/**
+ *  书签链接图地址
+ */
+@property (nonatomic, strong) NSString *icon;
+/**
+ *  时间戳
+ */
+@property (nonatomic, assign) NSUInteger time;
+/**
+ *  用户ID
+ */
+@property (nonatomic, assign) NSInteger userid;
+
+@end

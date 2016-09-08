@@ -1,0 +1,208 @@
+//
+//  UIControllerModeDetail.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/29.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerModeDetail.h"
+
+#import "UIViewNav.h"
+#import "UICellModeProgram.h"
+
+#import "UIControllerAddProgram.h"
+
+#import "ModelMode.h"
+#import "ModelProgram.h"
+#import "ModelModeProgram.h"
+
+#import "ADOModeProgram.h"
+
+@interface UIControllerModeDetail () <UITableViewDataSource, UITableViewDelegate>
+{
+    UIViewNav *_viewNav;
+    __weak IBOutlet UITableView *_tableView;
+    
+    ModelModeProgram *_editingModelModeProgram;
+}
+
+@end
+
+@implementation UIControllerModeDetail
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    
+    // ----------------
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    [self.view addSubview:_viewNav];
+    
+    if (!_modelMode.sysRecommend) {
+        UIButton *btnAddModeProgram = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, self.view.width, 40)];
+        [btnAddModeProgram setTitle:LocalizedString(@"xinzengyuyue") forState:UIControlStateNormal];
+        [btnAddModeProgram setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
+        [btnAddModeProgram setTitleColor:[UIColor lightGrayColor] forState:UIControlStateHighlighted];
+        [btnAddModeProgram addTarget:self action:@selector(onTouchAddModeProgram:) forControlEvents:UIControlEventTouchUpInside];
+        btnAddModeProgram.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        _tableView.tableHeaderView = btnAddModeProgram;
+    }
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = CGRectMake(0, _viewNav.bottom, self.view.width, self.view.height-_viewNav.bottom);
+    _tableView.frame = rc;
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)onValueChanged:(UISwitch *)swt
+{
+    ModelModeProgram *modelModeProgram = _modelMode.arrModeProgram[swt.tag];
+    modelModeProgram.on = swt.on;
+    
+    [ADOModeProgram updateOn:modelModeProgram.on withPkid:modelModeProgram.pkid];
+}
+
+- (void)onTouchAddModeProgram:(UIButton *)btn
+{
+    UIControllerAddProgram *controllerAddProgram = [[UIControllerAddProgram alloc] initWithNibName:@"UIControllerAddProgram" bundle:nil];
+    controllerAddProgram.actionType = ProgramActionTypeAddProgram;
+    controllerAddProgram.modeProgramModePkid = _modelMode.pkid;
+    [controllerAddProgram setCallbackDidAddModeProgram:^(ModelModeProgram *modelModeProgram) {
+        modelModeProgram.on = YES;
+        [_modelMode.arrModeProgram addObject:modelModeProgram];
+    }];
+    
+    [self.navigationController pushViewController:controllerAddProgram animated:YES];
+}
+
+- (NSString *)stringFromRepeatMode:(RemindRepeatMode)repeatMode
+{
+    if (RemindRepeatModeNone==repeatMode) {
+        return LocalizedString(@"buchongfu");
+    }
+    
+    NSMutableString *str = [NSMutableString stringWithString:@""];
+    NSArray *arrRepeat = @[@{@"title":@"zhou1",
+                             @"repeat":@(RemindRepeatMode1)},
+                           @{@"title":@"zhou2",
+                             @"repeat":@(RemindRepeatMode2)},
+                           @{@"title":@"zhou3",
+                             @"repeat":@(RemindRepeatMode3)},
+                           @{@"title":@"zhou4",
+                             @"repeat":@(RemindRepeatMode4)},
+                           @{@"title":@"zhou5",
+                             @"repeat":@(RemindRepeatMode5)},
+                           @{@"title":@"zhou6",
+                             @"repeat":@(RemindRepeatMode6)},
+                           @{@"title":@"zhou0",
+                             @"repeat":@(RemindRepeatMode0)}
+                           ];
+
+    for (NSInteger i=0; i<arrRepeat.count; i++) {
+        NSDictionary *dict = arrRepeat[i];
+        RemindRepeatMode repeat = [dict[@"repeat"] integerValue];
+        if (repeat&repeatMode) {
+            NSString *title = LocalizedString(dict[@"title"]);
+            
+            [str appendString:title];
+            [str appendString:@","];
+        }
+    }
+    
+    if (str.length>1) {
+        [str deleteCharactersInRange:NSMakeRange(str.length-1, 1)];
+    }
+    
+    return str;
+}
+
+#pragma mark - UITableViewDatasource, UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _modelMode.arrModeProgram.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *Identifier = @"UICellModeProgram";
+    UICellModeProgram *cell = [tableView dequeueReusableCellWithIdentifier:Identifier];
+    if (!cell) {
+        cell = [UICellModeProgram cellFromXib];
+        
+        UISwitch *swt = [[UISwitch alloc] init];
+        [swt addTarget:self action:@selector(onValueChanged:) forControlEvents:UIControlEventValueChanged];
+        
+        cell.accessoryView = swt;
+    }
+    
+    cell.accessoryView.tag = indexPath.row;
+    
+    ModelModeProgram *modelModeProgram = _modelMode.arrModeProgram[indexPath.row];
+    cell.textLabel.text = [NSString stringWithFormat:@"%02d:%02d    %@", modelModeProgram.time/3600, modelModeProgram.time%60, modelModeProgram.modelProgram.title];
+    cell.detailTextLabel.text = [self stringFromRepeatMode:modelModeProgram.repeatMode];
+    
+    [(UISwitch *)cell.accessoryView setOn:modelModeProgram.on];
+    
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    if (_modelMode.sysRecommend) {
+        return;
+    }
+    
+    ModelModeProgram *modelModeProgram = _modelMode.arrModeProgram[indexPath.row];
+    
+    UIControllerAddProgram *controllerAddProgram = [[UIControllerAddProgram alloc] initWithNibName:@"UIControllerAddProgram" bundle:nil];
+    controllerAddProgram.title = LocalizedString(@"diantai_zixun");
+    controllerAddProgram.actionType = ProgramActionTypeEditProgram;
+    [controllerAddProgram setCallbackDidEditModeProgram:^(ModelModeProgram *modelModeProgram) {
+        modelModeProgram.time = modelModeProgram.time;
+        modelModeProgram.repeatMode = modelModeProgram.repeatMode;
+        
+        [_tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    }];
+    [controllerAddProgram setEditModelModeProgram:modelModeProgram];
+    
+    [self.navigationController pushViewController:controllerAddProgram animated:YES];
+}
+
+@end

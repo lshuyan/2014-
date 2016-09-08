@@ -1,0 +1,23 @@
+//
+//  UITableViewMode.h
+//  ChinaBrowser
+//
+//  Created by David on 14/11/18.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@protocol UITableViewModeDelegate;
+
+@interface UITableViewMode : UITableView
+
+@property (nonatomic, weak) IBOutlet id<UITableViewModeDelegate> delegateMode;
+
+@end
+
+@protocol UITableViewModeDelegate <NSObject>
+
+- (void)tableViewModeWillAdd:(UITableViewMode *)tableViewMode;
+
+@end

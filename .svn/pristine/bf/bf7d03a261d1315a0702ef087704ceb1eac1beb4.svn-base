@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6250" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment version="1536" identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="KGk-i7-Jjw" customClass="UICellItemList">
+            <rect key="frame" x="0.0" y="0.0" width="250" height="70"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="add_write.png" translatesAutoresizingMaskIntoConstraints="NO" id="aOx-Co-50W">
+                        <rect key="frame" x="34" y="21" width="26" height="26"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="26" id="U01-kp-qyW"/>
+                        </constraints>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="手动输入" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ius-Pk-o9d">
+                        <rect key="frame" x="72" y="26" width="114" height="18"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="21u-ff-Pwf">
+                        <rect key="frame" x="0.0" y="69" width="250" height="1"/>
+                        <color key="backgroundColor" red="0.85882352941176465" green="0.85882352941176465" blue="0.85882352941176465" alpha="1" colorSpace="calibratedRGB"/>
+                    </view>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="expansion_0.png" translatesAutoresizingMaskIntoConstraints="NO" id="dCP-4k-4ip">
+                        <rect key="frame" x="221" y="29" width="12" height="12"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="12" id="FK2-D8-qnS"/>
+                            <constraint firstAttribute="width" constant="12" id="mWL-kT-wGQ"/>
+                        </constraints>
+                    </imageView>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="ius-Pk-o9d" firstAttribute="centerY" secondItem="dCP-4k-4ip" secondAttribute="centerY" id="4VK-tk-Ppd"/>
+                    <constraint firstAttribute="trailing" secondItem="21u-ff-Pwf" secondAttribute="trailing" id="4jE-d6-Zu8"/>
+                    <constraint firstItem="21u-ff-Pwf" firstAttribute="top" secondItem="dCP-4k-4ip" secondAttribute="bottom" constant="28" id="CnZ-1A-L7w"/>
+                    <constraint firstItem="ius-Pk-o9d" firstAttribute="leading" secondItem="aOx-Co-50W" secondAttribute="trailing" constant="12" id="HYs-PP-uav"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="21u-ff-Pwf" secondAttribute="bottom" constant="-9" id="OVA-Sm-ZqX"/>
+                    <constraint firstItem="dCP-4k-4ip" firstAttribute="leading" secondItem="ius-Pk-o9d" secondAttribute="trailing" constant="35" id="TmA-m1-1Gc"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="dCP-4k-4ip" secondAttribute="trailing" constant="9" id="pzf-Q6-eEv"/>
+                    <constraint firstItem="aOx-Co-50W" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" constant="26" id="tMc-tw-osX"/>
+                    <constraint firstItem="21u-ff-Pwf" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="vA0-AZ-hby"/>
+                    <constraint firstItem="aOx-Co-50W" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="wUJ-9l-9no"/>
+                    <constraint firstItem="21u-ff-Pwf" firstAttribute="top" secondItem="aOx-Co-50W" secondAttribute="bottom" constant="22" id="wY1-A5-pU9"/>
+                    <constraint firstItem="21u-ff-Pwf" firstAttribute="top" secondItem="ius-Pk-o9d" secondAttribute="bottom" constant="25" id="z9D-HS-cR2"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="_assistIcon" destination="dCP-4k-4ip" id="VEJ-rn-Eo8"/>
+                <outlet property="customIcon" destination="aOx-Co-50W" id="lQk-oC-aFw"/>
+                <outlet property="customTitle" destination="ius-Pk-o9d" id="T9b-JA-dQ9"/>
+            </connections>
+            <point key="canvasLocation" x="267" y="279"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="add_write.png" width="26" height="26"/>
+        <image name="expansion_0.png" width="12" height="12"/>
+    </resources>
+</document>

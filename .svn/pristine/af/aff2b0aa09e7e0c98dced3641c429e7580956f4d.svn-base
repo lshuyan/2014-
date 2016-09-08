@@ -1,0 +1,38 @@
+//
+//  UIViewHome.h
+//  ChinaBrowser
+//
+//  Created by David on 14-9-27.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UIViewHome : UIView
+
+/**
+ *  是否可以弹出
+ */
+@property (nonatomic, assign, readonly) BOOL canPop;
+
+/**
+ *  设置是否可滚动
+ *
+ *  @param enable BOOL
+ */
+- (void)setScrollEnable:(BOOL)enable;
+/**
+ *  push 一个View进来
+ *
+ *  @param view     UIView
+ *  @param completion
+ */
+- (void)pushView:(UIView *)view completion:(void(^)(void))completion;
+/**
+ *  pop 出来
+ *
+ *  @param completion
+ */
+- (void)popToRootWithCompletion:(void(^)(void))completion;
+
+@end

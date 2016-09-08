@@ -1,0 +1,263 @@
+//
+//  UIViewBanner.m
+//  DailyHeadlines
+//
+//  Created by David on 2011-12-16.
+//  Copyright 2011年 com.veryapps. All rights reserved.
+//
+
+#import "UIViewBanner.h"
+#import "UIViewBannerItem.h"
+
+#import "ModelBanner.h"
+#import "UIImageView+UIActivityIndicatorForSDWebImage.h"
+
+#define kDefaultTimeIntervalScroll  3
+
+@implementation UIScrollViewBanner
+
+@end
+
+#pragma mark - UIViewBanner (private)
+
+@interface UIViewBanner (private)
+
+// BannerItem 被点击事件
+- (void)onClickBannerItem:(UIViewBannerItem*)bannerItem;
+
+// 自动滚动
+- (void)autoScroll;
+
+- (void)resizePageControl;
+
+- (void)onTouchClose;
+
+@end
+
+#pragma mark - UIViewBanner
+
+@implementation UIViewBanner
+{
+    UIButton *_btnClose;
+}
+
+@synthesize delegate = _delegate;
+
+#pragma mark - Properties
+- (void)setShouldShowCloseBtn:(BOOL)shouldShowCloseBtn
+{
+    _shouldShowCloseBtn = shouldShowCloseBtn;
+    _btnClose.hidden = !_shouldShowCloseBtn;
+}
+
+- (void)setShouldShowPageControl:(BOOL)shouldShowPageControl
+{
+    _shouldShowPageControl = shouldShowPageControl;
+    if (_shouldShowPageControl) {
+        _pageControl.hidden = !(_arrBannerItems.count>1);
+    }
+    else {
+        _pageControl.hidden = YES;
+    }
+}
+
+#pragma mark - Init
+
+- (id)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
+        _arrBannerItems = [[NSMutableArray alloc] initWithCapacity:0];
+        
+        _scrollView = [[UIScrollViewBanner alloc] initWithFrame:self.bounds];
+        _scrollView.delegate = self;
+        _scrollView.pagingEnabled = YES;
+        _scrollView.showsHorizontalScrollIndicator = _scrollView.showsVerticalScrollIndicator = NO;
+        
+        _pageControl = [[SMPageControl alloc] initWithFrame:CGRectMake(0, self.bounds.size.height-20, _scrollView.bounds.size.width, 20)];
+        _pageControl.userInteractionEnabled = NO;
+        _pageControl.pageIndicatorTintColor = [UIColor colorWithWhite:0.3 alpha:0.8];
+        _pageControl.currentPageIndicatorTintColor = [UIColor colorWithWhite:0.9 alpha:0.8];
+        _pageControl.autoresizingMask = UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleWidth;
+        
+        _btnClose = [UIButton buttonWithType:UIButtonTypeCustom];
+        _btnClose.frame = CGRectMake(0, 0, 30, 30);
+        [_btnClose setImage:[UIImage imageWithBundleFile:@"ad_close.png"] forState:UIControlStateNormal];
+        [_btnClose addTarget:self action:@selector(onTouchClose) forControlEvents:UIControlEventTouchUpInside];
+        _btnClose.center = CGPointMake(self.bounds.size.width-_btnClose.bounds.size.width*0.5-5, self.bounds.size.height*0.5);
+        _btnClose.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin;
+        
+        [self addSubview:_scrollView];
+        [self addSubview:_pageControl];
+        [self addSubview:_btnClose];
+        
+        _viewContentMode = UIViewContentModeScaleToFill;
+    }
+    
+    return self;
+}
+
+- (void)onClickBannerItem:(UIViewBannerItem*)bannerItem {
+    // 点击某项
+    [_delegate viewBannerDidClick:[_arrBannerItems indexOfObject:bannerItem]];
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    NSInteger page = _scrollView.contentOffset.x/_scrollView.bounds.size.width;
+    
+    [super setFrame:frame];
+    _scrollView.frame = self.bounds;
+    
+    NSInteger itemCount = _scrollView.subviews.count;
+    for (NSInteger i=0; i<itemCount; i++) {
+        UIView *viewItem = _scrollView.subviews[i];
+        CGRect rc = _scrollView.bounds;
+        rc.origin.x = _scrollView.bounds.size.width*i+0;
+        viewItem.frame = rc;
+    }
+    
+    _scrollView.contentSize = CGSizeMake(frame.size.width*itemCount, frame.size.height);
+    _scrollView.contentOffset = CGPointMake(frame.size.width*page, 0);
+    
+    [self setNeedsDisplay];
+}
+
+// 自动滚动
+- (void)autoScroll {
+    if ([_arrBannerItems count]==0) {
+        return;
+    }
+    _currIndex++;
+    if (_currIndex>=[_arrBannerItems count]) {
+        _currIndex = 0;
+    }
+    _pageControl.currentPage = _currIndex;
+    [_scrollView setContentOffset:CGPointMake(_currIndex*_scrollView.bounds.size.width, 0) animated:YES];
+}
+
+- (void)resizePageControl {
+    CGRect rc = _pageControl.frame;
+    rc.size.width = self.bounds.size.width;
+    rc.origin.x = 0;
+    _pageControl.frame = rc;
+    _pageControl.numberOfPages = [_arrBanner count];
+    
+    if (_shouldShowPageControl) {
+        _pageControl.hidden = !(_pageControl.numberOfPages>1);
+    }
+    else {
+        _pageControl.hidden = YES;
+    }
+}
+
+#pragma mark - UIScrollViewDelegate
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    NSInteger page = scrollView.contentOffset.x/scrollView.bounds.size.width;
+    if (page!=_currIndex) {
+        _currIndex = page;
+        _pageControl.currentPage = _currIndex;
+        // 选中某项
+        if ([_delegate respondsToSelector:NSSelectorFromString(@"viewBannerDidSelect:")])
+            [_delegate viewBannerDidSelect:_currIndex];
+    }
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    if (!decelerate) {
+        NSInteger page = scrollView.contentOffset.x/scrollView.bounds.size.width;
+        if (page!=_currIndex) {
+            _currIndex = page;
+            _pageControl.currentPage = _currIndex;
+            // 选中某项
+            if ([_delegate respondsToSelector:NSSelectorFromString(@"viewBannerDidSelect:")])
+                [_delegate viewBannerDidSelect:_currIndex];
+        }
+    }
+}
+
+- (void)onTouchClose
+{
+    if ([_delegate respondsToSelector:@selector(viewBannerWillDismiss)])
+        [_delegate viewBannerWillDismiss];
+}
+
+#pragma mark - public methods
+
+- (void)startAutoScroll:(NSTimeInterval)tiScroll {
+    [_timerScroll invalidate];
+    _timerScroll = nil;
+    
+    _timerScroll = [NSTimer scheduledTimerWithTimeInterval:tiScroll
+                                                    target:self
+                                                  selector:@selector(autoScroll)
+                                                  userInfo:nil
+                                                   repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_timerScroll forMode:NSRunLoopCommonModes];
+}
+
+- (void)stopAutoScroll {
+    [_timerScroll invalidate];
+    _timerScroll = nil;
+}
+
+- (void)setArrBanner:(NSArray *)arrBanner {
+    
+    BOOL shouldAutoScroll = _timerScroll!=nil;
+    NSTimeInterval tiScroll = _timerScroll.timeInterval;
+    [self stopAutoScroll];
+    
+    NSInteger countOld = [_arrBanner count];
+    NSInteger countNew = [arrBanner count];
+    
+    _arrBanner = nil;
+    _arrBanner = [NSArray arrayWithArray:arrBanner];
+    _currIndex = 0;
+    
+    if (countNew>countOld) {
+        // 比以前多了
+        for (NSInteger indexBanner=countOld; indexBanner<countNew; indexBanner++) {
+            CGRect rc = _scrollView.bounds;
+            rc.origin.x = indexBanner*rc.size.width;
+            UIViewBannerItem *viewBannerItem = [[UIViewBannerItem alloc] initWithFrame:rc];
+//            viewBannerItem.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin;
+            [viewBannerItem addTarget:self action:@selector(onClickBannerItem:) forControlEvents:UIControlEventTouchUpInside];
+            [_arrBannerItems addObject:viewBannerItem];
+            [_scrollView addSubview:viewBannerItem];
+            SAFE_RELEASE(viewBannerItem);
+        }
+    }
+    else {
+        // 比以前少了
+        for (NSInteger indexBanner=countNew; indexBanner<countOld; indexBanner++) {
+            UIViewBannerItem *viewBannerItem = [_arrBannerItems objectAtIndex:countNew];
+            [viewBannerItem  removeFromSuperview];
+            [_arrBannerItems removeObjectAtIndex:countNew];
+        }
+    }
+    
+    for (NSInteger indexBanner=0; indexBanner<countNew; indexBanner++) {
+        UIViewBannerItem *viewBannerItem = [_arrBannerItems objectAtIndex:indexBanner];
+        viewBannerItem.imageView.contentMode = _viewContentMode;
+        ModelBanner *model = _arrBanner[indexBanner];
+        viewBannerItem.labelTitle.text = model.title;
+        if ([[model.image lowercaseString] hasPrefix:@"http://"]) {
+            [viewBannerItem.imageView setImageWithURL:[NSURL URLWithString:model.image] placeholderImage:[UIImage imageWithBundleFile:@"ad_default.jpg"] usingActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        }
+        else {
+            viewBannerItem.imageView.image = [UIImage imageWithBundleFile:model.image];
+        }
+    }
+    
+    _pageControl.numberOfPages = _arrBanner.count;
+    _scrollView.contentSize = CGSizeMake(_scrollView.bounds.size.width*countNew, _scrollView.bounds.size.height);
+    [_scrollView setContentOffset:CGPointMake(_currIndex*_scrollView.width, 0) animated:NO];
+    
+    [self resizePageControl];
+    
+    if (shouldAutoScroll) {
+        [self startAutoScroll:tiScroll];
+    }
+}
+
+@end

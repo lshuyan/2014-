@@ -1,0 +1,17 @@
+//
+//  UIViewBannerItem.h
+//  DailyHeadlines
+//
+//  Created by David on 2011-12-16.
+//  Copyright 2011年 com.veryapps. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UIViewBannerItem : UIControl {
+}
+
+@property (nonatomic, strong) UILabel *labelTitle;
+@property (nonatomic, strong) UIImageView *imageView;
+
+@end

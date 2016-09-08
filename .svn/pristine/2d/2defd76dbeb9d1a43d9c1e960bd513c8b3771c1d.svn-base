@@ -1,0 +1,130 @@
+//
+//  UIControllerManuallyAdd.m
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/20.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerManuallyAdd.h"
+#import "UIViewNav.h"
+
+@interface UIControllerManuallyAdd ()<UITextFieldDelegate>
+{
+    UIViewNav *_viewNav;
+    // 标题
+    IBOutlet UITextField *_textFieldTitle;
+    
+    // 地址
+    IBOutlet UITextField *_textFieldURL;
+    
+    UIButton *_btnSave;
+}
+@end
+
+@implementation UIControllerManuallyAdd
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self initData];
+    [self loadSubViews];
+}
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [_textFieldTitle becomeFirstResponder];
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (IsiPad) return;
+    [_viewNav resizeWithOrientation:orientation];
+}
+
+#pragma mark - Private Method
+- (void)loadSubViews
+{
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    
+    UIButton *btnBack = [UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack addTarget:self action:@selector(onTouchBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:btnBack];
+    
+    _btnSave = [UIButton buttonWithType:UIButtonTypeCustom];
+    [_btnSave addTarget:self action:@selector(onTouchSave) forControlEvents:UIControlEventTouchUpInside];
+    [_btnSave setTitle:LocalizedString(@"baocun") forState:UIControlStateNormal];
+    [_btnSave setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [_btnSave setTitleColor:[UIColor lightGrayColor] forState:UIControlStateHighlighted];
+    _btnSave.titleLabel.font = [UIFont systemFontOfSize:15];
+    [_btnSave sizeToFit];
+    _viewNav.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:_btnSave];
+}
+
+- (void)initData
+{
+    self.title = LocalizedString(@"shoudongtianjia");
+}
+
+- (BOOL)isURL:(NSString *)URL
+{
+    NSString *urlRegex = @"\\w";
+    NSPredicate *urlTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", urlRegex];
+    return [urlTest evaluateWithObject:URL];
+}
+#pragma mark - Action Method
+- (void)onTouchBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+- (void)onTouchSave
+{
+    /**
+     *  生成一个 modelAPP
+     */
+    NSLog(@"保存");
+}
+
+#pragma mark - UITextField Delegate
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    if ([@"\n" isEqualToString:string] == YES)
+    {
+        if (textField == _textFieldTitle){
+            
+            [_textFieldTitle resignFirstResponder];
+            [_textFieldURL becomeFirstResponder];
+            
+            return NO;
+        }else if (textField == _textFieldURL){
+            
+            if (_textFieldTitle.text.length && [self isURL:_textFieldURL.text]) {
+                [self onTouchSave];
+            }
+        }
+    }
+    
+    _btnSave.enabled = _textFieldTitle.text.length && [self isURL:_textFieldURL.text];
+    
+    return YES;
+}
+@end

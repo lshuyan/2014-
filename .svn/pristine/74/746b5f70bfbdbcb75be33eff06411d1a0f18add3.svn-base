@@ -1,0 +1,580 @@
+//
+//  Define.h
+//  ChinaBrowser
+//
+//  Created by David on 13-12-3.
+//  Copyright (c) 2013年 KOTO Inc. All rights reserved.
+//
+
+#ifndef ChinaBrowser_Define_h
+#define ChinaBrowser_Define_h
+
+/**
+ *  地址栏事件
+ */
+typedef NS_ENUM(NSInteger, BarEvent) {
+    /**
+     *  未知
+     */
+    BarEventUnknow,
+    /**
+     *  首页
+     */
+    BarEventHome,
+    /**
+     *  后退
+     */
+    BarEventGoBack,
+    /**
+     *  前进
+     */
+    BarEventGoForward,
+    /**
+     *  菜单
+     */
+    BarEventMenu,
+    /**
+     *  添加/删除书签
+     */
+    BarEventFav,
+    /**
+     *  刷新网页
+     */
+    BarEventRefresh,
+    /**
+     *  停止加载
+     */
+    BarEventStop,
+    /**
+     *  书签按钮事件
+     */
+    BarEventBookmark,
+    /**
+     *  添加标签
+     */
+    BarEventAddTab,
+    /**
+     *  多标签事件
+     */
+    BarEventWindows,
+    /**
+     *  开始输入地址
+     */
+    BarEventDidBeginInputUrl,
+    /**
+     *  开始输入搜索
+     */
+    BarEventDidBeginInputSearch,
+    /**
+     *  结束输入地址
+     */
+    BarEventDidEndInputUrl,
+    /**
+     *  结束输入搜索
+     */
+    BarEventDidEndInputSearch,
+    /**
+     *  取消输入地址
+     */
+    BarEventCancelInputUrl,
+    /**
+     *  取消输入搜索
+     */
+    BarEventCancelInputSearch,
+    /**
+     *  二维码
+     */
+    BarEventQRCode,
+    /**
+     *  点击搜索选项事件
+     */
+    BarEventSearchOption
+};
+
+/**
+ *  UIView boder
+ */
+typedef NS_ENUM(NSInteger, UIBorder) {
+    /**
+     *  无边框
+     */
+    UIBorderNone        = 0,
+    /**
+     * 上
+     */
+    UIBorderTop         = 1 << 0,
+    /**
+     * 下
+     */
+    UIBorderBottom      = 1 << 1,
+    /**
+     *  左
+     */
+    UIBorderLeft        = 1 << 2,
+    /**
+     *  右
+     */
+    UIBorderRight       = 1 << 3,
+    /**
+     *  上下
+     */
+    UIBorderTopBottom   = UIBorderTop|UIBorderBottom,
+    /**
+     *  所有
+     */
+    UIBorderAll         = UIBorderTop|UIBorderBottom|UIBorderLeft|UIBorderRight
+};
+
+/**
+ *  首页图标网址
+ */
+typedef NS_ENUM (NSInteger, IconSiteEvent){
+    /**
+     *  添加事件
+     */
+    IconSiteEventAdd,
+    /**
+     *  开始编辑
+     */
+    IconSiteEventBeginEdit,
+    /**
+     *  解释编辑
+     */
+    IconSiteEventEndEdit
+};
+
+/**
+ *  停靠边栏方向
+ */
+typedef NS_ENUM(NSInteger, DockDirection) {
+    /**
+     *  未知
+     */
+    DockDirectionUnknow,
+    /**
+     *  上
+     */
+    DockDirectionTop,
+    /**
+     *  右
+     */
+    DockDirectionRight,
+    /**
+     *  下
+     */
+    DockDirectionBottom,
+    /**
+     *  左
+     */
+    DockDirectionLeft
+};
+
+/**
+ *  菜单类型
+ */
+typedef NS_ENUM(NSInteger, MenuItem) {
+    /**
+     *  添加书签
+     */
+    MenuItemBookmark = 0,
+    /**
+     *  书签和历史记录
+     */
+    MenuItemBookmarkHistory,
+    /**
+     *  语言设置
+     */
+    MenuItemLanguage,
+    /**
+     *  刷新
+     */
+    MenuItemRefresh,
+    /**
+     *  停止
+     */
+    MenuItemStop,
+    /**
+     *  截图涂鸦
+     */
+    MenuItemScreenshot,
+    /**
+     *  业内查找
+     */
+    MenuItemFindInPage,
+    /**
+     *  分享
+     */
+    MenuItemShare,
+    /**
+     *  个人中心
+     */
+    MenuItemProfile,
+    /**
+     *  无图模式
+     */
+    MenuItemNoImageMode,
+    /**
+     *  全屏
+     */
+    MenuItemFullscreenMode,
+    /**
+     *  亮度调节
+     */
+    MenuItemSetBrightness,
+    /**
+     *  无痕浏览
+     */
+    MenuItemNoSaveHistory,
+    /**
+     *  二维码
+     */
+    MenuItemQRCode,
+    /**
+     *  皮肤管理
+     */
+    MenuItemSkinManage,
+    /**
+     *  桌面样式
+     */
+    MenuItemDesktopStyle,
+    /**
+     *  系统设置
+     */
+    MenuItemSystemSettings,
+    /**
+     *  下载和文件
+     */
+    MenuItemDownload,
+    /**
+     *  意见反馈
+     */
+    MenuItemFeedback,
+    /**
+     *  省流查询
+     */
+    MenuItemSaveTraffic,
+    /**
+     *  版本检查
+     */
+    MenuItemCheckVersion,
+    /**
+     *  退出
+     */
+    MenuItemExit
+};
+
+/**
+ *  链接地址打开方式
+ */
+typedef NS_ENUM (NSInteger, UrlOpenStyle) {
+    /**
+     *  自动，遵循页面定义
+     */
+    UrlOpenStyleAuto,
+    /**
+     *  当前标签
+     */
+    UrlOpenStyleCurrent,
+    /**
+     *  新标签
+     */
+    UrlOpenStyleNewTab,
+    /**
+     *  后台
+     */
+    UrlOpenStyleBackground
+};
+
+/**
+ *  表单保存
+ */
+typedef NS_ENUM (NSInteger, SaveForm) {
+    /**
+     *  保存前提示
+     */
+    SaveFormAlert,
+    /**
+     *  总是不保存
+     */
+    SaveFormNo,
+    /**
+     *  总是保存
+     */
+    SaveFormAlways,
+    /**
+     *  自动保存
+     */
+    SaveFormAuto
+};
+
+/**
+ *  桌面样式
+ */
+typedef NS_ENUM (NSInteger, DesktopStyle) {
+    /**
+     *  默认，4列
+     */
+    DesktopStyleDefault = 4,
+    /**
+     *  2列
+     */
+    DesktopStyleCol2 = 2,
+    /**
+     *  3列
+     */
+    DesktopStyleCol3 = 3,
+    /**
+     *  4列，默认值
+     */
+    DesktopStyleCol4 = DesktopStyleDefault
+};
+
+/**
+ *  @Author David, 14-11-08 14:11:07
+ *
+ *  用户信息界面来的来源地址
+ */
+typedef NS_ENUM(NSInteger, FromController) {
+    /**
+     *  @Author David, 14-11-08 14:11:10
+     *
+     *  未知来源
+     */
+    FromControllerUnknow,
+//    /**
+//     *  @Author David, 14-11-08 14:11:07
+//     *
+//     *  登录
+//     */
+//    FromControllerLogin,
+//    /**
+//     *  @Author David, 14-11-08 14:11:07
+//     *
+//     *  注册
+//     */
+//    FromControllerRegister,
+//    /**
+//     *  @Author David, 14-11-08 14:11:07
+//     *
+//     *  系统设置
+//     */
+    FromControllerSystemSettings,
+    /**
+     *  @Author David, 14-11-08 17:11:50
+     *
+     *  根控制器
+     */
+    FromControllerRoot,
+    /**
+     *  书签和历史
+     */
+    FromControllerSync
+};
+
+/**
+ *  皮肤信息
+ */
+typedef struct SkinInfo {
+    /**
+     *  是否App内置皮肤
+     */
+    BOOL isAppInternal;
+    /**
+     *  皮肤索引
+     */
+    NSUInteger skinIndex;
+} SkinInfo;
+
+/**
+ *  翻页配置
+ */
+typedef struct PageStyle {
+    /**
+     *  是否显示翻页按钮
+     */
+    BOOL showPageBtn;
+    /**
+     *  是否允许触屏翻页
+     */
+    BOOL shouldTouchPage;
+} PageStyle;
+
+/**
+ *  Remind 重复方式
+ */
+typedef NS_ENUM(NSInteger, RemindRepeatMode) {
+    /**
+     *  不重复
+     */
+    RemindRepeatModeNone= 0,
+    /**
+     *  周日
+     */
+    RemindRepeatMode0   = 1 << 0,
+    /**
+     *  周一
+     */
+    RemindRepeatMode1   = 1 << 1,
+    /**
+     *  周二
+     */
+    RemindRepeatMode2   = 1 << 2,
+    /**
+     *  周三
+     */
+    RemindRepeatMode3   = 1 << 3,
+    /**
+     *  周四
+     */
+    RemindRepeatMode4   = 1 << 4,
+    /**
+     *  周五
+     */
+    RemindRepeatMode5   = 1 << 5,
+    /**
+     *  周六
+     */
+    RemindRepeatMode6   = 1 << 6,
+    /**
+     *  周末
+     */
+    RemindRepeatModeWeekend = RemindRepeatMode0|RemindRepeatMode6,
+    /**
+     *  工作日
+     */
+    RemindRepeatModeWeekdays = RemindRepeatMode1|RemindRepeatMode2|RemindRepeatMode3|RemindRepeatMode4|RemindRepeatMode5,
+    /**
+     *  每天
+     */
+    RemindRepeatModeEveryDay = RemindRepeatMode0|RemindRepeatMode1|RemindRepeatMode2|RemindRepeatMode3|RemindRepeatMode4|RemindRepeatMode5|RemindRepeatMode6
+};
+
+/**
+ *  节目(定时提醒)资源类型
+ */
+typedef NS_ENUM(NSInteger, ProgramSrcType) {
+    /**
+     *  FM电台
+     */
+    ProgramSrcTypeFM            = 1,
+    /**
+     *  推荐分类
+     */
+    ProgramSrcTypeRecommendCate = 2,
+    /**
+     *  网站(网页)
+     */
+    ProgramSrcTypeWeb           = 3
+};
+
+/**
+ *  应用类型
+ */
+typedef NS_ENUM(NSInteger, AppType) {
+    /**
+     *  网页应用
+     */
+    AppTypeWeb      = 1,
+    /**
+     *  本地原生App
+     */
+    AppTypeNative   = 2,
+    /**
+     *  浏览器内置功能
+     */
+    AppTypeFunc     = 3
+};
+
+/**
+ *  同步方式
+ */
+typedef NS_ENUM (NSInteger, SyncStyle) {
+    /**
+     *  WiFi 下同步
+     */
+    SyncStyleWiFi,
+    /**
+     *  自动同步
+     */
+    SyncStyleAuto,
+    /**
+     *  手动同步
+     */
+    SyncStyleManual
+};
+
+/**
+ *  操作类型
+ */
+typedef NS_ENUM(NSInteger, ProgramActionType) {
+    /**
+     *  无
+     */
+    ProgramActionTypeNone       = 0,
+    /**
+     *  新建模式
+     */
+    ProgramActionTypeAddMode    = 1,
+    /**
+     *  新增预约
+     */
+    ProgramActionTypeAddModeProgram = 2,
+    /**
+     *  编辑预约(编辑节目)
+     */
+    ProgramActionTypeEditModeProgram    = 3
+};
+
+/**
+ *  服务器同步的数据类型
+ */
+typedef NS_ENUM(NSInteger, SyncDataType) {
+    /**
+     *  未知
+     */
+    SyncDataTypeUnknow      = 0,
+    /**
+     *  书签
+     */
+    SyncDataTypeBookmark    = 1 << 0,
+    /**
+     *  最近浏览(历史记录前20条)
+     */
+    SyncDataTypeHistory     = 1 << 1,
+    /**
+     *  个性化定制 模式)
+     */
+    SyncDataTypeMode        = 1 << 2,
+    /**
+     *  个性化定制 模式-节目
+     */
+    SyncDataTypeModeProgram = 1 << 3,
+    /**
+     *  同步个性化定制 (提醒)
+     */
+    SyncDataTypeReminder    = SyncDataTypeMode|SyncDataTypeModeProgram,
+    /**
+     *  开发测试用的，删除服务器用户的所有同步的数据【*****谨慎使用】
+     */
+    SyncDataTypeAll         = SyncDataTypeHistory|SyncDataTypeBookmark|SyncDataTypeMode|SyncDataTypeModeProgram
+};
+
+/**
+ *  用户性别
+ */
+typedef NS_ENUM(NSInteger, UserGender) {
+    /**
+     *  男 1
+     */
+    UserGenderMale      = 1,
+    /**
+     *  女 2
+     */
+    UserGenderFemale    = 2,
+    /**
+     *  保密 3
+     */
+    UserGenderSecrecy   = 3
+};
+
+#endif

@@ -1,0 +1,405 @@
+//
+//  UIControllerEditUserInfo.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/11/3.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerEditUserInfo.h"
+
+#import "UIControllerEditNick.h"
+#import "UIControllerScreenshot.h"
+
+#import "UserManager.h"
+#import "ModelUser.h"
+#import "UICellEditIcon.h"
+
+#import "UIViewPopGender.h"
+
+#import "UIImageView+WebCache.h"
+
+#import <AGCommon/UIImage+Common.h>
+#import <AGCommon/NSData+Common.h>
+#import "BlockUI.h"
+
+@interface UIControllerEditUserInfo ()<UINavigationControllerDelegate, UIImagePickerControllerDelegate, UIControllerScreenshotDelegate, UIViewPopGenderDelegate, UIControllerEdintNickDelegate>
+{
+    UIImagePickerController *_pickerController;
+    NSArray *_arrGender;
+    AFJSONRequestOperation *_reqLogin;
+    UICellEditIcon *_cellEdit;
+}
+@end
+
+@implementation UIControllerEditUserInfo
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:YES];
+    [_tableView reloadData];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    _arrGender = @[@{@"type":@(1), @"gender":@"nan"},
+                 @{@"type":@(2), @"gender":@"nv"},
+                 @{@"type":@(3), @"gender":@"baomi"}];
+    
+    self.title = LocalizedString(@"gerenxinxi");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnBack) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+    
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+//返回按钮 lianjie
+-(void)onTouchBtnBack
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+
+#pragma mark - tableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 3;
+    
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if ([self isEqualIndexPath:indexPath section:0 row:0]) {
+        return 107;
+    }
+    return 44;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    
+    
+    UITableViewCell *cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
+    //头像
+    if ([self isEqualIndexPath:indexPath section:0 row:0]) {
+        cell = [[[NSBundle mainBundle] loadNibNamed:@"UICellEditIcon" owner:self options:nil] lastObject];
+        _cellEdit = (UICellEditIcon *)cell;
+        _cellEdit.textLabel.text = LocalizedString(@"touxiang");
+        
+        __weak UIImageView *wImageViewIcon = _cellEdit.imageIcon;
+        [_cellEdit.imageIcon setImageWithURL:[NSURL URLWithString:[UserManager shareUserManager].currUser.avatar] placeholderImage:[UIImage imageWithBundleFile:@"iPhone/User/tu_0.png"] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+            if (image) {
+                wImageViewIcon.image = [UIImage imageWithData:UIImagePNGRepresentation(image) scale:[UIScreen mainScreen].scale];
+            }
+        }];
+    }//昵称
+    else if ([self isEqualIndexPath:indexPath section:0 row:1]) {
+        cell.textLabel.text = LocalizedString(@"nicheng");
+        cell.detailTextLabel.text = [UserManager shareUserManager].currUser.nickname;
+    }//性别
+    else if ([self isEqualIndexPath:indexPath section:0 row:2]) {
+        cell.textLabel.text = LocalizedString(@"xingbie");
+        NSInteger genderIndex = [UserManager shareUserManager].currUser.gender-1;
+        if (genderIndex<0) {
+            genderIndex = 2;
+        }
+        NSDictionary *dicGender = _arrGender[genderIndex];
+        cell.detailTextLabel.text = LocalizedString(dicGender[@"gender"]);
+    }
+    
+    //[cell setSubViewBgColor];
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    return cell;
+    
+    
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    //换头像
+    if ([self isEqualIndexPath:indexPath section:0 row:0]) {
+        [self onTouthChangeIcon];
+    }
+    else if([self isEqualIndexPath:indexPath section:0 row:1])
+    {
+        //换昵称
+        UIControllerEditNick *vc = [[UIControllerEditNick alloc] initWithNibName:@"UIControllerEditNick" bundle:nil];
+        vc.delegate = self;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if([self isEqualIndexPath:indexPath section:0 row:2 ])
+    {
+        //换性别
+        _DEBUG_LOG(@"%s",__FUNCTION__);
+        UIViewPopGender *viewPop = [UIViewPopGender viewFromXib];
+        viewPop.delegate = self;
+        viewPop.labelTitle.text = LocalizedString(@"xuanzexingbie");
+        [viewPop showInView:self.view completion:nil];
+    }
+    
+}
+
+/**
+ *  比较indexpath
+ *
+ *  @param section   如果section 为-1  只比较row
+ *  @param row       同上
+ *
+ */
+-(BOOL)isEqualIndexPath:(NSIndexPath*)indexPath section:(NSInteger)section row:(NSInteger)row
+{
+    if (section==-1) {
+        return (indexPath.row==row);
+    }
+    else if (row==-1) {
+        return (indexPath.section==section);
+    }
+    else
+    {
+        return (indexPath.section==section && indexPath.row==row);
+    }
+}
+
+//相册选择
+-(void)onTouthChangeIcon
+{
+    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:nil delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") destructiveButtonTitle:nil otherButtonTitles:LocalizedString(@"paizhao"), LocalizedString(@"congxiangcexuanqu"), nil];
+    [action showInView:self.view withCompletionHandler:^(NSInteger buttonIndex) {
+        if (buttonIndex==action.cancelButtonIndex) {
+            return;
+        }
+        
+        void (^showPicker)(UIImagePickerController *) = ^(UIImagePickerController *picker){
+            [self addChildViewController:picker];
+            CGRect rc = self.view.bounds;
+            picker.view.frame = rc;
+            
+            picker.view.alpha = 0;
+            picker.view.transform = CGAffineTransformMakeScale(0.001, 0.001);
+            [self.view addSubview:picker.view];
+            [UIView animateWithDuration:0.35 animations:^{
+                picker.view.alpha = 1;
+                picker.view.transform = CGAffineTransformIdentity;
+            } completion:^(BOOL finished) {
+            }];
+        };
+        
+        UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+        imagePicker.delegate = self;
+        _pickerController = imagePicker;
+        if (0==buttonIndex) {
+            // take photo
+            if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+                imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
+                //                [self presentModalViewController:imagePicker animated:YES];
+                showPicker(imagePicker);
+            }
+            else {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:LocalizedString(@"zhaoxiangjibukeyong") delegate:nil cancelButtonTitle:LocalizedString(@"quxiao") otherButtonTitles:LocalizedString(@"congxiangcexuanqu"), nil];
+                [alert showWithCompletionHandler:^(NSInteger buttonIndex) {
+                    if (buttonIndex==1) {
+                        // select from album
+                        imagePicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+                        //                        [self presentModalViewController:imagePicker animated:YES];
+                        showPicker(imagePicker);
+                    }
+                }];
+            }
+            
+        }
+        else if (1==buttonIndex) {
+            // select from album
+            imagePicker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+            //            [self presentModalViewController:imagePicker animated:YES];
+            showPicker(imagePicker);
+        }
+    }];
+}
+
+#pragma mark - UIControllerScreenshotDelegate
+-(void)controller:(UIControllerScreenshot *)controller didCaptureImage:(UIImage *)image
+{
+    [_pickerController.view removeFromSuperview];
+    [_pickerController removeFromParentViewController];
+    
+    NSIndexPath *indexpath = [NSIndexPath indexPathForRow:0 inSection:0];
+    UICellEditIcon *cell = (UICellEditIcon *)[_tableView cellForRowAtIndexPath:indexpath];
+    cell.imageIcon.image = image;
+    
+    [self doEditWithImageIcon:image nick:nil gender:-1];
+}
+
+#pragma mark - UINavigationControllerDelegate, UIImagePickerControllerDelegate
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
+{
+    UIImage* imageOriginal = [info objectForKey:UIImagePickerControllerOriginalImage];
+    UIControllerScreenshot *controller = [UIControllerScreenshot controllerFromXib];
+    controller.delegate = self;
+    controller.screenshotType = ScreenshotIcon;
+    controller.imageOriginal = imageOriginal;
+    [self.navigationController pushViewController:controller animated:YES];
+    
+    
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+    
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
+{
+    [UIView animateWithDuration:0.35 animations:^{
+        picker.view.transform = CGAffineTransformMakeScale(0.001, 0.001);
+        picker.view.alpha = 0;
+    } completion:^(BOOL finished) {
+        [picker.view removeFromSuperview];
+        [picker removeFromParentViewController];
+    }];
+    
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - UIViewPopGenderDelegate
+- (void)viewPopGender:(UIViewPopGender *)viewPopGender selectedGender:(NSInteger)gender
+{
+//    [UserManager shareUserManager].currUser.gender = gender;
+//    [[UserManager shareUserManager] updateUser:[UserManager shareUserManager].currUser];
+    [self doEditWithImageIcon:nil nick:nil gender:gender];
+    [_tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:2 inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+}
+
+#pragma mark - UIControllerEditdDelegate
+- (void)controller:(UIControllerEditNick *)controller edinNick:(NSString *)nick
+{
+    [self doEditWithImageIcon:nil nick:nick gender:-1];
+}
+
+/**
+ *  用户登录逻辑
+ */
+- (void)doEditWithImageIcon:(UIImage *)imageIcom nick:(NSString *)nick  gender:(NSInteger)gender
+{
+    [SVProgressHUD dismiss];
+    [SVProgressHUD showWithStatus:nil maskType:1];
+    //防止多次登录
+    [_reqLogin cancel];
+    _reqLogin = nil;
+    
+    NSMutableDictionary *dicParam = [NSMutableDictionary dictionary];
+
+    dicParam[@"uid"] = [NSString stringWithFormat:@"%d",[UserManager shareUserManager].currUser.uid];
+    //昵称
+    if (nick) {
+        dicParam[@"nickname"] = nick;
+    }
+    
+    //性别
+    if (gender>-1)
+    {
+        gender -= 1;
+        if (gender<0) {
+            gender = 2;
+        }
+        NSDictionary *dicGender = _arrGender[gender];
+        dicParam[@"gender"] = [NSString stringWithFormat:@"%d" ,[dicGender[@"type"] integerValue] ];
+    }
+    
+    if (imageIcom) {
+        
+        NSData *imageData = UIImagePNGRepresentation(imageIcom);
+        dicParam[@"avatar"] = [imageData base64Encoding];
+    }
+    
+    AFHTTPClient *client = [AFHTTPClient clientWithBaseURL:[NSURL URLWithString:@""]];
+    NSMutableURLRequest *req = [client multipartFormRequestWithMethod:@"POST" path:GetApiWithName(API_UserEdit) parameters:dicParam constructingBodyWithBlock:nil];
+    _reqLogin = [AFJSONRequestOperation JSONRequestOperationWithRequest:req success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+        
+        _DEBUG_LOG(@"\n------modify user result:%@", JSON);
+        
+        BOOL flag = NO;
+        NSInteger error = -1;
+        NSString *msg;
+        do {
+            if (![JSON isKindOfClass:[NSDictionary class]]) break;
+            
+            {
+                msg = JSON[@"msg"];
+                error = [JSON[@"error"] integerValue];
+            }
+            
+            NSDictionary *dicUser = JSON[@"data"];
+            if (![dicUser isKindOfClass:[NSDictionary class]]) break;
+            
+            ModelUser *modelUser = [ModelUser modelWithDict:dicUser];
+            // 个人信息持久化
+            [UserManager shareUserManager].currUser = modelUser;
+            _DEBUG_LOG(@"%@", modelUser.avatar);
+            [_cellEdit.imageIcon setImageWithURL:[NSURL URLWithString:modelUser.avatar] placeholderImage:_cellEdit.imageIcon.image];
+            
+            flag = YES;
+        } while (NO);
+        
+        if (flag) {
+            [_tableView reloadData];
+            [SVProgressHUD showSuccessWithStatus:LocalizedString(@"baocunchenggong")];
+        }
+        else {
+            [SVProgressHUD showErrorWithStatus:LocalizedString(@"baocunshibai")];
+        }
+        
+    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+        NSLog(@"failure__%@",(NSDictionary*)JSON);
+        
+        [SVProgressHUD showErrorWithStatus:LocalizedString(@"lianjieshibai")];
+    }];
+    [_reqLogin start];
+    
+   
+}
+
+@end

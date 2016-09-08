@@ -1,0 +1,134 @@
+//
+//  AppSetting.h
+//  ChinaBrowser
+//
+//  Created by David on 14-9-26.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+// 默认网页字体大小
+#define kDefaultFontsize (19.0f)
+
+@interface AppSetting : NSObject
+
+// ----------------- 需要持久化的设置内容
+/**
+ *  开启时打开上次页面
+ */
+@property (nonatomic, assign) BOOL openLastWebsite;
+/**
+ *  链接打开方式
+ */
+@property (nonatomic, assign) UrlOpenStyle urlOpenStyle;
+/**
+ *  字体大小
+ */
+@property (nonatomic, assign) CGFloat fontsize;
+/**
+ *  默认搜索引擎(索引)，需要支持多语言设置的，{tr:0, zh-hans:0, ......}
+ */
+@property (nonatomic, assign) NSInteger searchIndex;
+/**
+ *  消息推送
+ */
+@property (nonatomic, assign) BOOL remotePush;
+/**
+ *  强力广告拦截
+ */
+@property (nonatomic, assign) BOOL adBlockers;
+/**
+ *  转屏
+ */
+@property (nonatomic, assign) BOOL rotateScreen;
+/**
+ *  触屏翻页
+ */
+@property (nonatomic, assign) BOOL touchPage;
+/**
+ *  表单保存
+ */
+@property (nonatomic, assign) SaveForm saveForm;
+/**
+ *  浏览器标识(UA)(UserAgent)
+ */
+@property (nonatomic, strong) NSString *userAgent;
+/**
+ *  亮度 [0, 1]
+ */
+@property (nonatomic, assign) CGFloat brightness;
+/**
+ *  无图模式
+ */
+@property (nonatomic, assign) BOOL noImageMode;
+/**
+ *  无痕浏览
+ */
+@property (nonatomic, assign) BOOL noSaveHistory;
+/**
+ *  桌面样式
+ */
+@property (nonatomic, assign) DesktopStyle desktopStyle;
+/**
+ *  皮肤信息
+ */
+@property (nonatomic, assign) SkinInfo skinInfo;
+
+
+// ---------------- 不需要持久化的设置内容
+/**
+ *  全屏模式
+ */
+@property (nonatomic, assign) BOOL fullscreenMode;
+
+/**
+ *  当前皮肤图片
+ */
+@property (nonatomic, readonly) UIImage *skinImage;
+
+/**
+ *  搜索引擎列表
+ */
+@property (nonatomic, strong) NSArray *arrSearchEngine;
+
+/**
+ *  分享选项集合
+ */
+@property (nonatomic, strong) NSArray *arrShareItem;
+
+
++ (instancetype)shareAppSetting;
++ (void)init;
+
+/**
+ *  重置设置
+ */
+- (void)reset;
+
+/**
+ *  将网页链接打开方式转成字符串
+ *
+ *  @param urlOpenStyle
+ *
+ *  @return NSString
+ */
++ (NSString *)stringFromUrlOpenStyle:(UrlOpenStyle)urlOpenStyle;
+
+// ------------------ 搜索引擎/分享选项
+
+/**
+ *  从网络获取搜索引擎列表
+ *
+ *  @param completion 获取完成
+ */
++ (void)fetchSeachEngineWithCompletion:(void(^)(NSArray *))completion;
+
+/**
+ *  从网络获取分享选项列表
+ *
+ *  @param completion 获取王城
+ */
++ (void)fetchShareItemWithCompletion:(void(^)(NSArray *))completion;
+
+@end

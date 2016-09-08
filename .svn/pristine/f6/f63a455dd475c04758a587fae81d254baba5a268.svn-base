@@ -1,0 +1,13 @@
+//
+//  UIControllerLabelsList.h
+//  ChinaBrowser
+//
+//  Created by 石显军 on 14/11/11.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerBase.h"
+
+@interface UIControllerLabelsList : UIControllerBase
+
+@end

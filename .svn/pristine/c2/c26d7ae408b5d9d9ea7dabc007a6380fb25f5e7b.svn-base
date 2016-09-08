@@ -1,0 +1,174 @@
+//
+//  UIControllerDesktopStyle.m
+//  ChinaBrowser
+//
+//  Created by David on 14/10/31.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerDesktopStyle.h"
+
+#import "UINavigationBarCustom.h"
+#import "UICellDesktopStyle.h"
+
+#import "AppLanguageProtocol.h"
+
+@interface UIControllerDesktopStyle () <AppLanguageProtocol, UITableViewDataSource, UITableViewDelegate>
+{
+    IBOutlet UINavigationBarCustom *_navBar;
+    IBOutlet UITableView *_tableView;
+    
+    NSInteger _selectRow;
+    NSArray *_arrTitle;
+}
+
+@end
+
+@implementation UIControllerDesktopStyle
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    [self.view setBgImageWithScaleAspectFillImage:[AppSetting shareAppSetting].skinImage];
+    [self updateByLanguage];
+    [self layoutSubViewsWithInterfaceOrientation:[UIApplication sharedApplication].statusBarOrientation];
+    
+    _arrTitle = @[LocalizedString(@"二栏模式"),
+                  LocalizedString(@"三栏模式"),
+                  LocalizedString(@"四栏模式")];
+    
+    switch ([AppSetting shareAppSetting].desktopStyle) {
+        case DesktopStyleCol2:
+        {
+            _selectRow = 0;
+        }break;
+        case DesktopStyleCol3:
+        {
+            _selectRow = 1;
+        }break;
+        case DesktopStyleCol4:
+        {
+            _selectRow = 2;
+        }break;
+            
+        default:
+            break;
+    }
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSIndexPath *indexPathSelect = [NSIndexPath indexPathForRow:_selectRow inSection:0];
+        UITableViewCell *cell = [_tableView cellForRowAtIndexPath:indexPathSelect];
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        
+        [_tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:_selectRow inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+    });
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (IsiPad) return;
+    
+    CGRect rc = _navBar.frame;
+    rc.size.height = UIInterfaceOrientationIsPortrait(orientation)?44:32;
+    _navBar.frame = rc;
+    
+    rc = _tableView.frame;
+    rc.origin.y = _navBar.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+#pragma mark - AppLanguageProtocol
+- (void)updateByLanguage
+{
+    _navBar.topItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:LocalizedString(@"fanhui") style:UIBarButtonItemStylePlain target:self action:@selector(onTouchBack)];
+    _navBar.topItem.title = self.title;
+}
+
+#pragma mark - UITableViewDataSource, UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _arrTitle.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICellDesktopStyle *cell = (UICellDesktopStyle *)[tableView dequeueReusableCellWithIdentifier:@"UICellDesktopStyle"];
+    if (indexPath.row==_selectRow) {
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+    }
+    else {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
+    
+    cell.labelTitle.text = _arrTitle[indexPath.row];
+    cell.imageViewIcon.image = [UIImage imageWithBundleFile:@"iPhone/bg_nav1.png"];
+    cell.imageViewIcon.highlightedImage = [UIImage imageWithBundleFile:@"ad_default.jpg"];
+    
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 100;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (indexPath.row==_selectRow) {
+        return;
+    }
+
+    UITableViewCell *cell = [_tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:_selectRow inSection:0]];
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    
+    cell = [_tableView cellForRowAtIndexPath:indexPath];
+    cell.accessoryType = UITableViewCellAccessoryCheckmark;
+    _selectRow = indexPath.row;
+}
+
+#pragma mark - private methods
+- (void)onTouchBack
+{
+    switch (_selectRow) {
+        case 0:
+            [AppSetting shareAppSetting].desktopStyle = DesktopStyleCol2;
+            break;
+        case 1:
+            [AppSetting shareAppSetting].desktopStyle = DesktopStyleCol3;
+            break;
+        case 2:
+            [AppSetting shareAppSetting].desktopStyle = DesktopStyleCol4;
+            break;
+            
+        default:
+            break;
+    }
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:KNotificationDidChanageDesktopStyle object:nil];
+    
+    if (self.navigationController) {
+        [self.navigationController popViewControllerAnimated:YES];
+    }
+    else {
+        [self dismissModalViewControllerAnimated:YES];
+    }
+}
+
+@end

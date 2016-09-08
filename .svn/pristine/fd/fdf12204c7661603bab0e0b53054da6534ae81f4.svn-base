@@ -1,0 +1,262 @@
+//
+//  UIControllerImageGroup.m
+//  ChinaBrowser
+//
+//  Created by HHY on 14/12/6.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "UIControllerImageGroup.h"
+#import "UIControllerImageAssets.h"
+
+#import "UICellGroup.h"
+
+#define kTitle @"title"
+#define kSubTitle @"subTitle"
+#define kImage @"image"
+#define kGroupID @"GroupID"
+
+@interface UIControllerImageGroup ()
+{
+    NSMutableArray *_arrAllGroup;
+    ALAssetsLibrary *_assetsLibrary;
+}
+@end
+
+@implementation UIControllerImageGroup
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.title = LocalizedString(@"xiangce");
+    _viewNav = [UIViewNav viewNav];
+    _viewNav.title = self.title;
+    [self.view addSubview:_viewNav];
+    //导航栏设置
+    UIButton *btnBack =[UIButton buttonWithType:UIButtonTypeCustom];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_0.png"] forState:UIControlStateNormal];
+    [btnBack setImage:[UIImage imageWithBundleFile:@"iPhone/back_1.png"] forState:UIControlStateHighlighted];
+    [btnBack addTarget:self action:@selector(onTouchBtnback) forControlEvents:UIControlEventTouchUpInside];
+    [btnBack sizeToFit];
+    _viewNav.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnBack];
+    
+    _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
+    //相册数据源
+    
+    [self setupGroup];
+
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        _DEBUG_LOG(@"sdf  %d",_arrAllGroup.count);
+    });
+    
+}
+
+/**
+ *  屏幕旋转
+ *
+ *  @param toInterfaceOrientation
+ *  @param duration
+ */
+-(void)layoutSubViewsWithInterfaceOrientation:(UIInterfaceOrientation)orientation
+{
+    if (UIUserInterfaceIdiomPad==UI_USER_INTERFACE_IDIOM()) return;
+    
+    [_viewNav resizeWithOrientation:orientation];
+    
+    CGRect rc = _tableView.frame;
+    rc.origin.y = _viewNav.bottom;
+    rc.size.height = self.view.height-rc.origin.y;
+    _tableView.frame = rc;
+}
+
+/**
+ *  获得资源柄
+ */
++ (ALAssetsLibrary *)defaultAssetsLibrary
+{
+    static dispatch_once_t pred = 0;
+    static ALAssetsLibrary *library = nil;
+    dispatch_once(&pred, ^{
+        library = [[ALAssetsLibrary alloc] init];
+    });
+    return library;
+}
+
+/**
+ *  获得相册数据源
+ */
+- (void)setupGroup
+{
+    if (!_assetsLibrary)
+        _assetsLibrary = [self.class defaultAssetsLibrary];
+    
+    if (!_arrAllGroup)
+        _arrAllGroup = [[NSMutableArray alloc] init];
+    else
+        [_arrAllGroup removeAllObjects];
+    
+    ALAssetsFilter *assetsFilter = [ALAssetsFilter allPhotos];
+    
+    //获取相册资源成功的block
+    ALAssetsLibraryGroupsEnumerationResultsBlock resultsBlock = ^(ALAssetsGroup *group, BOOL *stop) {
+        
+        if (group)
+        {
+            //只要相册里的相片(滤掉视频)
+            [group setAssetsFilter:assetsFilter];
+            
+            if (group.numberOfAssets > 0)
+                [_arrAllGroup addObject:group];
+            
+        }
+        else
+        {
+              //group为空说明 已经枚举完所有group.
+            if (_arrAllGroup.count == 0) {
+                [self showNotAllowed];
+            }
+            [_tableView reloadData];
+        }
+    };
+    
+    //获取相册失败的block
+    ALAssetsLibraryAccessFailureBlock failureBlock = ^(NSError *error) {
+         [self showNotAllowed];
+        
+    };
+    
+    // Enumerate Camera roll firstALAssetsGroupSavedPhotos
+    //开始枚举设备里的相册
+    //注意这是异步的.
+    [_assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupAll
+                                      usingBlock:resultsBlock
+                                    failureBlock:failureBlock];
+    
+}
+
+/**
+ *  返回按钮
+ */
+- (void)onTouchBtnback
+{
+    [self.navigationController popViewControllerAnimated:YES];
+    
+}
+
+#pragma mark - Not allowed / No assets
+
+- (void)showNotAllowed
+{
+    self.title              = nil;
+    
+    UIView *lockedView      = [[UIView alloc] initWithFrame:self.view.bounds];
+    UIImageView *locked     = [[UIImageView alloc] initWithImage:[UIImage imageWithBundleFile:@"iPhone/User/password.png"]];
+    
+    CGRect rect             = CGRectInset(self.view.bounds, 8, 8);
+    UILabel *title          = [[UILabel alloc] initWithFrame:rect];
+    UILabel *message        = [[UILabel alloc] initWithFrame:rect];
+    
+    title.text              = LocalizedString(@"meiyouxiangcehuochengxubunengfangwennindexiangce");
+    title.font              = [UIFont boldSystemFontOfSize:17.0];
+    title.textColor         = [UIColor colorWithRed:129.0/255.0 green:136.0/255.0 blue:148.0/255.0 alpha:1];
+    title.textAlignment     = NSTextAlignmentCenter;
+    title.numberOfLines     = 5;
+    
+    message.text            = LocalizedString(@"ninkeyizaishezhiyinsizhongyunxufangwen");
+    message.font            = [UIFont systemFontOfSize:14.0];
+    message.textColor       = [UIColor colorWithRed:129.0/255.0 green:136.0/255.0 blue:148.0/255.0 alpha:1];
+    message.textAlignment   = NSTextAlignmentCenter;
+    message.numberOfLines   = 5;
+    
+    [title sizeToFit];
+    [message sizeToFit];
+    
+    locked.center           = CGPointMake(lockedView.center.x, lockedView.center.y/5.0*2 );
+    title.center            = locked.center;
+    message.center          = locked.center;
+    locked.autoresizingMask  =
+    UIViewAutoresizingFlexibleTopMargin|
+    UIViewAutoresizingFlexibleLeftMargin |
+    UIViewAutoresizingFlexibleRightMargin;
+
+    rect                    = title.frame;
+    rect.origin.y           = locked.frame.origin.y + locked.frame.size.height + 20;
+    title.frame             = rect;
+    title.autoresizingMask  =
+    UIViewAutoresizingFlexibleTopMargin|
+    UIViewAutoresizingFlexibleLeftMargin |
+    UIViewAutoresizingFlexibleRightMargin;
+    
+    rect                    = message.frame;
+    rect.origin.y           = title.frame.origin.y + title.frame.size.height + 10;
+    message.frame           = rect;
+    message.autoresizingMask  =
+    UIViewAutoresizingFlexibleTopMargin|
+    UIViewAutoresizingFlexibleLeftMargin |
+    UIViewAutoresizingFlexibleRightMargin;
+
+    
+    [lockedView addSubview:locked];
+    [lockedView addSubview:title];
+    [lockedView addSubview:message];
+    
+    _tableView.tableHeaderView  = lockedView;
+    _tableView.scrollEnabled    = NO;
+}
+
+
+#pragma mask   UITableViewDelegate
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return _arrAllGroup.count;
+    
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *cellIdD = @"UICellGroup";
+    
+    UICellGroup *cell = [tableView dequeueReusableCellWithIdentifier:cellIdD];
+    if (!cell) {
+        cell = [UICellGroup cellFromXib];
+    }
+    
+    [cell bind:[_arrAllGroup objectAtIndex:indexPath.row]];
+  
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    UIControllerImageAssets *controller = [[UIControllerImageAssets alloc]initWithNibName:@"UIControllerImageAssets" bundle:nil];
+    
+    controller.assetsGroup = _arrAllGroup[indexPath.row];
+    controller.delegate = self.controller;
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 90;
+}
+
+
+@end

@@ -1,0 +1,62 @@
+//
+//  ModelProgram.m
+//  ChinaBrowser
+//
+//  Created by David on 14/11/22.
+//  Copyright (c) 2014年 KOTO Inc. All rights reserved.
+//
+
+#import "ModelProgram.h"
+
+@implementation ModelProgram
+
+#pragma mark - property
+- (void)setTitle:(NSString *)title
+{
+    _title = [title isKindOfClass:[NSString class]]?title:nil;
+}
+
+- (void)setFm:(NSString *)fm
+{
+    _fm = [fm isKindOfClass:[NSString class]]?fm:nil;
+}
+
+- (void)setLink:(NSString *)link
+{
+    _link = [link isKindOfClass:[NSString class]]?link:nil;
+}
+
+#pragma mark - instance
+- (instancetype)initWithDict:(NSDictionary *)dict
+{
+    self = [super initWithDict:dict];
+    if (self) {
+        self.pkid_server = [dict[@"p_id"] integerValue];
+        self.srcType = [dict[@"type"] integerValue];
+        self.title = dict[@"title"];
+        self.link = dict[@"link"];
+        self.fm = dict[@"fm"];
+        self.time = [dict[@"time"] integerValue];
+        self.recommendCateId = [dict[@"recommend_catid"] integerValue];
+    }
+    return self;
+}
+
+- (instancetype)initWithResultSetDict:(NSDictionary *)dict
+{
+    self = [super initWithResultSetDict:dict];
+    if (self) {
+        self.pkid = [dict[@"pkid"] integerValue];
+        self.pkid_server = [dict[@"pkid_server"] integerValue];
+        
+        self.srcType = [dict[@"type"] integerValue];
+        self.title = dict[@"title"];
+        self.link = dict[@"link"];
+        self.fm = dict[@"fm"];
+        self.time = [dict[@"time"] integerValue];
+        self.recommendCateId = [dict[@"recommend_catid"] integerValue];
+    }
+    return self;
+}
+
+@end
